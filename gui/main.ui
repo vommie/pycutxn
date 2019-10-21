@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1115</width>
-    <height>833</height>
+    <width>1135</width>
+    <height>808</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -31,6 +31,9 @@
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::ClickFocus</enum>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -162,7 +165,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1115</width>
+     <width>1135</width>
      <height>29</height>
     </rect>
    </property>
@@ -180,7 +183,7 @@
    <addaction name="menu_View"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="dockWidget_queue">
+  <widget class="QDockWidget" name="dockWidget_export">
    <property name="autoFillBackground">
     <bool>false</bool>
    </property>
@@ -191,50 +194,357 @@
     <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
-    <string>Queue</string>
+    <string>Export</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_3">
+   <widget class="QWidget" name="dockWidgetContents_export">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QListView" name="listView_Queue"/>
+      <layout class="QVBoxLayout" name="verticalLayout_export">
+       <item>
+        <widget class="QLabel" name="label_export">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Export</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMaximumSize</enum>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="lineEdit_export_filepath">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_export_inc">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>+</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_export_dec">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>−</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_export_edit">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>✎</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_export_save">
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>⚙</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="dockWidget_mediaInfo">
-   <property name="windowTitle">
-    <string>MediaInfo</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_4">
-    <layout class="QVBoxLayout" name="verticalLayout_7">
      <item>
-      <widget class="QPlainTextEdit" name="plainTextEdit"/>
+      <layout class="QVBoxLayout" name="verticalLayout_filters">
+       <item>
+        <widget class="QLabel" name="label_filters">
+         <property name="text">
+          <string>Filters</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_crop">
+         <item>
+          <widget class="QPushButton" name="pushButton_6">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Crop</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_7">
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>✎</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_resize">
+         <item>
+          <widget class="QPushButton" name="pushButton_9">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Resize</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_10">
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>✎</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_deshake">
+         <item>
+          <widget class="QPushButton" name="pushButton_8">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Deshake</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_11">
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>✎</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="dockWidget_fileBrowser">
-   <property name="windowTitle">
-    <string>File Browser</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents">
-    <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QTreeView" name="treeView_fileBrowser"/>
+      <layout class="QVBoxLayout" name="verticalLayout_sections">
+       <item>
+        <widget class="QLabel" name="label_sections">
+         <property name="text">
+          <string>Sections</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListView" name="listView_sections">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QPushButton" name="pushButton_3">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Droid Sans [1ASC]</family>
+             <pointsize>14</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>+</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_section_up">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>▲</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_section_down">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>▼</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_section_remove">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>✖</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_tagRate">
+  <widget class="QDockWidget" name="dockWidget_tagger">
    <property name="windowTitle">
     <string>Tag &amp;&amp; Rate</string>
    </property>
@@ -354,6 +664,33 @@
      </item>
     </layout>
    </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_mediainfo">
+   <property name="windowTitle">
+    <string>MediaInfo</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_6"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_queue">
+   <property name="windowTitle">
+    <string>Queue</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_7"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_filebrowser">
+   <property name="windowTitle">
+    <string>File Browser</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_8"/>
   </widget>
  </widget>
  <resources/>
