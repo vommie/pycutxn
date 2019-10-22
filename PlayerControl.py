@@ -1,6 +1,6 @@
 class PlayerControl():
 
-    volume_step = 5
+    volumeStep = 5
 
     def __init__(self, player):
         self.player = player
@@ -14,11 +14,11 @@ class PlayerControl():
 
         @self.player.on_key_press('WHEEL_DOWN')
         def binding_wheel_down():
-            self.volume_down()
+            self.volumeDown()
 
         @self.player.on_key_press('WHEEL_UP')
         def binding_wheel_up():
-            self.volume_up()
+            self.volumeUp()
 
     def play(self, filepath):
         self.player.play(filepath)
@@ -30,20 +30,23 @@ class PlayerControl():
         self.player.pause = not self.player.pause
         return self.player.pause
 
-    def volume_down(self):
-        if self.player.volume - self.volume_step >= self.volume_step:
-            self.player.volume -= self.volume_step
+    def volumeDown(self):
+        if self.player.volume - self.volumeStep >= self.volumeStep:
+            self.player.volume -= self.volumeStep
         else:
             self.player.volume = 0.0
 
-    def volume_up(self):
-        if self.player.volume + self.volume_step <= 100:
-            self.player.volume += self.volume_step
+    def volumeUp(self):
+        if self.player.volume + self.volumeStep <= 100:
+            self.player.volume += self.volumeStep
         else:
             self.player.volume = 100.0
 
-    def frame_step(self):
+    def frameStep(self):
         self.player.frame_step()
 
-    def frame_back_step(self):
+    def frameBackStep(self):
         self.player.frame_back_step()
+
+    def seek(self, amount, reference="relative"):
+        self.player.seek(amount, reference)

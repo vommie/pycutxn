@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import mpv
-from player_control import PlayerControl
+from PlayerControl import PlayerControl
 import sys
 from functions import *
+import datetime
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
@@ -16,37 +17,62 @@ class Ui(QtWidgets.QMainWindow):
         self.init_player()
         self.show()
 
-        self.btn_pause.clicked.connect(self.on_pause)
-        self.btn_frame_step.clicked.connect(self.on_frame_step)
-        self.btn_frame_step_back.clicked.connect(self.on_frame_step_back)
+        # Init member variables
+        self.playerTimeCurrent = '0:00:0.0'
+        self.sectionTimeStart = '0:00:0.0'
+        self.sectionTimeEnd = '0:00:0.0'
+
+        # Player control
+        self.btnPause.clicked.connect(self.onBtnPauseClicked)
+        self.btnFrameStep.clicked.connect(self.onBtnFrameStepClicked)
+        self.btnFrameStepBack.clicked.connect(self.onBtnFrameStepBackClicked)
+        self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
+        self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
+        self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
+        # Sections
+        self.tableSections.cellClicked.connect(self.onTableSectionRowClicked)
+        self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
+        self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
+        self.btnSectionAdd2.clicked.connect(self.onBtnSectionAddClicked)
+        self.btnSectionDelete.clicked.connect(self.onBtnSectionDeleteClicked)
+        self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
+        self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
 
     def init_player(self):
-        self.render_frame = self.findChild(QtWidgets.QFrame, 'render_frame')
+        #self.render_frame = self.findChild(QtWidgets.QFrame, 'render_frame')
+        self.render_frame = self.findChild(QtWidgets.QWidget, 'render_frame')
         self.render_frame.setAttribute(Qt.WA_DontCreateNativeAncestors)
         self.render_frame.setAttribute(Qt.WA_NativeWindow)
         import locale
         locale.setlocale(locale.LC_NUMERIC, 'C')
         player = mpv.MPV(wid=str(int(self.render_frame.winId())), vo='x11', log_handler=print, loglevel='debug')
         #
-        self.player_control = PlayerControl(player)
+        self.playerControl = PlayerControl(player)
         # Register observers
-        self.player_control.player.observe_property('pause', self.on_player_pause)
-        self.player_control.player.observe_property('percent-pos', self.on_player_percent_pos)
-        # self.player_control.player.observe_property('duration', self.on_player_duration)
-        self.player_control.player.observe_property('time-pos', self.on_player_time_pos)
+        self.playerControl.player.observe_property('pause', self.onPlayerPause)
+        self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
+        # self.playerControl.player.observe_property('duration', self.on_player_duration)
+        self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
+
+    # Helper functions
+
+    # Convert time string (0:00:0.0) to datetime object
+    def timeStringToTime(self, timeStr):
+        date_time_obj = datetime.datetime.strptime(timeStr, '%H:%M:%S.%f')
+        return date_time_obj
 
     # Player observer events
 
-    def on_player_pause(self, action, state):
+    def onPlayerPause(self, action, state):
         if state:
-            self.btn_pause.setText('||')
+            self.btnPause.setText('||')
         else:
-            self.btn_pause.setText('>')
+            self.btnPause.setText('>')
 
-    def on_player_percent_pos(self, action, pos):
+    def onPlayerPercentPos(self, action, pos):
         self.player_progress_bar.setValue(pos)
 
-    def on_player_time_pos(self, action, timestamp):
+    def onPlayerTimePos(self, action, timestamp):
         # Convert timestamp format s.ms to h:m:s.ms
         time_split = str(timestamp).split('.', 1)
         time_ms = time_split[1]
@@ -54,22 +80,122 @@ class Ui(QtWidgets.QMainWindow):
             time_ms = '%s0' % time_split[1]
         time_ms = '{:03d}'.format(int(time_split[1][:3]))
         time = "%s.%s" % (convert_seconds_to_hmsf(int(time_split[0])), time_ms)
+        self.playerTimeCurrent = time
         self.player_time_curr_label.setText(time)
-
 
     # GUI control events
 
-    def on_pause(self):
-        self.player_control.pause()
+    def onBtnPauseClicked(self):
+        self.playerControl.pause()
 
-    def on_frame_step(self):
-        self.player_control.frame_step()
+    def onBtnFrameStepClicked(self):
+        self.playerControl.frameStep()
 
-    def on_frame_step_back(self):
-        self.player_control.frame_back_step()
+    def onBtnFrameStepBackClicked(self):
+        self.playerControl.frameBackStep()
+
+    def onBtnSectionStartClicked(self):
+        self.sectionTimeStart = self.playerTimeCurrent
+        if self.timeStringToTime(self.sectionTimeStart) > self.timeStringToTime(self.sectionTimeEnd):
+            self.sectionTimeEnd = self.sectionTimeStart
+        self.setBtnSectionAddState()
+
+    def onBtnSectionEndClicked(self):
+        self.sectionTimeEnd = self.playerTimeCurrent
+        if self.timeStringToTime(self.sectionTimeEnd) < self.timeStringToTime(self.sectionTimeStart):
+            self.sectionTimeStart = self.sectionTimeEnd
+        self.setBtnSectionAddState()
+
+    def onBtnSectionAddClicked(self):
+        self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
+
+    def onBtnSectionDeleteClicked(self):
+        self.sectionDeleteSelectedRow()
+
+    def onBtnSectionUpClicked(self):
+        self.moveSectionItem(-1)
+
+    def onBtnSectionDownClicked(self):
+        self.moveSectionItem(1)
+
+    def onTableSectionRowClicked(self):
+        pass
+
+    def onTableSectionCurrCellChanged(self):
+        self.setSectionBtnStates()
+
+    def onTableSectionItemDblClicked(self, item):
+        timeStr = item.text()
+        # Set section time range
+        col = item.column()
+        row = item.row()
+        if col == 0:
+            self.sectionTimeStart = timeStr
+            timeEndStr = self.tableSections.item(row, 1)
+            self.sectionTimeEnd = timeEndStr
+        elif col == 1:
+            self.sectionTimeEnd = timeStr
+            timeStartStr = self.tableSections.item(row, 0)
+            self.sectionTimeStart = timeStartStr
+        # Jump to time position in video
+        self.playerControl.seek(timeStr, 'absolute')
+
+
+    # GUI Control
+
+    def setBtnSectionAddState(self):
+        if self.sectionTimeStart and self.sectionTimeEnd:
+            self.btnSectionAdd2.setEnabled(True)
+        else:
+            self.btnSectionAdd2.setEnabled(False)
+
+    def sectionAddRow(self, fromTime, toTime):
+        rowIndex = self.tableSections.rowCount()
+        self.tableSections.insertRow(rowIndex)
+        self.tableSections.setItem(rowIndex, 0, QTableWidgetItem(fromTime))
+        self.tableSections.setItem(rowIndex, 1, QTableWidgetItem(toTime))
+
+    def sectionDeleteSelectedRow(self):
+        rowIndex = self.tableSections.currentRow()
+        self.tableSections.removeRow(rowIndex)
+        self.setSectionBtnStates()
+
+    # Set the states of the section buttons
+    def setSectionBtnStates(self):
+        rowCount = self.tableSections.rowCount()
+        rowIndex = self.tableSections.currentRow()
+        if rowCount == 0:
+            self.btnSectionUp.setEnabled(False)
+            self.btnSectionDown.setEnabled(False)
+            self.btnSectionDelete.setEnabled(False)
+        else:
+            self.btnSectionDelete.setEnabled(True)
+            if rowIndex == 0:
+                self.btnSectionUp.setEnabled(False)
+            else:
+                self.btnSectionUp.setEnabled(True)
+            if rowIndex < rowCount-1:
+                self.btnSectionDown.setEnabled(True)
+            else:
+                self.btnSectionDown.setEnabled(False)
+
+    # Move an item up (+1) or down (-1)
+    def moveSectionItem(self, directionValue):
+        rowCount = self.tableSections.rowCount()
+        rowIndex = self.tableSections.currentRow()
+        if rowIndex + directionValue >= 0 and  rowIndex + directionValue <= rowCount - 1:
+            currItem1 = self.tableSections.takeItem(rowIndex, 0)
+            currItem2 = self.tableSections.takeItem(rowIndex, 1)
+            prevItem1 = self.tableSections.takeItem(rowIndex + directionValue, 0)
+            prevItem2 = self.tableSections.takeItem(rowIndex + directionValue, 1)
+            self.tableSections.setItem(rowIndex, 0, prevItem1)
+            self.tableSections.setItem(rowIndex, 1, prevItem2)
+            self.tableSections.setItem(rowIndex + directionValue, 0, currItem1)
+            self.tableSections.setItem(rowIndex + directionValue, 1, currItem2)
+            self.tableSections.setCurrentItem(currItem1)
 
 
 app = QtWidgets.QApplication(sys.argv)
 window = Ui()
-window.player_control.play('/home/vommie/videos/Musikvideos/60s/Uriah Heep - Lady In Black 1971 (1977)  (HQ) (480p_25fps_H264-128kbit_AAC).mp4')
+window.playerControl.play('/home/vommie/videos/Musikvideos/60s/Uriah Heep - Lady In Black 1971 (1977)  (HQ) (480p_25fps_H264-128kbit_AAC).mp4')
 app.exec_()

@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1135</width>
-    <height>808</height>
+    <width>1210</width>
+    <height>852</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -25,27 +25,10 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QFrame" name="render_frame">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+     <widget class="QWidget" name="render_frame" native="true">
+      <property name="autoFillBackground">
+       <bool>true</bool>
       </property>
-      <property name="focusPolicy">
-       <enum>Qt::ClickFocus</enum>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_8">
-       <property name="sizeConstraint">
-        <enum>QLayout::SetDefaultConstraint</enum>
-       </property>
-      </layout>
      </widget>
     </item>
     <item>
@@ -113,42 +96,78 @@
          <enum>QLayout::SetMinimumSize</enum>
         </property>
         <item>
-         <widget class="QPushButton" name="btn_pause">
+         <widget class="QPushButton" name="btnPause">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="text">
            <string>&gt;</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_frame_step_back">
+         <widget class="QPushButton" name="btnFrameStepBack">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="text">
            <string>&lt;</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_frame_step">
+         <widget class="QPushButton" name="btnFrameStep">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="text">
            <string>&gt;</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_section_open">
+         <widget class="QPushButton" name="btnSectionStart">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="text">
            <string>[</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_section_close">
+         <widget class="QPushButton" name="btnSectionEnd">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="text">
            <string>]</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_section_add">
+         <widget class="QPushButton" name="btnSectionAdd1">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>24</height>
+           </size>
+          </property>
           <property name="text">
            <string>+</string>
           </property>
@@ -165,7 +184,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1135</width>
+     <width>1210</width>
      <height>29</height>
     </rect>
    </property>
@@ -463,22 +482,38 @@
         </widget>
        </item>
        <item>
-        <widget class="QListView" name="listView_sections">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <widget class="QTableWidget" name="tableSections">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
          </property>
          <property name="alternatingRowColors">
           <bool>true</bool>
          </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::SingleSelection</enum>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <column>
+          <property name="text">
+           <string>From</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>To</string>
+          </property>
+         </column>
         </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="btnSectionAdd2">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="maximumSize">
             <size>
              <width>16777215</width>
@@ -499,7 +534,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_section_up">
+          <widget class="QPushButton" name="btnSectionUp">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="maximumSize">
             <size>
              <width>16777215</width>
@@ -512,7 +550,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_section_down">
+          <widget class="QPushButton" name="btnSectionDown">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="maximumSize">
             <size>
              <width>16777215</width>
@@ -525,7 +566,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_section_remove">
+          <widget class="QPushButton" name="btnSectionDelete">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="maximumSize">
             <size>
              <width>16777215</width>
