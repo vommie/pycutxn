@@ -25,7 +25,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QWidget" name="render_frame" native="true">
+     <widget class="QWidget" name="renderFrame" native="true">
       <property name="autoFillBackground">
        <bool>true</bool>
       </property>
@@ -34,40 +34,19 @@
     <item>
      <layout class="QVBoxLayout" name="player_control_box">
       <item>
-       <layout class="QHBoxLayout" name="progress_box" stretch="0,0">
-        <property name="sizeConstraint">
-         <enum>QLayout::SetMaximumSize</enum>
-        </property>
+       <layout class="QHBoxLayout" name="horizontalLayoutProgress">
         <item>
-         <widget class="QProgressBar" name="player_progress_bar">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+         <widget class="QSlider" name="sliderPlayer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <property name="baseSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="mouseTracking">
-           <bool>false</bool>
-          </property>
-          <property name="maximum">
-           <number>100</number>
-          </property>
-          <property name="value">
-           <number>0</number>
-          </property>
-          <property name="textVisible">
-           <bool>false</bool>
+          <property name="tickPosition">
+           <enum>QSlider::NoTicks</enum>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="player_time_curr_label">
+         <widget class="QLabel" name="labelPlayerTimeCurr">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
             <horstretch>0</horstretch>
@@ -91,7 +70,7 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="controls_box">
+       <layout class="QHBoxLayout" name="horizontalLayoutControls">
         <property name="sizeConstraint">
          <enum>QLayout::SetMinimumSize</enum>
         </property>

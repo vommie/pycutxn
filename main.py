@@ -14,14 +14,18 @@ class Ui(QtWidgets.QMainWindow):
         super(Ui, self).__init__()
         uic.loadUi('./gui/main.ui', self)
 
-        self.init_player()
+        self.initPlayer()
         self.show()
+
+        # Config
+        self.playerSliderFactor = 100
 
         # Init member variables
         self.playerTimeCurrent = '0:00:0.0'
         self.sectionTimeStart = '0:00:0.0'
         self.sectionTimeEnd = '0:00:0.0'
 
+        # Set Events
         # Player control
         self.btnPause.clicked.connect(self.onBtnPauseClicked)
         self.btnFrameStep.clicked.connect(self.onBtnFrameStepClicked)
@@ -29,6 +33,10 @@ class Ui(QtWidgets.QMainWindow):
         self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
         self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
         self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
+        # Player Progress
+        self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
+        self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
+        self.sliderPlayer.sliderReleased.connect(self.onSliderPlayerReleased)
         # Sections
         self.tableSections.cellClicked.connect(self.onTableSectionRowClicked)
         self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
@@ -38,23 +46,26 @@ class Ui(QtWidgets.QMainWindow):
         self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
 
-    def init_player(self):
-        #self.render_frame = self.findChild(QtWidgets.QFrame, 'render_frame')
-        self.render_frame = self.findChild(QtWidgets.QWidget, 'render_frame')
-        self.render_frame.setAttribute(Qt.WA_DontCreateNativeAncestors)
-        self.render_frame.setAttribute(Qt.WA_NativeWindow)
+    def initPlayer(self):
+        #self.renderFrame = self.findChild(QtWidgets.QFrame, 'renderFrame')
+        self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
+        self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
+        self.renderFrame.setAttribute(Qt.WA_NativeWindow)
         import locale
         locale.setlocale(locale.LC_NUMERIC, 'C')
-        player = mpv.MPV(wid=str(int(self.render_frame.winId())), vo='x11', log_handler=print, loglevel='debug')
-        #
+        player = mpv.MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='debug')
         self.playerControl = PlayerControl(player)
         # Register observers
         self.playerControl.player.observe_property('pause', self.onPlayerPause)
         self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
-        # self.playerControl.player.observe_property('duration', self.on_player_duration)
+        self.playerControl.player.observe_property('duration', self.onPlayerDuration)
         self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
 
-    # Helper functions
+    def newFile(self, videoFilePath):
+        window.playerControl.play(videoFilePath)
+        self.sliderPlayerIsPressed = False
+        self.sliderPlayer.setMinimum(0)
+        self.sliderPlayer.setMaximum(99 * self.playerSliderFactor)
 
     # Convert time string (0:00:0.0) to datetime object
     def timeStringToTime(self, timeStr):
@@ -70,18 +81,22 @@ class Ui(QtWidgets.QMainWindow):
             self.btnPause.setText('>')
 
     def onPlayerPercentPos(self, action, pos):
-        self.player_progress_bar.setValue(pos)
+        if not self.sliderPlayerIsPressed:
+            self.sliderPlayer.setValue(pos * self.playerSliderFactor)
 
     def onPlayerTimePos(self, action, timestamp):
         # Convert timestamp format s.ms to h:m:s.ms
-        time_split = str(timestamp).split('.', 1)
-        time_ms = time_split[1]
-        if len(time_ms) == 1:
-            time_ms = '%s0' % time_split[1]
-        time_ms = '{:03d}'.format(int(time_split[1][:3]))
-        time = "%s.%s" % (convert_seconds_to_hmsf(int(time_split[0])), time_ms)
+        timeSplit = str(timestamp).split('.', 1)
+        timeMs = timeSplit[1]
+        if len(timeMs) == 1:
+            timeMs = '%s0' % timeSplit[1]
+        timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
+        time = "%s.%s" % (convertSecondsToHMFS(int(timeSplit[0])), timeMs)
         self.playerTimeCurrent = time
-        self.player_time_curr_label.setText(time)
+        self.labelPlayerTimeCurr.setText(time)
+
+    def onPlayerDuration(self, action, duration):
+        self.duration = duration
 
     # GUI control events
 
@@ -138,10 +153,27 @@ class Ui(QtWidgets.QMainWindow):
             timeStartStr = self.tableSections.item(row, 0)
             self.sectionTimeStart = timeStartStr
         # Jump to time position in video
-        self.playerControl.seek(timeStr, 'absolute')
+        self.playerControl.seek(timeStr, 'absolute+exact')
+
+    def onSliderPlayerMoved(self, value):
+        self.sliderPlayerIsPressed = True
+        self.setPlayerPosByPlayerSlider()
+
+    def onSliderPlayerPressed(self):
+        self.sliderPlayerIsPressed = True
+
+    def onSliderPlayerReleased(self):
+        self.sliderPlayerIsPressed = False
+        self.setPlayerPosByPlayerSlider()
 
 
     # GUI Control
+
+    def setPlayerPosByPlayerSlider(self):
+        value = self.sliderPlayer.value()
+        percentage = value / self.playerSliderFactor
+        self.playerControl.seek(percentage, 'absolute-percent+exact')
+
 
     def setBtnSectionAddState(self):
         if self.sectionTimeStart and self.sectionTimeEnd:
@@ -197,5 +229,5 @@ class Ui(QtWidgets.QMainWindow):
 
 app = QtWidgets.QApplication(sys.argv)
 window = Ui()
-window.playerControl.play('/home/vommie/videos/Musikvideos/60s/Uriah Heep - Lady In Black 1971 (1977)  (HQ) (480p_25fps_H264-128kbit_AAC).mp4')
+window.newFile('/home/vommie/videos/Musikvideos/60s/Uriah Heep - Lady In Black 1971 (1977)  (HQ) (480p_25fps_H264-128kbit_AAC).mp4')
 app.exec_()

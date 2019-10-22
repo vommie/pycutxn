@@ -1,4 +1,4 @@
-def convert_seconds_to_hmsf(seconds):
+def convertSecondsToHMFS(seconds):
     seconds = seconds % (24 * 3600)
     hour = seconds // 3600
     seconds %= 3600
