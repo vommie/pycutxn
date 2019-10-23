@@ -1,0 +1,30 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>ic_keyboard_arrow_right_24px.svg</file>
+    <file>ic_keyboard_arrow_left_24px.svg</file>
+    <file>left-alignment.svg</file>
+    <file>right-alignment.svg</file>
+    <file>flip_horizontally.svg</file>
+    <file>ic_edit_24px.svg</file>
+    <file>ic_fast_rewind_24px.svg</file>
+    <file>ic_fast_forward_24px.svg</file>
+    <file>ic_pause_24px.svg</file>
+    <file>ic_play_arrow_24px.svg</file>
+    <file>ic_more_horiz_24px.svg</file>
+    <file>ic_rotate_right_24px.svg</file>
+    <file>ic_rotate_left_24px.svg</file>
+    <file>ic_settings_24px.svg</file>
+    <file>ic_volume_up_24px.svg</file>
+    <file>ic_volume_off_24px.svg</file>
+    <file>ic_clear_24px.svg</file>
+    <file>ic_expand_more_24px.svg</file>
+    <file>ic_expand_less_24px.svg</file>
+    <file>ic_exposure_plus_1_24px.svg</file>
+    <file>ic_exposure_neg_1_24px.svg</file>
+    <file>ic_folder_24px.svg</file>
+    <file>ic_save_24px.svg</file>
+    <file>ic_remove_24px.svg</file>
+    <file>ic_water.svg</file>
+    <file>ic_add_24px.svg</file>
+  </qresource>
+</RCC>

@@ -8,6 +8,8 @@ import datetime
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import QIcon
+import res # pyrcc5 -o res.py res/res.qrc
 
 class Ui(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -15,6 +17,7 @@ class Ui(QtWidgets.QMainWindow):
         uic.loadUi('./gui/main.ui', self)
 
         self.initMembers()
+        self.initGui()
         self.initGuiEvents()
         self.initPlayer()
 
@@ -29,6 +32,9 @@ class Ui(QtWidgets.QMainWindow):
         self.playerTimeCurrent = timeFormat
         self.sectionTimeStart = timeFormat
         self.sectionTimeEnd = timeFormat
+        self.iconPlay = QIcon(':/icons/ic_play_arrow_24px.svg')
+        self.iconPause = QIcon(':/icons/ic_pause_24px.svg')
+        self.frameStep = False
 
     def initGuiEvents(self):
         # Player control
@@ -75,10 +81,11 @@ class Ui(QtWidgets.QMainWindow):
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
         self.setExportVideoFilePath(videoFilePath)
-        window.playerControl.play(videoFilePath)
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.playerSliderFactor)
+        window.playerControl.play(videoFilePath)
+        self.btnPause.setIcon(self.iconPause)
 
     def setExportVideoFilePath(self, videoFilePath):
         self.lineEditExportFilePath.setText(self.videoFilePath)
@@ -91,10 +98,12 @@ class Ui(QtWidgets.QMainWindow):
     # Player observer events
 
     def onPlayerPause(self, action, state):
-        if state:
-            self.btnPause.setText('||')
-        else:
-            self.btnPause.setText('>')
+        if not self.frameStep:
+            if state:
+                self.btnPause.setIcon(self.iconPlay)
+            else:
+                self.btnPause.setIcon(self.iconPause)
+        self.frameStep = False
 
     def onPlayerPercentPos(self, action, pos):
         if not self.sliderPlayerIsPressed:
@@ -120,10 +129,13 @@ class Ui(QtWidgets.QMainWindow):
         self.playerControl.pause()
 
     def onBtnFrameStepClicked(self):
+        self.frameStep = True
         self.playerControl.frameStep()
+        self.btnPause.setIcon(self.iconPlay)
 
     def onBtnFrameStepBackClicked(self):
         self.playerControl.frameBackStep()
+        self.btnPause.setIcon(self.iconPlay)
 
     def onBtnSectionStartClicked(self):
         self.sectionTimeStart = self.playerTimeCurrent
