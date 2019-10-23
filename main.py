@@ -14,18 +14,23 @@ class Ui(QtWidgets.QMainWindow):
         super(Ui, self).__init__()
         uic.loadUi('./gui/main.ui', self)
 
+        self.initMembers()
+        self.initGuiEvents()
         self.initPlayer()
+
         self.show()
 
+    def initMembers(self):
         # Config
         self.playerSliderFactor = 100
 
         # Init member variables
-        self.playerTimeCurrent = '0:00:0.0'
-        self.sectionTimeStart = '0:00:0.0'
-        self.sectionTimeEnd = '0:00:0.0'
+        timeFormat = '0:00:0.0'
+        self.playerTimeCurrent = timeFormat
+        self.sectionTimeStart = timeFormat
+        self.sectionTimeEnd = timeFormat
 
-        # Set Events
+    def initGuiEvents(self):
         # Player control
         self.btnPause.clicked.connect(self.onBtnPauseClicked)
         self.btnFrameStep.clicked.connect(self.onBtnFrameStepClicked)
@@ -46,6 +51,12 @@ class Ui(QtWidgets.QMainWindow):
         self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
 
+    def initGui(self):
+        # GUI elements options
+        header = self.tableSections.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+
     def initPlayer(self):
         #self.renderFrame = self.findChild(QtWidgets.QFrame, 'renderFrame')
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -62,10 +73,15 @@ class Ui(QtWidgets.QMainWindow):
         self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
 
     def newFile(self, videoFilePath):
+        self.videoFilePath = videoFilePath
+        self.setExportVideoFilePath(videoFilePath)
         window.playerControl.play(videoFilePath)
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.playerSliderFactor)
+
+    def setExportVideoFilePath(self, videoFilePath):
+        self.lineEditExportFilePath.setText(self.videoFilePath)
 
     # Convert time string (0:00:0.0) to datetime object
     def timeStringToTime(self, timeStr):
@@ -165,7 +181,6 @@ class Ui(QtWidgets.QMainWindow):
     def onSliderPlayerReleased(self):
         self.sliderPlayerIsPressed = False
         self.setPlayerPosByPlayerSlider()
-
 
     # GUI Control
 
