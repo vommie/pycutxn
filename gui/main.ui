@@ -37,14 +37,8 @@
        <layout class="QHBoxLayout" name="layoutPlayerProgress">
         <item>
          <widget class="QSlider" name="sliderPlayer">
-          <property name="tracking">
-           <bool>true</bool>
-          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::NoTicks</enum>
           </property>
          </widget>
         </item>
@@ -63,7 +57,7 @@
            </size>
           </property>
           <property name="text">
-           <string/>
+           <string>0:00:00.00</string>
           </property>
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
@@ -151,6 +145,13 @@
          </widget>
         </item>
         <item>
+         <widget class="Line" name="line_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="btnSectionStart">
           <property name="maximumSize">
            <size>
@@ -187,6 +188,13 @@
             <width>20</width>
             <height>20</height>
            </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
           </property>
          </widget>
         </item>
@@ -308,7 +316,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Export</string>
+          <string>Job Finalization</string>
          </property>
         </widget>
        </item>
@@ -330,6 +338,14 @@
              <width>16777215</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
+           <property name="placeholderText">
+            <string>Filepath</string>
            </property>
           </widget>
          </item>
@@ -820,6 +836,13 @@
          </item>
          <item>
           <layout class="QHBoxLayout" name="layoutFilterRotate">
+           <item>
+            <widget class="Line" name="line">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QPushButton" name="btnFilterRotateLeft">
              <property name="sizePolicy">

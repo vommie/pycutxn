@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import mpv
 from PlayerControl import PlayerControl
+from Job import Job
 import sys
 from functions import *
 import datetime
+import os
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
@@ -26,6 +28,7 @@ class Ui(QtWidgets.QMainWindow):
     def initMembers(self):
         # Config
         self.playerSliderFactor = 100
+        self.useExportFileNameCounter = True
 
         # Init member variables
         timeFormat = '0:00:0.0'
@@ -56,6 +59,11 @@ class Ui(QtWidgets.QMainWindow):
         self.btnSectionDelete.clicked.connect(self.onBtnSectionDeleteClicked)
         self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
+        # Job Finalization
+        self.btnExportDec.clicked.connect(self.onBtnExportDecClicked)
+        self.btnExportInc.clicked.connect(self.onBtnExportIncClicked)
+        self.btnExportWx.clicked.connect(self.onBtnExportWxClicked)
+        self.btnExportSave.clicked.connect(self.onBtnExportSave)
 
     def initGui(self):
         # GUI elements options
@@ -80,15 +88,34 @@ class Ui(QtWidgets.QMainWindow):
 
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
-        self.setExportVideoFilePath(videoFilePath)
+        self.job = Job(videoFilePath)
+        self.setExportVideoFilePath()
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.playerSliderFactor)
+        self.btnExportWx.setChecked(False)
         window.playerControl.play(videoFilePath)
         self.btnPause.setIcon(self.iconPause)
 
-    def setExportVideoFilePath(self, videoFilePath):
-        self.lineEditExportFilePath.setText(self.videoFilePath)
+    def addJob(self):
+        job = self.job
+        job.resetSections()
+        count = self.tableSections.rowCount()
+        for iRow in range(count):
+            item = self.tableSections.item(iRow, 0)
+            timeFrom = item.text()
+            item = self.tableSections.item(iRow, 1)
+            timeTo = item.text()
+            self.job.addSection(timeFrom, timeTo)
+
+    def setExportVideoFilePath(self, count = 0, suffix = False):
+        job = self.job
+        job.plusMinusFileCount(count)
+        job.addRemoveSuffix(suffix)
+        if self.useExportFileNameCounter:
+            self.lineEditExportFilePath.setText("%s/%s - %s%s%s" % (job.tgtDirName, job.tgtFileName, "{:02d}".format(job.tgtFileCount), job.tgtFileSuffix, job.tgtFileExt))
+        else:
+            self.lineEditExportFilePath.setText("%s/%s%s" % (job.tgtDirName, job.tgtFileName, job.tgtFileExt))
 
     # Convert time string (0:00:0.0) to datetime object
     def timeStringToTime(self, timeStr):
@@ -194,6 +221,21 @@ class Ui(QtWidgets.QMainWindow):
         self.sliderPlayerIsPressed = False
         self.setPlayerPosByPlayerSlider()
 
+    def onBtnExportDecClicked(self):
+        self.setExportVideoFilePath(count=-1)
+
+    def onBtnExportIncClicked(self):
+        self.setExportVideoFilePath(count=1)
+
+    def onBtnExportWxClicked(self):
+        if self.btnExportWx.isChecked():
+            self.setExportVideoFilePath(suffix=' - [WX]')
+        else:
+            self.setExportVideoFilePath(suffix='')
+
+    def onBtnExportSave(self):
+        self.addJob()
+
     # GUI Control
 
     def setPlayerPosByPlayerSlider(self):
@@ -256,5 +298,6 @@ class Ui(QtWidgets.QMainWindow):
 
 app = QtWidgets.QApplication(sys.argv)
 window = Ui()
-window.newFile('/home/vommie/videos/Musikvideos/60s/Uriah Heep - Lady In Black 1971 (1977)  (HQ) (480p_25fps_H264-128kbit_AAC).mp4')
+# window.newFile('/home/vommie/videos/test.mp4')
+window.newFile('/home/vommie/videos/test - 02.mp4')
 app.exec_()
