@@ -96,6 +96,7 @@ class Ui(QtWidgets.QMainWindow):
         self.btnExportWx.setChecked(False)
         window.playerControl.play(videoFilePath)
         self.btnPause.setIcon(self.iconPause)
+        self.setPlayerControlsState(True)
 
     def addJob(self):
         job = self.job
@@ -107,6 +108,18 @@ class Ui(QtWidgets.QMainWindow):
             item = self.tableSections.item(iRow, 1)
             timeTo = item.text()
             self.job.addSection(timeFrom, timeTo)
+
+        # Todo: Reset
+        # Increment File Number if setting is active
+
+
+    def setPlayerControlsState(self, state):
+        self.btnPause.setEnabled(state)
+        self.btnFrameStepBack.setEnabled(state)
+        self.btnFrameStep.setEnabled(state)
+        self.btnSectionStart.setEnabled(state)
+        self.btnSectionEnd.setEnabled(state)
+        self.btnSectionAdd1.setEnabled(state)
 
     def setExportVideoFilePath(self, count = 0, suffix = False):
         job = self.job
