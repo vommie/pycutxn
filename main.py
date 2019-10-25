@@ -13,9 +13,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
 import res # pyrcc5 -o res.py res/res.qrc
 
-class Ui(QtWidgets.QMainWindow):
+class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        super(Ui, self).__init__()
+        super(MainUi, self).__init__()
         uic.loadUi('./gui/main.ui', self)
 
         self.initMembers()
@@ -38,6 +38,7 @@ class Ui(QtWidgets.QMainWindow):
         self.iconPlay = QIcon(':/icons/ic_play_arrow_24px.svg')
         self.iconPause = QIcon(':/icons/ic_pause_24px.svg')
         self.frameStep = False
+        self.dirsUi = DirsUi(self)
 
     def initGuiEvents(self):
         # Player control
@@ -60,10 +61,11 @@ class Ui(QtWidgets.QMainWindow):
         self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
         # Job Finalization
-        self.btnExportDec.clicked.connect(self.onBtnExportDecClicked)
-        self.btnExportInc.clicked.connect(self.onBtnExportIncClicked)
+        self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
+        self.boxFileCount.valueChanged.connect(self.onBoxFileCountChanged)
         self.btnExportWx.clicked.connect(self.onBtnExportWxClicked)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
+        self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
 
     def initGui(self):
         # GUI elements options
@@ -72,7 +74,6 @@ class Ui(QtWidgets.QMainWindow):
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
     def initPlayer(self):
-        #self.renderFrame = self.findChild(QtWidgets.QFrame, 'renderFrame')
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
@@ -89,7 +90,7 @@ class Ui(QtWidgets.QMainWindow):
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
         self.job = Job(videoFilePath)
-        self.setExportVideoFilePath()
+        self.lineEditTgtFileName.setText(self.job.tgtFileName)
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.playerSliderFactor)
@@ -100,6 +101,7 @@ class Ui(QtWidgets.QMainWindow):
 
     def addJob(self):
         job = self.job
+        # Set sections
         job.resetSections()
         count = self.tableSections.rowCount()
         for iRow in range(count):
@@ -108,6 +110,8 @@ class Ui(QtWidgets.QMainWindow):
             item = self.tableSections.item(iRow, 1)
             timeTo = item.text()
             self.job.addSection(timeFrom, timeTo)
+        # Set filters
+
 
         # Todo: Reset
         # Increment File Number if setting is active
@@ -120,15 +124,6 @@ class Ui(QtWidgets.QMainWindow):
         self.btnSectionStart.setEnabled(state)
         self.btnSectionEnd.setEnabled(state)
         self.btnSectionAdd1.setEnabled(state)
-
-    def setExportVideoFilePath(self, count = 0, suffix = False):
-        job = self.job
-        job.plusMinusFileCount(count)
-        job.addRemoveSuffix(suffix)
-        if self.useExportFileNameCounter:
-            self.lineEditExportFilePath.setText("%s/%s - %s%s%s" % (job.tgtDirName, job.tgtFileName, "{:02d}".format(job.tgtFileCount), job.tgtFileSuffix, job.tgtFileExt))
-        else:
-            self.lineEditExportFilePath.setText("%s/%s%s" % (job.tgtDirName, job.tgtFileName, job.tgtFileExt))
 
     # Convert time string (0:00:0.0) to datetime object
     def timeStringToTime(self, timeStr):
@@ -196,10 +191,10 @@ class Ui(QtWidgets.QMainWindow):
         self.sectionDeleteSelectedRow()
 
     def onBtnSectionUpClicked(self):
-        self.moveSectionItem(-1)
+        moveTableRow(self.tableSections, -1)
 
     def onBtnSectionDownClicked(self):
-        self.moveSectionItem(1)
+        moveTableRow(self.tableSections, 1)
 
     def onTableSectionRowClicked(self):
         pass
@@ -234,20 +229,23 @@ class Ui(QtWidgets.QMainWindow):
         self.sliderPlayerIsPressed = False
         self.setPlayerPosByPlayerSlider()
 
-    def onBtnExportDecClicked(self):
-        self.setExportVideoFilePath(count=-1)
-
-    def onBtnExportIncClicked(self):
-        self.setExportVideoFilePath(count=1)
-
     def onBtnExportWxClicked(self):
         if self.btnExportWx.isChecked():
-            self.setExportVideoFilePath(suffix=' - [WX]')
+            self.job.setTgtFileSuffix(' - [WX]')
         else:
-            self.setExportVideoFilePath(suffix='')
+            self.job.setTgtFileSuffix('')
+
+    def onLineEditTgtFileNameChanged(self, text):
+        self.job.setTgtFileName(text)
+
+    def onBoxFileCountChanged(self, text):
+        self.job.tgtFileCount = text
 
     def onBtnExportSave(self):
         self.addJob()
+
+    def onBtnExportDirsClicked(self):
+        self.dirsUi.show()
 
     # GUI Control
 
@@ -293,24 +291,13 @@ class Ui(QtWidgets.QMainWindow):
             else:
                 self.btnSectionDown.setEnabled(False)
 
-    # Move an item up (+1) or down (-1)
-    def moveSectionItem(self, directionValue):
-        rowCount = self.tableSections.rowCount()
-        rowIndex = self.tableSections.currentRow()
-        if rowIndex + directionValue >= 0 and  rowIndex + directionValue <= rowCount - 1:
-            currItem1 = self.tableSections.takeItem(rowIndex, 0)
-            currItem2 = self.tableSections.takeItem(rowIndex, 1)
-            prevItem1 = self.tableSections.takeItem(rowIndex + directionValue, 0)
-            prevItem2 = self.tableSections.takeItem(rowIndex + directionValue, 1)
-            self.tableSections.setItem(rowIndex, 0, prevItem1)
-            self.tableSections.setItem(rowIndex, 1, prevItem2)
-            self.tableSections.setItem(rowIndex + directionValue, 0, currItem1)
-            self.tableSections.setItem(rowIndex + directionValue, 1, currItem2)
-            self.tableSections.setCurrentItem(currItem1)
-
+class DirsUi(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(DirsUi, self).__init__(parent)
+        uic.loadUi('./gui/dirs.ui', self)
 
 app = QtWidgets.QApplication(sys.argv)
-window = Ui()
+window = MainUi()
 # window.newFile('/home/vommie/videos/test.mp4')
 window.newFile('/home/vommie/videos/test - 02.mp4')
 app.exec_()

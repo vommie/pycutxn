@@ -3,17 +3,7 @@ import os
 class Job():
 
     def __init__(self, srcFilePath):
-        path = os.path.normpath(srcFilePath)
-        dirname, basename = os.path.split(path)
-        filename, ext = os.path.splitext(basename)
-        self.srcDirName = dirname
-        self.srcBaseName = basename
-        self.srcFileName = filename
-        self.srcFileExt = ext
-        self.tgtDirName = dirname
-        self.tgtBaseName = basename
-        self.tgtFileName = filename
-        self.tgtFileExt = ext
+        self.splitFilePath(srcFilePath)
         self.tgtFileCount = 0
         self.tgtFileSuffix = ''
         self.sections = []
@@ -30,6 +20,19 @@ class Job():
         self.tgtFileCount = 0
         self.tgtFileSuffix = ''
         self.resetSections()
+
+    def splitFilePath(self, filePath):
+        path = os.path.normpath(filePath)
+        dirname, basename = os.path.split(path)
+        filename, ext = os.path.splitext(basename)
+        self.srcDirName = dirname
+        self.srcBaseName = basename
+        self.srcFileName = filename
+        self.srcFileExt = ext
+        self.tgtDirName = dirname
+        self.tgtBaseName = basename
+        self.tgtFileName = filename
+        self.tgtFileExt = ext
 
     def resetSections(self):
         self.sections = []
