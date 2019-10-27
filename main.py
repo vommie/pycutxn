@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-import mpv
-from PlayerControl import PlayerControl
-from Job import Job
+
 import sys
-from functions import *
 import datetime
-import os
+
+from libs.mpv import *
+from classes.PlayerControl import PlayerControl
+from classes.DirsUi import DirsUi
+from classes.Job import Job
+from classes.Functions import Functions
+from classes.Config import Config
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
@@ -27,18 +30,19 @@ class MainUi(QtWidgets.QMainWindow):
 
     def initMembers(self):
         # Config
-        self.playerSliderFactor = 100
-        self.useExportFileNameCounter = True
+        self.config = Config()
 
         # Init member variables
+        self.dirsUi = DirsUi(self)
         timeFormat = '0:00:0.0'
         self.playerTimeCurrent = timeFormat
         self.sectionTimeStart = timeFormat
         self.sectionTimeEnd = timeFormat
         self.iconPlay = QIcon(':/icons/ic_play_arrow_24px.svg')
         self.iconPause = QIcon(':/icons/ic_pause_24px.svg')
+        self.iconIsMuted = QIcon(':/icons/ic_volume_off_24px.svg')
+        self.iconIsNotMuted = QIcon(':/icons/ic_volume_up_24px.svg')
         self.frameStep = False
-        self.dirsUi = DirsUi(self)
 
     def initGuiEvents(self):
         # Player control
@@ -48,12 +52,14 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
         self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
         self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
+        self.btnMute.clicked.connect(self.onBtnMuteClicked)
+        self.sliderVolume.sliderMoved.connect(self.onSliderVolumeMoved)
+        self.sliderVolume.sliderReleased.connect(self.onSliderVolumeReleased)
         # Player Progress
         self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
         self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
         self.sliderPlayer.sliderReleased.connect(self.onSliderPlayerReleased)
         # Sections
-        self.tableSections.cellClicked.connect(self.onTableSectionRowClicked)
         self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
         self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
         self.btnSectionAdd2.clicked.connect(self.onBtnSectionAddClicked)
@@ -62,16 +68,20 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
         # Job Finalization
         self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
-        self.boxFileCount.valueChanged.connect(self.onBoxFileCountChanged)
-        self.btnExportWx.clicked.connect(self.onBtnExportWxClicked)
+        self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
+        self.btnTgtWxSuffix.clicked.connect(self.onBtnExportWxClicked)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
+        self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
 
     def initGui(self):
         # GUI elements options
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        # Set GUI from config
+        self.updateDirs(self.config.getTargetDirs())
+        self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -79,56 +89,64 @@ class MainUi(QtWidgets.QMainWindow):
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
         import locale
         locale.setlocale(locale.LC_NUMERIC, 'C')
-        player = mpv.MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='debug')
-        self.playerControl = PlayerControl(player)
+        player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11')
+        # player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='debug')
+        self.playerControl = PlayerControl(player, self.config)
         # Register observers
         self.playerControl.player.observe_property('pause', self.onPlayerPause)
         self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
         self.playerControl.player.observe_property('duration', self.onPlayerDuration)
         self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
+        self.playerControl.player.observe_property('volume', self.onPlayerVolume)
 
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
         self.job = Job(videoFilePath)
-        self.lineEditTgtFileName.setText(self.job.tgtFileName)
+        self.lineEditTgtFileName.setText(self.job.getTgtFileName())
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
-        self.sliderPlayer.setMaximum(99 * self.playerSliderFactor)
-        self.btnExportWx.setChecked(False)
+        self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
+        self.btnTgtWxSuffix.setChecked(False)
         window.playerControl.play(videoFilePath)
+        self.playerControl.volume(self.config.getPlayerVolume())
+        self.setMuteState(self.config.getPlayerIsMuted())
         self.btnPause.setIcon(self.iconPause)
         self.setPlayerControlsState(True)
 
     def addJob(self):
-        job = self.job
-        # Set sections
-        job.resetSections()
-        count = self.tableSections.rowCount()
-        for iRow in range(count):
-            item = self.tableSections.item(iRow, 0)
-            timeFrom = item.text()
-            item = self.tableSections.item(iRow, 1)
-            timeTo = item.text()
-            self.job.addSection(timeFrom, timeTo)
-        # Set filters
+        print(self.job.getSections())
+        pass
+    #     job = self.job
+    #     # Set sections
+    #     job.resetSections()
+    #     count = self.tableSections.rowCount()
+    #     for iRow in range(count):
+    #         item = self.tableSections.item(iRow, 0)
+    #         timeFrom = item.text()
+    #         item = self.tableSections.item(iRow, 1)
+    #         timeTo = item.text()
+    #         self.job.addSection(timeFrom, timeTo)
+    #     # Set filters
 
-
-        # Todo: Reset
-        # Increment File Number if setting is active
+    #     # Set Names
+    #     self.job.setTgtDirName(self.cmbTgtDirs.currentData())
 
 
     def setPlayerControlsState(self, state):
-        self.btnPause.setEnabled(state)
-        self.btnFrameStepBack.setEnabled(state)
-        self.btnFrameStep.setEnabled(state)
-        self.btnSectionStart.setEnabled(state)
-        self.btnSectionEnd.setEnabled(state)
-        self.btnSectionAdd1.setEnabled(state)
+        self.framePlayerBtns.setEnabled(state)
+        self.framePlayerProgress.setEnabled(state)
 
     # Convert time string (0:00:0.0) to datetime object
     def timeStringToTime(self, timeStr):
         date_time_obj = datetime.datetime.strptime(timeStr, '%H:%M:%S.%f')
         return date_time_obj
+
+    def setMuteState(self, mute):
+        self.playerControl.mute(mute)
+        if mute:
+            self.btnMute.setIcon(self.iconIsMuted)
+        else:
+            self.btnMute.setIcon(self.iconIsNotMuted)
 
     # Player observer events
 
@@ -142,7 +160,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onPlayerPercentPos(self, action, pos):
         if not self.sliderPlayerIsPressed:
-            self.sliderPlayer.setValue(pos * self.playerSliderFactor)
+            self.sliderPlayer.setValue(pos * self.config.getPlayerSliderFactor())
 
     def onPlayerTimePos(self, action, timestamp):
         # Convert timestamp format s.ms to h:m:s.ms
@@ -151,12 +169,15 @@ class MainUi(QtWidgets.QMainWindow):
         if len(timeMs) == 1:
             timeMs = '%s0' % timeSplit[1]
         timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
-        time = "%s.%s" % (convertSecondsToHMFS(int(timeSplit[0])), timeMs)
+        time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
         self.playerTimeCurrent = time
         self.labelPlayerTimeCurr.setText(time)
 
     def onPlayerDuration(self, action, duration):
         self.duration = duration
+
+    def onPlayerVolume(self, action, volume):
+        self.sliderVolume.setValue(volume)
 
     # GUI control events
 
@@ -186,18 +207,18 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnSectionAddClicked(self):
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
+        self.job.addSection(self.sectionTimeStart, self.sectionTimeEnd)
 
     def onBtnSectionDeleteClicked(self):
         self.sectionDeleteSelectedRow()
 
     def onBtnSectionUpClicked(self):
-        moveTableRow(self.tableSections, -1)
+        move = Functions.moveTableRow(self.tableSections, -1)
+        self.job.moveSection(move.get('from'), move.get('to'))
 
     def onBtnSectionDownClicked(self):
-        moveTableRow(self.tableSections, 1)
-
-    def onTableSectionRowClicked(self):
-        pass
+        move = Functions.moveTableRow(self.tableSections, 1)
+        self.job.moveSection(move.get('from'), move.get('to'))
 
     def onTableSectionCurrCellChanged(self):
         self.setSectionBtnStates()
@@ -230,16 +251,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.setPlayerPosByPlayerSlider()
 
     def onBtnExportWxClicked(self):
-        if self.btnExportWx.isChecked():
-            self.job.setTgtFileSuffix(' - [WX]')
+        if self.btnTgtWxSuffix.isChecked():
+            self.job.addTgtFileSuffix('[WX]')
         else:
-            self.job.setTgtFileSuffix('')
+            self.job.removeTgtFileSuffix('[WX]')
 
     def onLineEditTgtFileNameChanged(self, text):
         self.job.setTgtFileName(text)
 
     def onBoxFileCountChanged(self, text):
-        self.job.tgtFileCount = text
+        self.job.setTgtFileCount(text)
 
     def onBtnExportSave(self):
         self.addJob()
@@ -247,11 +268,28 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnExportDirsClicked(self):
         self.dirsUi.show()
 
+    def onCmbTgtDirsCurrTextChanged(self, text):
+        path = self.cmbTgtDirs.currentData()
+        self.job.setTgtDirName(path)
+        self.config.setTgtDirName(text)
+
+    def onBtnMuteClicked(self):
+        self.config.setPlayerIsMuted(not self.config.getPlayerIsMuted())
+        self.setMuteState(self.config.getPlayerIsMuted())
+
+    def onSliderVolumeMoved(self):
+        self.setMuteState(False)
+        self.playerControl.volume(self.sliderVolume.value())
+
+    def onSliderVolumeReleased(self):
+        self.setMuteState(False)
+        self.playerControl.volume(self.sliderVolume.value())
+
     # GUI Control
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
-        percentage = value / self.playerSliderFactor
+        percentage = value / self.config.getPlayerSliderFactor()
         self.playerControl.seek(percentage, 'absolute-percent+exact')
 
 
@@ -270,6 +308,9 @@ class MainUi(QtWidgets.QMainWindow):
     def sectionDeleteSelectedRow(self):
         rowIndex = self.tableSections.currentRow()
         self.tableSections.removeRow(rowIndex)
+        self.job.removeSection(rowIndex)
+        if(rowIndex > 0):
+            self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
 
     # Set the states of the section buttons
@@ -291,10 +332,17 @@ class MainUi(QtWidgets.QMainWindow):
             else:
                 self.btnSectionDown.setEnabled(False)
 
-class DirsUi(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super(DirsUi, self).__init__(parent)
-        uic.loadUi('./gui/dirs.ui', self)
+    # Update the directories combo element
+    def updateDirs(self, dirs):
+        self.dirs = dirs
+        self.config.setDirs(dirs)
+        currentText = self.cmbTgtDirs.currentText()
+        self.cmbTgtDirs.clear()
+        for i in range(len(self.dirs)):
+            self.cmbTgtDirs.insertItem(i, self.dirs[i][1], userData=self.dirs[i][0])
+            if self.dirs[i][1] == currentText:
+                self.cmbTgtDirs.setCurrentText(currentText)
+
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()

@@ -2,7 +2,8 @@ class PlayerControl():
 
     volumeStep = 5
 
-    def __init__(self, player):
+    def __init__(self, player, config):
+        self.config = config
         self.player = player
         player.loop_playlist = 'inf'
         self.set_keybindings()
@@ -35,12 +36,26 @@ class PlayerControl():
             self.player.volume -= self.volumeStep
         else:
             self.player.volume = 0.0
+        self.config.setPlayerVolume(self.player.volume)
 
     def volumeUp(self):
         if self.player.volume + self.volumeStep <= 100:
             self.player.volume += self.volumeStep
         else:
             self.player.volume = 100.0
+        self.config.setPlayerVolume(self.player.volume)
+
+    def volume(self, volume):
+        if volume > 100:
+            volume = 100
+        if volume < 0:
+            volume = 0
+        self.player.volume = volume
+        self.config.setPlayerVolume(self.player.volume)
+
+    def mute(self, mute):
+        self.player.mute = mute
+        self.config.setPlayerIsMuted(self.player.mute)
 
     def frameStep(self):
         self.player.frame_step()

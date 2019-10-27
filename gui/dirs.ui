@@ -19,6 +19,9 @@
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QTableWidget" name="tableDirs">
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
      <column>
       <property name="text">
        <string>Path</string>
@@ -43,6 +46,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="btnUp">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="icon">
         <iconset resource="../res/res.qrc">
          <normaloff>:/icons/ic_expand_less_24px.svg</normaloff>:/icons/ic_expand_less_24px.svg</iconset>
@@ -51,6 +57,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="btnDown">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="icon">
         <iconset resource="../res/res.qrc">
          <normaloff>:/icons/ic_expand_more_24px.svg</normaloff>:/icons/ic_expand_more_24px.svg</iconset>
@@ -59,6 +68,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="btnDelete">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="icon">
         <iconset resource="../res/res.qrc">
          <normaloff>:/icons/ic_clear_24px.svg</normaloff>:/icons/ic_clear_24px.svg</iconset>
