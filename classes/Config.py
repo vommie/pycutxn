@@ -22,7 +22,10 @@ class Config:
             self.saveConfig()
         else:
             with open(self.configFilePath) as jsonFile:
-                tmpConfig = json.load(jsonFile)
+                try:
+                    tmpConfig = json.load(jsonFile)
+                except:
+                    self.saveConfig()
         # Compare hardcoded config with json to add missing keys into json
         save = False
         if tmpConfig:
@@ -36,7 +39,7 @@ class Config:
 
     def saveConfig(self):
         with open(self.configFilePath, 'w') as outfile:
-            json.dump(self.config, outfile)
+            json.dump(self.config, outfile, indent=1)
 
     def getPlayerVolume(self):
         return self.config['playerVolume']

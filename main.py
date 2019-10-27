@@ -2,6 +2,7 @@
 
 import sys
 import datetime
+import json
 
 from libs.mpv import *
 from classes.PlayerControl import PlayerControl
@@ -9,6 +10,7 @@ from classes.DirsUi import DirsUi
 from classes.Job import Job
 from classes.Functions import Functions
 from classes.Config import Config
+from classes.Jobs import Jobs
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
@@ -29,9 +31,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.show()
 
     def initMembers(self):
-        # Config
         self.config = Config()
-
+        self.jobsFilePath = 'jobs.json'
+        self.jobs = Jobs(self.jobsFilePath)
         # Init member variables
         self.dirsUi = DirsUi(self)
         timeFormat = '0:00:0.0'
@@ -101,7 +103,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
-        self.job = Job(videoFilePath)
+        self.job = Job(parent=self, srcFilePath=videoFilePath)
         self.lineEditTgtFileName.setText(self.job.getTgtFileName())
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
@@ -114,23 +116,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.setPlayerControlsState(True)
 
     def addJob(self):
-        print(self.job.getSections())
-        pass
-    #     job = self.job
-    #     # Set sections
-    #     job.resetSections()
-    #     count = self.tableSections.rowCount()
-    #     for iRow in range(count):
-    #         item = self.tableSections.item(iRow, 0)
-    #         timeFrom = item.text()
-    #         item = self.tableSections.item(iRow, 1)
-    #         timeTo = item.text()
-    #         self.job.addSection(timeFrom, timeTo)
-    #     # Set filters
+        id = self.jobs.addJob(self.job)
 
-    #     # Set Names
-    #     self.job.setTgtDirName(self.cmbTgtDirs.currentData())
-
+    def jobUpdated(self):
+        try:
+            self.jobs.updateJob('default', self.job)
+        except:
+            pass
 
     def setPlayerControlsState(self, state):
         self.framePlayerBtns.setEnabled(state)
