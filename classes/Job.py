@@ -52,6 +52,7 @@ class Job():
                 'suffixes': []
             },
             'sections': [],
+            'state': 'pending',
         })
 
     def reset(self):
@@ -115,6 +116,9 @@ class Job():
     def getSections(self):
         return self.props.get('sections')
 
+    def getState(self):
+        return self.props.get('state')
+
     def setSrcDirName(self, dirName):
         self.props['srcFile'].update({'dirName': dirName})
 
@@ -141,6 +145,9 @@ class Job():
 
     def setTgtFileCount(self, count):
         self.props['tgtFile'].update({'count': count})
+
+    def setState(self, state):
+        self.props.update({'state': state})
 
     def addTgtFileSuffix(self, suffix):
         suffixes = self.props['tgtFile'].get('suffixes')

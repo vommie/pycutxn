@@ -81,9 +81,20 @@ class MainUi(QtWidgets.QMainWindow):
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header = self.tableQueue.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
         # Set GUI from config
         self.updateDirs(self.config.getTargetDirs())
         self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())
+        # Jobs
+        for id, job in self.jobs.jobs.items():
+            try:
+                int(id)
+                self.queueAddRow(id, job.getTgtFileName(), 'pending')
+            except:
+                pass
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -117,6 +128,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def addJob(self):
         id = self.jobs.addJob(self.job)
+
 
     def jobUpdated(self):
         try:
@@ -304,6 +316,13 @@ class MainUi(QtWidgets.QMainWindow):
         if(rowIndex > 0):
             self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
+
+    def queueAddRow(self, id, filename, state):
+        rowIndex = self.tableQueue.rowCount()
+        self.tableQueue.insertRow(rowIndex)
+        self.tableQueue.setItem(rowIndex, 0, QTableWidgetItem(id))
+        self.tableQueue.setItem(rowIndex, 1, QTableWidgetItem(filename))
+        self.tableQueue.setItem(rowIndex, 2, QTableWidgetItem(state))
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):

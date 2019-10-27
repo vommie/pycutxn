@@ -26,7 +26,6 @@ class Jobs:
             self.jobs.update({id: Job(props=props)})
 
     def saveJobs(self):
-        print(self.jobs)
         with open(self.jobsFilePath, 'w') as outfile:
             jobsProps = {}
             for id, job in self.jobs.items():
@@ -54,3 +53,6 @@ class Jobs:
                 break
             id += 1
         return str(id)
+
+    def getJob(self, id):
+        return self.jobs.get(id)

@@ -1193,6 +1193,9 @@
     <layout class="QVBoxLayout" name="verticalLayout_8">
      <item>
       <widget class="QTableWidget" name="tableQueue">
+       <attribute name="verticalHeaderVisible">
+        <bool>false</bool>
+       </attribute>
        <column>
         <property name="text">
          <string>ID</string>
