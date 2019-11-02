@@ -1,6 +1,7 @@
 import json
 from .Job import Job
 import os
+import copy
 
 class Jobs:
 
@@ -37,13 +38,15 @@ class Jobs:
         self.saveJobs()
 
     def addJob(self, job):
+        print('addJob')
         id = self.generateID()
-        self.jobs.update({id: job})
+        self.jobs.update({id: copy.deepcopy(job)})
         self.saveJobs()
         return id
 
     def removeJob(self, id):
         self.jobs.pop(id)
+        self.saveJobs()
 
     def generateID(self):
         keys = self.jobs.keys()

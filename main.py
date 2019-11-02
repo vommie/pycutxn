@@ -75,6 +75,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
         self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
+        # Queue
+        self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
+        self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
 
     def initGui(self):
         # GUI elements options
@@ -92,7 +95,7 @@ class MainUi(QtWidgets.QMainWindow):
         for id, job in self.jobs.jobs.items():
             try:
                 int(id)
-                self.queueAddRow(id, job.getTgtFileName(), 'pending')
+                self.queueAddRow(id, job.getTgtFileNameLong(), job.getState())
             except:
                 pass
 
@@ -128,7 +131,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def addJob(self):
         id = self.jobs.addJob(self.job)
-
+        self.queueAddRow(id, self.job.getTgtFileNameLong(), self.job.getState())
 
     def jobUpdated(self):
         try:
@@ -289,6 +292,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.setMuteState(False)
         self.playerControl.volume(self.sliderVolume.value())
 
+    def onTableQueueCurrCellChanged(self):
+        self.setQueueBtnStates()
+
+    def onBtnQueueDeleteClicked(self):
+        self.queueDeleteSelectedRow()
+
     # GUI Control
 
     def setPlayerPosByPlayerSlider(self):
@@ -342,6 +351,36 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnSectionDown.setEnabled(True)
             else:
                 self.btnSectionDown.setEnabled(False)
+
+    def setQueueBtnStates(self):
+        rowCount = self.tableQueue.rowCount()
+        rowIndex = self.tableQueue.currentRow()
+        if rowCount == 0:
+            self.btnQueueUp.setEnabled(False)
+            self.btnQueueDown.setEnabled(False)
+            self.btnQueueDelete.setEnabled(False)
+            self.btnQueueLoad.setEnabled(False)
+        else:
+            self.btnQueueDelete.setEnabled(True)
+            self.btnQueueLoad.setEnabled(True)
+            if rowIndex == 0:
+                self.btnQueueUp.setEnabled(False)
+            else:
+                self.btnQueueUp.setEnabled(True)
+            if rowIndex < rowCount-1:
+                self.btnQueueDown.setEnabled(True)
+            else:
+                self.btnQueueDown.setEnabled(False)
+
+    def queueDeleteSelectedRow(self):
+        iRow = self.tableQueue.currentRow()
+        itemID = self.tableQueue.item(iRow, 0)
+        jobID = itemID.text()
+        self.tableQueue.removeRow(iRow)
+        self.jobs.removeJob(jobID)
+        if(iRow > 0):
+            self.tableQueue.setCurrentCell(iRow-1, 0)
+        self.setQueueBtnStates()
 
     # Update the directories combo element
     def updateDirs(self, dirs):

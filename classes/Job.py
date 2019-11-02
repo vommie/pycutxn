@@ -113,6 +113,9 @@ class Job():
     def getTgtFileCount(self):
         return self.props['tgtFile'].get('count')
 
+    def getTgtFileNameLong(self):
+        return "%s%s" % (self.getTgtFileName(), self.getTgtFileExt())
+
     def getSections(self):
         return self.props.get('sections')
 
