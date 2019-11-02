@@ -226,18 +226,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onTableSectionItemDblClicked(self, item):
         timeStr = item.text()
-        # Set section time range
-        col = item.column()
-        row = item.row()
-        if col == 0:
-            self.sectionTimeStart = timeStr
-            timeEndStr = self.tableSections.item(row, 1)
-            self.sectionTimeEnd = timeEndStr
-        elif col == 1:
-            self.sectionTimeEnd = timeStr
-            timeStartStr = self.tableSections.item(row, 0)
-            self.sectionTimeStart = timeStartStr
-        # Jump to time position in video
         self.playerControl.seek(timeStr, 'absolute+exact')
 
     def onSliderPlayerMoved(self, value):
