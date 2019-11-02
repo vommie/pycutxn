@@ -16,13 +16,11 @@ class Job():
         self._props = {
             'srcFile': {
                 'dirName': False,
-                'baseName': False,
                 'fileName': False,
                 'fileExt': False,
             },
             'tgtFile': {
                 'dirName': False,
-                'baseName': False,
                 'fileName': False,
                 'fileExt': False,
                 'count': 0,
@@ -35,11 +33,9 @@ class Job():
     def initPaths(self, filePath):
         paths = self.splitPath(filePath)
         self.setSrcDirName(paths.get('dirName'))
-        self.setSrcBaseName(paths.get('baseName'))
         self.setSrcFileName(paths.get('fileName'))
         self.setSrcFileExt(paths.get('fileExt'))
         self.setTgtDirName(paths.get('dirName'))
-        self.setTgtBaseName(paths.get('baseName'))
         self.setTgtFileName(paths.get('fileName'))
         self.setTgtFileExt(paths.get('fileExt'))
 
@@ -60,9 +56,6 @@ class Job():
     def getSrcDirName(self):
         return self._props['srcFile'].get('dirName')
 
-    def getSrcBaseName(self):
-        return self._props['srcFile'].get('baseName')
-
     def getSrcFileName(self):
         return self._props['srcFile'].get('fileName')
 
@@ -71,9 +64,6 @@ class Job():
 
     def getTgtDirName(self):
         return self._props['tgtFile'].get('dirName')
-
-    def getTgtBaseName(self):
-        return self._props['tgtFile'].get('baseName')
 
     def getTgtFileName(self):
         return self._props['tgtFile'].get('fileName')
@@ -88,7 +78,17 @@ class Job():
         return self._props['tgtFile'].get('count')
 
     def getTgtFileNameLong(self):
-        return "%s%s" % (self.getTgtFileName(), self.getTgtFileExt())
+        name = self.getTgtFileName()
+        fileNameLong = name
+        ext = self.getTgtFileExt()
+        count = self.getTgtFileCount()
+        suffix = ' '.join(self.getTgtFileSuffixes())
+        if(count):
+            fileNameLong = "%s - %02d" % (fileNameLong, count)
+        if(suffix):
+            fileNameLong = "%s - %s" % (fileNameLong, suffix)
+        fileNameLong = "%s%s" % (fileNameLong, ext)
+        return fileNameLong
 
     def getSections(self):
         return self._props.get('sections')
@@ -106,10 +106,6 @@ class Job():
         self._props['srcFile'].update({'dirName': dirName})
         self.propValueChanged()
 
-    def setSrcBaseName(self, baseName):
-        self._props['srcFile'].update({'baseName': baseName})
-        self.propValueChanged()
-
     def setSrcFileName(self, fileName):
         self._props['srcFile'].update({'fileName': fileName})
         self.propValueChanged()
@@ -120,10 +116,6 @@ class Job():
 
     def setTgtDirName(self, dirName):
         self._props['tgtFile'].update({'dirName': dirName})
-        self.propValueChanged()
-
-    def setTgtBaseName(self, baseName):
-        self._props['tgtFile'].update({'baseName': baseName})
         self.propValueChanged()
 
     def setTgtFileName(self, fileName):
@@ -150,7 +142,6 @@ class Job():
         fileName, fileExt = os.path.splitext(baseName)
         return {
             'dirName': dirName,
-            'baseName': baseName,
             'fileName': fileName,
             'fileExt': fileExt
         }

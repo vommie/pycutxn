@@ -44,9 +44,10 @@ class Jobs:
 
     def addJob(self, job):
         id = self.generateID()
-        self.jobs.update({id: copy.deepcopy(job)})
+        newJob = copy.deepcopy(job)
+        self.jobs.update({id: newJob})
         self.saveJobs()
-        return id
+        return id, newJob
 
     def removeJob(self, id):
         self.jobs.pop(id)

@@ -130,8 +130,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.setPlayerControlsState(True)
 
     def addJob(self):
-        id = self.jobs.addJob(self.jobs.currentJob)
-        self.queueAddRow(id, self.jobs.currentJob.getTgtFileNameLong(), self.jobs.currentJob.getState())
+        id, job = self.jobs.addJob(self.jobs.currentJob)
+        self.queueAddRow(id, job.getTgtFileNameLong(), job.getState())
 
     def setPlayerControlsState(self, state):
         self.framePlayerBtns.setEnabled(state)
@@ -391,5 +391,5 @@ class MainUi(QtWidgets.QMainWindow):
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
 # window.newFile('/home/vommie/videos/test.mp4')
-window.newFile('/home/vommie/videos/test - 02.mp4')
+window.newFile('/home/vommie/videos/test.mp4')
 app.exec_()
