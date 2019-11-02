@@ -5,6 +5,8 @@ import copy
 
 class Jobs:
 
+    # Initialization
+
     def __init__(self, jobsFilePath):
         self.jobsFilePath = jobsFilePath
         self.jobs = {}
@@ -23,8 +25,15 @@ class Jobs:
                 except:
                     self.saveJobs()
 
+    # Other functions
+
     def newCurrentJob(self, videoFilePath):
         self.currentJob = Job(srcFilePath=videoFilePath)
+        self.currentJob.bindToProps(self.jobUpdated)
+
+    def jobUpdated(self, props):
+        print('jobUpdated')
+        self.saveJobs()
 
     def jobsPropsToJobs(self, jobsProps):
         for id, props in jobsProps.items():
@@ -34,7 +43,7 @@ class Jobs:
         with open(self.jobsFilePath, 'w') as outfile:
             jobsProps = {}
             for id, job in self.jobs.items():
-                jobsProps.update({id: job.props})
+                jobsProps.update({id: job.getProps()})
             json.dump(jobsProps, outfile, indent=1)
 
     def updateJob(self, id, job):
@@ -44,7 +53,8 @@ class Jobs:
     def addJob(self, job):
         print('addJob')
         id = self.generateID()
-        self.jobs.update({id: copy.deepcopy(job)})
+        # self.jobs.update({id: copy.deepcopy(job)})
+        self.jobs.update({id: job})
         self.saveJobs()
         return id
 
