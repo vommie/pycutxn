@@ -21,46 +21,49 @@ class Jobs:
                 try:
                     jobsProps = json.load(jsonFile)
                     self.jobsPropsToJobs(jobsProps)
-                    self.saveJobs()
                 except:
                     self.saveJobs()
 
-    # Other functions
+    # Current job
 
     def newCurrentJob(self, videoFilePath):
         self.currentJob = Job(srcFilePath=videoFilePath)
-        self.currentJob.bindToProps(self.jobUpdated)
+        self.currentJob.bindToProps(self.currentJobUpdated)
 
-    def jobUpdated(self, props):
-        print('jobUpdated')
-        self.saveJobs()
+    def currentJobUpdated(self, props):
+        self.updateJob('default', self.currentJob)
 
-    def jobsPropsToJobs(self, jobsProps):
-        for id, props in jobsProps.items():
-            self.jobs.update({id: Job(props=props)})
+    # Jobs management
 
-    def saveJobs(self):
-        with open(self.jobsFilePath, 'w') as outfile:
-            jobsProps = {}
-            for id, job in self.jobs.items():
-                jobsProps.update({id: job.getProps()})
-            json.dump(jobsProps, outfile, indent=1)
+    def getJob(self, id):
+        return self.jobs.get(id)
 
     def updateJob(self, id, job):
         self.jobs.update({id: job})
         self.saveJobs()
 
     def addJob(self, job):
-        print('addJob')
         id = self.generateID()
-        # self.jobs.update({id: copy.deepcopy(job)})
-        self.jobs.update({id: job})
+        self.jobs.update({id: copy.deepcopy(job)})
         self.saveJobs()
         return id
 
     def removeJob(self, id):
         self.jobs.pop(id)
         self.saveJobs()
+
+    def saveJobs(self):
+        with open(self.jobsFilePath, 'w') as outfile:
+            jobsProps = { }
+            for id, job in self.jobs.items():
+                jobsProps.update({id: job.getProps()})
+            json.dump(jobsProps, outfile, indent=1)
+
+    # Other functions
+
+    def jobsPropsToJobs(self, jobsProps):
+        for id, props in jobsProps.items():
+            self.jobs.update({id: Job(props=props)})
 
     def generateID(self):
         keys = self.jobs.keys()
@@ -70,6 +73,3 @@ class Jobs:
                 break
             id += 1
         return str(id)
-
-    def getJob(self, id):
-        return self.jobs.get(id)
