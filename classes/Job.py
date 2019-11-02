@@ -2,29 +2,27 @@ import os
 
 # Own dictionary to be informed when props change
 class JobDict(dict):
-    def __init__(self, parent, initialDict):
-        self.parent = parent
+    def __init__(self, initialDict):
         for k,v in initialDict.items():
           if isinstance(v,dict):
-            initialDict[k] = JobDict(self.parent, v)
+            initialDict[k] = JobDict(v)
         super().__init__(initialDict)
 
     def __setitem__(self, item, value):
         if isinstance(value,dict):
-          _value = JobDict(self.parent, value)
+          _value = JobDict(value)
         else:
           _value = value
         super().__setitem__(item, _value)
-        self.parent.jobUpdated()
+        # Fire Update
 
     def update(self, iterable):
         super(JobDict, self).update(iterable)
-        self.parent.jobUpdated()
+        # Fire Update
 
 class Job():
 
-    def __init__(self, parent = False, srcFilePath = False, props = False):
-        self.parent = parent
+    def __init__(self, srcFilePath = False, props = False):
         if srcFilePath:
             self.initProps()
             self.initPaths(srcFilePath)
@@ -36,7 +34,7 @@ class Job():
             self.parent.jobUpdated()
 
     def initProps(self):
-        self.props = JobDict(self, {
+        self.props = JobDict({
             'srcFile': {
                 'dirName': False,
                 'baseName': False,

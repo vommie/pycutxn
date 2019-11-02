@@ -8,6 +8,7 @@ class Jobs:
     def __init__(self, jobsFilePath):
         self.jobsFilePath = jobsFilePath
         self.jobs = {}
+        self.currentJob = False
         self.initJobs()
 
     def initJobs(self):
@@ -21,6 +22,9 @@ class Jobs:
                     self.saveJobs()
                 except:
                     self.saveJobs()
+
+    def newCurrentJob(self, videoFilePath):
+        self.currentJob = Job(srcFilePath=videoFilePath)
 
     def jobsPropsToJobs(self, jobsProps):
         for id, props in jobsProps.items():

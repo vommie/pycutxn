@@ -7,7 +7,7 @@ import json
 from libs.mpv import *
 from classes.PlayerControl import PlayerControl
 from classes.DirsUi import DirsUi
-from classes.Job import Job
+#from classes.Job import Job
 from classes.Functions import Functions
 from classes.Config import Config
 from classes.Jobs import Jobs
@@ -117,8 +117,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
-        self.job = Job(parent=self, srcFilePath=videoFilePath)
-        self.lineEditTgtFileName.setText(self.job.getTgtFileName())
+        self.jobs.newCurrentJob(videoFilePath)
+        self.lineEditTgtFileName.setText(self.jobs.currentJob.getTgtFileName())
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
@@ -130,14 +130,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.setPlayerControlsState(True)
 
     def addJob(self):
-        id = self.jobs.addJob(self.job)
-        self.queueAddRow(id, self.job.getTgtFileNameLong(), self.job.getState())
-
-    def jobUpdated(self):
-        try:
-            self.jobs.updateJob('default', self.job)
-        except:
-            pass
+        id = self.jobs.addJob(self.jobs.currentJob)
+        self.queueAddRow(id, self.jobs.currentJob.getTgtFileNameLong(), self.jobs.currentJob.getState())
 
     def setPlayerControlsState(self, state):
         self.framePlayerBtns.setEnabled(state)
@@ -214,18 +208,18 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnSectionAddClicked(self):
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
-        self.job.addSection(self.sectionTimeStart, self.sectionTimeEnd)
+        self.jobs.currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
 
     def onBtnSectionDeleteClicked(self):
         self.sectionDeleteSelectedRow()
 
     def onBtnSectionUpClicked(self):
         move = Functions.moveTableRow(self.tableSections, -1)
-        self.job.moveSection(move.get('from'), move.get('to'))
+        self.jobs.currentJob.moveSection(move.get('from'), move.get('to'))
 
     def onBtnSectionDownClicked(self):
         move = Functions.moveTableRow(self.tableSections, 1)
-        self.job.moveSection(move.get('from'), move.get('to'))
+        self.jobs.currentJob.moveSection(move.get('from'), move.get('to'))
 
     def onTableSectionCurrCellChanged(self):
         self.setSectionBtnStates()
@@ -259,15 +253,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnExportWxClicked(self):
         if self.btnTgtWxSuffix.isChecked():
-            self.job.addTgtFileSuffix('[WX]')
+            self.jobs.currentJob.addTgtFileSuffix('[WX]')
         else:
-            self.job.removeTgtFileSuffix('[WX]')
+            self.jobs.currentJob.removeTgtFileSuffix('[WX]')
 
     def onLineEditTgtFileNameChanged(self, text):
-        self.job.setTgtFileName(text)
+        self.jobs.currentJob.setTgtFileName(text)
 
     def onBoxFileCountChanged(self, text):
-        self.job.setTgtFileCount(text)
+        self.jobs.currentJob.setTgtFileCount(text)
 
     def onBtnExportSave(self):
         self.addJob()
@@ -277,7 +271,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onCmbTgtDirsCurrTextChanged(self, text):
         path = self.cmbTgtDirs.currentData()
-        self.job.setTgtDirName(path)
+        self.jobs.currentJob.setTgtDirName(path)
         self.config.setTgtDirName(text)
 
     def onBtnMuteClicked(self):
@@ -321,7 +315,7 @@ class MainUi(QtWidgets.QMainWindow):
     def sectionDeleteSelectedRow(self):
         rowIndex = self.tableSections.currentRow()
         self.tableSections.removeRow(rowIndex)
-        self.job.removeSection(rowIndex)
+        self.jobs.currentJob.removeSection(rowIndex)
         if(rowIndex > 0):
             self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
