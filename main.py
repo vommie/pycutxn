@@ -5,12 +5,14 @@ import datetime
 import json
 
 from libs.mpv import *
+import ffmpeg
+
 from classes.PlayerControl import PlayerControl
 from classes.DirsUi import DirsUi
-#from classes.Job import Job
 from classes.Functions import Functions
 from classes.Config import Config
 from classes.Jobs import Jobs
+from classes.FFmpegControl import FFmpegControl
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
