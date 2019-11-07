@@ -5,7 +5,6 @@ import datetime
 import json
 
 from libs.mpv import *
-import ffmpeg
 
 from classes.PlayerControl import PlayerControl
 from classes.DirsUi import DirsUi
@@ -36,6 +35,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.config = Config()
         self.jobsFilePath = 'jobs.json'
         self.jobs = Jobs(self.jobsFilePath)
+        self.FFmpegControl = FFmpegControl()
         # Init member variables
         self.dirsUi = DirsUi(self)
         timeFormat = '0:00:0.0'
@@ -97,7 +97,10 @@ class MainUi(QtWidgets.QMainWindow):
         for id, job in self.jobs.jobs.items():
             try:
                 int(id)
-                self.queueAddRow(id, job.getTgtFileNameLong(), job.getState())
+                state = job.getState()
+                self.queueAddRow(id, job.getTgtFileNameLong(), state)
+                if(state.lower() == 'waiting'):
+                    self.runNextWaitJob()
             except:
                 pass
 
@@ -132,8 +135,29 @@ class MainUi(QtWidgets.QMainWindow):
         self.setPlayerControlsState(True)
 
     def addJob(self):
+        print('addJob')
         id, job = self.jobs.addJob(self.jobs.currentJob)
         self.queueAddRow(id, job.getTgtFileNameLong(), job.getState())
+        self.runNextWaitJob()
+
+    def runNextWaitJob(self):
+        print('runNextWaitJob')
+        if self.FFmpegControl.busy():
+            return False
+        job = self.getNextWaitingJob()
+        if(job):
+            self.FFmpegControl.renderJob(job)
+
+    def getNextWaitingJob(self):
+        print('getNextWaitingJob')
+        job = False
+        jobItems = self.tableQueue.findItems('waiting', Qt.MatchExactly)
+        if(jobItems):
+            iRow = self.tableQueue.row(jobItems[0])
+            jobItem = self.tableQueue.item(iRow, 0)
+            jobIndex = jobItem.text()
+            job = self.jobs.getJob(jobIndex)
+        return job
 
     def setPlayerControlsState(self, state):
         self.framePlayerBtns.setEnabled(state)
@@ -276,7 +300,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setMuteState(False)
         self.playerControl.volume(self.sliderVolume.value())
 
-    def onTableQueueCurrCellChanged(self):
+    def onTableQueueCurrCellChanged(self, row, col):
         self.setQueueBtnStates()
 
     def onBtnQueueDeleteClicked(self):

@@ -62,6 +62,12 @@ class Job():
     def getSrcFileExt(self):
         return self._props['srcFile'].get('fileExt')
 
+    def getSrcFileNameLong(self):
+        return '%s%s' % (self.getSrcFileName(), self.getSrcFileExt())
+
+    def getSrcFilePathLong(self):
+        return '%s/%s' % (self.getSrcDirName(), self.getSrcFileNameLong())
+
     def getTgtDirName(self):
         return self._props['tgtFile'].get('dirName')
 
@@ -89,6 +95,9 @@ class Job():
             fileNameLong = "%s - %s" % (fileNameLong, suffix)
         fileNameLong = "%s%s" % (fileNameLong, ext)
         return fileNameLong
+
+    def getTgtFilePathLong(self):
+        return '%s/%s' % (self.getTgtDirName(), self.getTgtFileNameLong())
 
     def getSections(self):
         return self._props.get('sections')
