@@ -35,3 +35,11 @@ class Functions:
         text = text.rstrip('\\')
         text = text.rstrip('/')
         return text
+
+    # H:M:S.f to seconds (int)
+    @staticmethod
+    def timeStrToSeconds(timeStr, asFloat=False):
+        h, m, s = timeStr.split(':')
+        s, ms = s.split('.')
+        if asFloat: return float(h) * 3600 + float(m) * 60 + float(s) + (float(ms) / 1000)
+        else: return float(h) * 3600 + float(m) * 60 + float(s)

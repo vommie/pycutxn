@@ -36,6 +36,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.jobsFilePath = 'jobs.json'
         self.jobs = Jobs(self.jobsFilePath)
         self.FFmpegControl = FFmpegControl()
+        self.FFmpegControl.bindToProgress(self.onFFmpegProgress)
+        self.FFmpegControl.bindToStart(self.onFFmpegStart)
+        self.FFmpegControl.bindToExit(self.onFFmpegExit)
         # Init member variables
         self.dirsUi = DirsUi(self)
         timeFormat = '0:00:0.0'
@@ -47,6 +50,43 @@ class MainUi(QtWidgets.QMainWindow):
         self.iconIsMuted = QIcon(':/icons/ic_volume_off_24px.svg')
         self.iconIsNotMuted = QIcon(':/icons/ic_volume_up_24px.svg')
         self.frameStep = False
+
+    # Event handler while ffmpeg is rendering
+    def onFFmpegProgress(self, line, job, totalSeconds):
+        # Todo: Segmentation Fault Error - Könnte mit timeStrToSeconds bzw. der Multiplikation zu tun haben
+        if not isinstance(line, list): return
+        if not len(line) == 2: return
+        # print(line)
+        if line[0] == 'progress':
+            if line[1] == 'end':
+                # Reset progress bar
+                pass
+        elif line[0] == 'speed':
+            # Set speed label
+            pass
+        elif line[0] == 'fps':
+            # set fps label
+            pass
+        elif line[0] == 'out_time':
+            currentSecond = int(Functions.timeStrToSeconds(line[1][:-3], True) * 100)
+            totalSeconds = int(totalSeconds * 100)
+            if currentSecond > totalSeconds: currentSecond = totalSeconds
+            self.progressBarRender.setValue(currentSecond)
+
+    # Event handler when ffmpeg exits rendering
+    def onFFmpegExit(self, job, code, output, error):
+        self.progressBarRender.setEnabled(False)
+        self.progressBarRender.setValue(0)
+        if code == 0:
+            job.setState('Finished')
+        else:
+            job.setState('Error')
+
+    # Event handler when ffmpeg starts to render
+    def onFFmpegStart(self, totalSeconds):
+        self.progressBarRender.setEnabled(True)
+        self.progressBarRender.setMaximum(int(totalSeconds * 100))
+        self.progressBarRender.setValue(0)
 
     def initGuiEvents(self):
         # Player control
@@ -135,13 +175,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.setPlayerControlsState(True)
 
     def addJob(self):
-        print('addJob')
         id, job = self.jobs.addJob(self.jobs.currentJob)
         self.queueAddRow(id, job.getTgtFileNameLong(), job.getState())
         self.runNextWaitJob()
 
     def runNextWaitJob(self):
-        print('runNextWaitJob')
         if self.FFmpegControl.busy():
             return False
         job = self.getNextWaitingJob()
@@ -149,7 +187,6 @@ class MainUi(QtWidgets.QMainWindow):
             self.FFmpegControl.renderJob(job)
 
     def getNextWaitingJob(self):
-        print('getNextWaitingJob')
         job = False
         jobItems = self.tableQueue.findItems('waiting', Qt.MatchExactly)
         if(jobItems):

@@ -1,5 +1,6 @@
-import json
 from .Job import Job
+
+import json
 import os
 import copy
 

@@ -1231,7 +1231,10 @@
      <item>
       <layout class="QHBoxLayout" name="layoutQueueProgress">
        <item>
-        <widget class="QProgressBar" name="progressBar">
+        <widget class="QProgressBar" name="progressBarRender">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="value">
           <number>0</number>
          </property>
