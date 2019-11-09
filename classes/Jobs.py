@@ -28,11 +28,23 @@ class Jobs:
     # Current job
 
     def newCurrentJob(self, videoFilePath):
-        self.currentJob = Job(srcFilePath=videoFilePath)
-        self.currentJob.bindToProps(self.currentJobUpdated)
+        job = Job('default', srcFilePath=videoFilePath)
+        job.bindToProps(self.onJobPropsUpdated)
+        self.jobs.update({'default': job})
 
-    def currentJobUpdated(self, props):
-        self.updateJob('default', self.currentJob)
+    def onJobPropsUpdated(self, id, props):
+        job = self.getJob(id)
+        self.updateJob(id, job)
+
+    def getCurrentJob(self):
+        return self.getJob('default')
+
+    def saveCurrentJob(self):
+        defaultJob = self.getJob('default')
+        id = self.generateID()
+        job = copy.deepcopy(defaultJob)
+        self.updateJob(id, job)
+        return id, job
 
     # Jobs management
 
@@ -42,13 +54,6 @@ class Jobs:
     def updateJob(self, id, job):
         self.jobs.update({id: job})
         self.saveJobs()
-
-    def addJob(self, job):
-        id = self.generateID()
-        newJob = copy.deepcopy(job)
-        self.jobs.update({id: newJob})
-        self.saveJobs()
-        return id, newJob
 
     def removeJob(self, id):
         self.jobs.pop(id)

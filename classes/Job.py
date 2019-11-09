@@ -4,8 +4,9 @@ class Job():
 
     # Init functions
 
-    def __init__(self, srcFilePath = False, props = False):
+    def __init__(self, id, srcFilePath = False, props = False):
         self._propsObservers = []
+        self.id = id
         if srcFilePath:
             self.initProps()
             self.initPaths(srcFilePath)
@@ -43,7 +44,7 @@ class Job():
 
     def propValueChanged(self):
         for callback in self._propsObservers:
-            callback(self._props)
+            callback(self.getID(), self.getProps())
 
     def bindToProps(self, callback):
         self._propsObservers.append(callback)
@@ -105,6 +106,9 @@ class Job():
     def getState(self):
         return self._props.get('state')
 
+    def getID(self):
+        return self.id
+
     # Props Setters
 
     def setProps(self, props):
@@ -142,6 +146,9 @@ class Job():
     def setState(self, state):
         self._props.update({'state': state})
         self.propValueChanged()
+
+    def setID(self, id):
+        self.id = id
 
     # Other functions
 

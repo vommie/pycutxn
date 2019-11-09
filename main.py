@@ -163,7 +163,7 @@ class MainUi(QtWidgets.QMainWindow):
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
         self.jobs.newCurrentJob(videoFilePath)
-        self.lineEditTgtFileName.setText(self.jobs.currentJob.getTgtFileName())
+        self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
@@ -175,7 +175,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setPlayerControlsState(True)
 
     def addJob(self):
-        id, job = self.jobs.addJob(self.jobs.currentJob)
+        id, job = self.jobs.saveCurrentJob()
         self.queueAddRow(id, job.getTgtFileNameLong(), job.getState())
         self.runNextWaitJob()
 
@@ -304,15 +304,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnExportWxClicked(self):
         if self.btnTgtWxSuffix.isChecked():
-            self.jobs.currentJob.addTgtFileSuffix('[WX]')
+            self.jobs.getCurrentJob().addTgtFileSuffix('[WX]')
         else:
-            self.jobs.currentJob.removeTgtFileSuffix('[WX]')
+            self.jobs.getCurrentJob().removeTgtFileSuffix('[WX]')
 
     def onLineEditTgtFileNameChanged(self, text):
-        self.jobs.currentJob.setTgtFileName(text)
+        self.jobs.getCurrentJob().setTgtFileName(text)
 
     def onBoxFileCountChanged(self, text):
-        self.jobs.currentJob.setTgtFileCount(text)
+        self.jobs.getCurrentJob().setTgtFileCount(text)
 
     def onBtnExportSave(self):
         self.addJob()
