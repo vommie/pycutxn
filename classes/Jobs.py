@@ -43,6 +43,7 @@ class Jobs:
         defaultJob = self.getJob('default')
         id = self.generateID()
         job = copy.deepcopy(defaultJob)
+        job.bindToProps(self.onJobPropsUpdated)
         self.updateJob(id, job)
         return id, job
 
@@ -70,7 +71,9 @@ class Jobs:
 
     def jobsPropsToJobs(self, jobsProps):
         for id, props in jobsProps.items():
-            self.jobs.update({id: Job(props=props)})
+            job = Job(id, props=props)
+            job.bindToProps(self.onJobPropsUpdated)
+            self.jobs.update({id: job})
 
     def generateID(self):
         keys = self.jobs.keys()

@@ -28,7 +28,7 @@ class Job():
                 'suffixes': []
             },
             'sections': [],
-            'state': 'waiting',
+            'state': 0,
         }
 
     def initPaths(self, filePath):

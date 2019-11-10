@@ -17,7 +17,8 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
-import res # pyrcc5 -o res.py res/res.qrc
+import res  # pyrcc5 -o res.py res/res.qrc
+
 
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -35,6 +36,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.config = Config()
         self.jobsFilePath = 'jobs.json'
         self.jobs = Jobs(self.jobsFilePath)
+        self.jobStates = {
+            0: 'Waiting',
+            1: 'Finished',
+            2: 'Pending',
+            3: 'Error'
+        }
         self.FFmpegControl = FFmpegControl()
         self.FFmpegControl.bindToProgress(self.onFFmpegProgress)
         self.FFmpegControl.bindToStart(self.onFFmpegStart)
@@ -53,10 +60,10 @@ class MainUi(QtWidgets.QMainWindow):
 
     # Event handler while ffmpeg is rendering
     def onFFmpegProgress(self, line, job, totalSeconds):
-        # Todo: Segmentation Fault Error - Könnte mit timeStrToSeconds bzw. der Multiplikation zu tun haben
-        if not isinstance(line, list): return
-        if not len(line) == 2: return
-        # print(line)
+        if not isinstance(line, list):
+            return
+        if not len(line) == 2:
+            return
         if line[0] == 'progress':
             if line[1] == 'end':
                 # Reset progress bar
@@ -68,23 +75,34 @@ class MainUi(QtWidgets.QMainWindow):
             # set fps label
             pass
         elif line[0] == 'out_time':
-            currentSecond = int(Functions.timeStrToSeconds(line[1][:-3], True) * 100)
+            currentSecond = int(
+                Functions.timeStrToSeconds(line[1][:-3], True) * 100)
             totalSeconds = int(totalSeconds * 100)
-            if currentSecond > totalSeconds: currentSecond = totalSeconds
+            if currentSecond > totalSeconds:
+                currentSecond = totalSeconds
             self.progressBarRender.setValue(currentSecond)
 
     # Event handler when ffmpeg exits rendering
     def onFFmpegExit(self, job, code, output, error):
-        self.progressBarRender.setEnabled(False)
-        self.progressBarRender.setValue(0)
+        if self.progressBarRender.isEnabled():
+            self.progressBarRender.setValue(0)
+            self.progressBarRender.setEnabled(False)
+        state = job.getState()
         if code == 0:
-            job.setState('Finished')
+            state = 1
         else:
-            job.setState('Error')
+            state = 3
+        job.setState(state)
+        # todo append output and error to job, display it if clicked on queue item
+        # Update queue table with job state
+        id = job.getID()
+        self.updateQueueJobState(id, state)
+        self.runNextWaitJob()
 
     # Event handler when ffmpeg starts to render
     def onFFmpegStart(self, totalSeconds):
-        self.progressBarRender.setEnabled(True)
+        if not self.progressBarRender.isEnabled():
+            self.progressBarRender.setEnabled(True)
         self.progressBarRender.setMaximum(int(totalSeconds * 100))
         self.progressBarRender.setValue(0)
 
@@ -104,21 +122,26 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
         self.sliderPlayer.sliderReleased.connect(self.onSliderPlayerReleased)
         # Sections
-        self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
-        self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
+        self.tableSections.currentCellChanged.connect(
+            self.onTableSectionCurrCellChanged)
+        self.tableSections.itemDoubleClicked.connect(
+            self.onTableSectionItemDblClicked)
         self.btnSectionAdd2.clicked.connect(self.onBtnSectionAddClicked)
         self.btnSectionDelete.clicked.connect(self.onBtnSectionDeleteClicked)
         self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
         # Job Finalization
-        self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
+        self.lineEditTgtFileName.textChanged.connect(
+            self.onLineEditTgtFileNameChanged)
         self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
         self.btnTgtWxSuffix.clicked.connect(self.onBtnExportWxClicked)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
-        self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
+        self.cmbTgtDirs.currentTextChanged.connect(
+            self.onCmbTgtDirsCurrTextChanged)
         # Queue
-        self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
+        self.tableQueue.currentCellChanged.connect(
+            self.onTableQueueCurrCellChanged)
         self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
 
     def initGui(self):
@@ -136,10 +159,10 @@ class MainUi(QtWidgets.QMainWindow):
         # Jobs
         for id, job in self.jobs.jobs.items():
             try:
-                int(id)
+                int(id) # Skip 'default' job
                 state = job.getState()
-                self.queueAddRow(id, job.getTgtFileNameLong(), state)
-                if(state.lower() == 'waiting'):
+                self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
+                if(state == 0):
                     self.runNextWaitJob()
             except:
                 pass
@@ -155,15 +178,20 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl = PlayerControl(player, self.config)
         # Register observers
         self.playerControl.player.observe_property('pause', self.onPlayerPause)
-        self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
-        self.playerControl.player.observe_property('duration', self.onPlayerDuration)
-        self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
-        self.playerControl.player.observe_property('volume', self.onPlayerVolume)
+        self.playerControl.player.observe_property(
+            'percent-pos', self.onPlayerPercentPos)
+        self.playerControl.player.observe_property(
+            'duration', self.onPlayerDuration)
+        self.playerControl.player.observe_property(
+            'time-pos', self.onPlayerTimePos)
+        self.playerControl.player.observe_property(
+            'volume', self.onPlayerVolume)
 
     def newFile(self, videoFilePath):
         self.videoFilePath = videoFilePath
         self.jobs.newCurrentJob(videoFilePath)
-        self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
+        self.lineEditTgtFileName.setText(
+            self.jobs.getCurrentJob().getTgtFileName())
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
@@ -176,7 +204,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
-        self.queueAddRow(id, job.getTgtFileNameLong(), job.getState())
+        state = job.getState()
+        self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
         self.runNextWaitJob()
 
     def runNextWaitJob(self):
@@ -188,7 +217,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def getNextWaitingJob(self):
         job = False
-        jobItems = self.tableQueue.findItems('waiting', Qt.MatchExactly)
+        jobItems = self.tableQueue.findItems(self.getJobStateString(0), Qt.MatchExactly)
         if(jobItems):
             iRow = self.tableQueue.row(jobItems[0])
             jobItem = self.tableQueue.item(iRow, 0)
@@ -204,6 +233,9 @@ class MainUi(QtWidgets.QMainWindow):
     def timeStringToTime(self, timeStr):
         date_time_obj = datetime.datetime.strptime(timeStr, '%H:%M:%S.%f')
         return date_time_obj
+
+    def getJobStateString(self, state):
+        return self.jobStates.get(state)
 
     def setMuteState(self, mute):
         self.playerControl.mute(mute)
@@ -224,7 +256,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onPlayerPercentPos(self, action, pos):
         if not self.sliderPlayerIsPressed:
-            self.sliderPlayer.setValue(pos * self.config.getPlayerSliderFactor())
+            self.sliderPlayer.setValue(
+                pos * self.config.getPlayerSliderFactor())
 
     def onPlayerTimePos(self, action, timestamp):
         # Convert timestamp format s.ms to h:m:s.ms
@@ -233,7 +266,8 @@ class MainUi(QtWidgets.QMainWindow):
         if len(timeMs) == 1:
             timeMs = '%s0' % timeSplit[1]
         timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
-        time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
+        time = "%s.%s" % (Functions.convertSecondsToHMFS(
+            int(timeSplit[0])), timeMs)
         self.playerTimeCurrent = time
         self.labelPlayerTimeCurr.setText(time)
 
@@ -271,18 +305,18 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnSectionAddClicked(self):
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
-        self.jobs.currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
+        self.jobs.getCurrentJob().addSection(self.sectionTimeStart, self.sectionTimeEnd)
 
     def onBtnSectionDeleteClicked(self):
         self.sectionDeleteSelectedRow()
 
     def onBtnSectionUpClicked(self):
         move = Functions.moveTableRow(self.tableSections, -1)
-        self.jobs.currentJob.moveSection(move.get('from'), move.get('to'))
+        self.jobs.getCurrentJob().moveSection(move.get('from'), move.get('to'))
 
     def onBtnSectionDownClicked(self):
         move = Functions.moveTableRow(self.tableSections, 1)
-        self.jobs.currentJob.moveSection(move.get('from'), move.get('to'))
+        self.jobs.getCurrentJob().moveSection(move.get('from'), move.get('to'))
 
     def onTableSectionCurrCellChanged(self):
         self.setSectionBtnStates()
@@ -350,7 +384,6 @@ class MainUi(QtWidgets.QMainWindow):
         percentage = value / self.config.getPlayerSliderFactor()
         self.playerControl.seek(percentage, 'absolute-percent+exact')
 
-
     def setBtnSectionAddState(self):
         if self.sectionTimeStart and self.sectionTimeEnd:
             self.btnSectionAdd2.setEnabled(True)
@@ -366,7 +399,7 @@ class MainUi(QtWidgets.QMainWindow):
     def sectionDeleteSelectedRow(self):
         rowIndex = self.tableSections.currentRow()
         self.tableSections.removeRow(rowIndex)
-        self.jobs.currentJob.removeSection(rowIndex)
+        self.jobs.getCurrentJob().removeSection(rowIndex)
         if(rowIndex > 0):
             self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
@@ -427,17 +460,27 @@ class MainUi(QtWidgets.QMainWindow):
             self.tableQueue.setCurrentCell(iRow-1, 0)
         self.setQueueBtnStates()
 
-    # Update the directories combo element
+    # Updates the directories combo element
     def updateDirs(self, dirs):
         self.dirs = dirs
         self.config.setDirs(dirs)
         currentText = self.cmbTgtDirs.currentText()
         self.cmbTgtDirs.clear()
         for i in range(len(self.dirs)):
-            self.cmbTgtDirs.insertItem(i, self.dirs[i][1], userData=self.dirs[i][0])
+            self.cmbTgtDirs.insertItem(
+                i, self.dirs[i][1], userData=self.dirs[i][0])
             if self.dirs[i][1] == currentText:
                 self.cmbTgtDirs.setCurrentText(currentText)
 
+    # Updates the state of a job in the queue by the job ID
+    def updateQueueJobState(self, id, state):
+        rowCount = self.tableQueue.rowCount()
+        for iRow in range(rowCount):
+            idItem = self.tableQueue.item(iRow, 0)
+            if(idItem.text() == id):
+                stateItem = self.tableQueue.item(iRow, 2)
+                stateItem.setText(self.getJobStateString(state))
+                break
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()

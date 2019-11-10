@@ -25,9 +25,8 @@ class FFmpegControl:
         self._startObservers.append(callback)
 
     def renderJob(self, job):
-        print('renderJob')
         atts = {'job': job}
-        self.busy(True)
+        self.setBusy(True)
         self.render(atts)
 
     # Start ffmpeg in a thread so it's asynchron, use onExit() as callback function
@@ -89,15 +88,15 @@ class FFmpegControl:
 
     # Callback function for ffmpeg process finished
     def onExit(self, job, code, output, error):
-        self.busy(False)
-        print('FFMPEG EXIT - Code: %s' % code)
+        self.setBusy(False)
         for callback in self._exitObservers:
             callback(job, code, output, error)
 
     def isSamePath(self, path1, path2):
         return path1 == path2
 
-    def busy(self, activate = False):
-        if(activate):
-            self.isBusy = True
+    def setBusy(self, state):
+        self.isBusy = state
+
+    def busy(self):
         return self.isBusy
