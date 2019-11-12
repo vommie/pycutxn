@@ -40,7 +40,8 @@ class MainUi(QtWidgets.QMainWindow):
             0: 'Waiting',
             1: 'Finished',
             2: 'Pending',
-            3: 'Error'
+            3: 'Error',
+            4: 'Rendering'
         }
         self.FFmpegControl = FFmpegControl()
         self.FFmpegControl.bindToProgress(self.onFFmpegProgress)
@@ -100,7 +101,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.runNextWaitJob()
 
     # Event handler when ffmpeg starts to render
-    def onFFmpegStart(self, totalSeconds):
+    def onFFmpegStart(self, job, totalSeconds):
+        job.setState(4)
+        self.updateQueueJobState(job.getID(), 4)
         if not self.progressBarRender.isEnabled():
             self.progressBarRender.setEnabled(True)
         self.progressBarRender.setMaximum(int(totalSeconds * 100))
@@ -356,7 +359,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onCmbTgtDirsCurrTextChanged(self, text):
         path = self.cmbTgtDirs.currentData()
-        self.jobs.currentJob.setTgtDirName(path)
+        self.jobs.getCurrentJob().setTgtDirName(path)
         self.config.setTgtDirName(text)
 
     def onBtnMuteClicked(self):

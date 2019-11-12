@@ -49,6 +49,9 @@ class Job():
     def bindToProps(self, callback):
         self._propsObservers.append(callback)
 
+    def clearPropObservers(self):
+        self._propsObservers.clear()
+
     # Props getters
 
     def getProps(self):
@@ -167,25 +170,30 @@ class Job():
         if suffix not in suffixes:
             suffixes.append(suffix)
         self._props['tgtFile'].update({'suffixes': suffixes})
+        self.propValueChanged()
 
     def removeTgtFileSuffix(self, suffix):
         suffixes = self._props['tgtFile'].get('suffixes')
         if suffix in suffixes:
             suffixes.remove(suffix)
         self._props['tgtFile'].update({'suffixes': suffixes})
+        self.propValueChanged()
 
     def clearTgtFileSuffixes(self):
         self._props['tgtFile'].update({'suffixes': []})
+        self.propValueChanged()
 
     def addSection(self, timeFrom, timeTo):
         sections = self._props.get('sections')
         sections.append([timeFrom, timeTo])
         self._props.update({'sections': sections})
+        self.propValueChanged()
 
     def removeSection(self, index):
         sections = self._props.get('sections')
         sections.pop(index)
         self._props.update({'sections': sections})
+        self.propValueChanged()
 
     def moveSection(self, fromIndex, toIndex):
         if fromIndex == toIndex:
@@ -196,6 +204,8 @@ class Job():
         sections[fromIndex] = toSection
         sections[toIndex] = fromSection
         self._props.update({'sections': sections})
+        self.propValueChanged()
 
     def clearSections(self):
         self._props.update({'sections': []})
+        self.propValueChanged()

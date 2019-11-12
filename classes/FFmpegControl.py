@@ -40,9 +40,9 @@ class FFmpegControl:
         srcPath = job.getSrcFilePathLong()
         tgtPath = job.getTgtFilePathLong()
         if(self.isSamePath(srcPath, tgtPath)):
-            print('Errror: Input and Output Path are the same')
+            print('Error: Input and Output Path are the same')
+            self.onExit(job, -100, 'Input and Output Path are the same', 'Input and Output Path are the same')
             return False
-
         # Set FFmpeg options
         in_file = ffmpeg.input(srcPath)
         # Build sections
@@ -73,7 +73,7 @@ class FFmpegControl:
         # Run ffmpeg
         process = output.run_async(overwrite_output=True, pipe_stdout=True, pipe_stderr=True)
         for callback in self._startObservers:
-            callback(totalSeconds)
+            callback(job, totalSeconds)
         # Handle stdout (progress information), by passing it to callback functions
         for line in process.stdout:
             line = line.decode('ascii').rstrip()
@@ -84,7 +84,7 @@ class FFmpegControl:
         out, err = process.communicate()
         code = process.returncode
         self.onExit(job, code, out, err)
-        return
+        return True
 
     # Callback function for ffmpeg process finished
     def onExit(self, job, code, output, error):

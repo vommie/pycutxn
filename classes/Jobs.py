@@ -40,9 +40,11 @@ class Jobs:
         return self.getJob('default')
 
     def saveCurrentJob(self):
-        defaultJob = self.getJob('default')
+        defaultJob = self.getCurrentJob()
         id = self.generateID()
         job = copy.deepcopy(defaultJob)
+        job.setID(id)
+        job.clearPropObservers()
         job.bindToProps(self.onJobPropsUpdated)
         self.updateJob(id, job)
         return id, job
@@ -73,7 +75,8 @@ class Jobs:
         for id, props in jobsProps.items():
             job = Job(id, props=props)
             job.bindToProps(self.onJobPropsUpdated)
-            self.jobs.update({id: job})
+            # self.jobs.update({id: job})
+            self.updateJob(id, job)
 
     def generateID(self):
         keys = self.jobs.keys()
