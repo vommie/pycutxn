@@ -74,6 +74,11 @@ class Jobs:
     def jobsPropsToJobs(self, jobsProps):
         for id, props in jobsProps.items():
             job = Job(id, props=props)
+            # When job state is 4 (rendering), then set error
+            if job.getState() == 4:
+                job.setState(3)
+                job.setErrorID(-102)
+                job.setErrorMsg('Error: Job had state 4 (Rendering) when initially loaded.')
             job.bindToProps(self.onJobPropsUpdated)
             # self.jobs.update({id: job})
             self.updateJob(id, job)

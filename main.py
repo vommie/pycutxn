@@ -58,9 +58,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.iconIsMuted = QIcon(':/icons/ic_volume_off_24px.svg')
         self.iconIsNotMuted = QIcon(':/icons/ic_volume_up_24px.svg')
         self.frameStep = False
+        self.jobsSwitching = False # Prevents crash when printing progress while jobs in queue getting switched
 
     # Event handler while ffmpeg is rendering
     def onFFmpegProgress(self, line, job, totalSeconds):
+        if self.jobsSwitching:
+            return
         if not isinstance(line, list):
             return
         if not len(line) == 2:
@@ -148,6 +151,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.tableQueue.currentCellChanged.connect(
             self.onTableQueueCurrCellChanged)
         self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
+        self.btnQueueUp.clicked.connect(self.onBtnQueueUpClicked)
+        self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
 
     def initGui(self):
         # GUI elements options
@@ -382,6 +387,12 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnQueueDeleteClicked(self):
         self.queueDeleteSelectedRow()
 
+    def onBtnQueueUpClicked(self):
+        self.switchJobs(Functions.moveTableRow(self.tableQueue, -1))
+
+    def onBtnQueueDownClicked(self):
+        self.switchJobs(Functions.moveTableRow(self.tableQueue, 1))
+
     # GUI Control
 
     def setPlayerPosByPlayerSlider(self):
@@ -410,34 +421,34 @@ class MainUi(QtWidgets.QMainWindow):
         self.setSectionBtnStates()
 
     def queueAddRow(self, id, filename, state):
-        rowIndex = self.tableQueue.rowCount()
-        self.tableQueue.insertRow(rowIndex)
-        self.tableQueue.setItem(rowIndex, 0, QTableWidgetItem(id))
-        self.tableQueue.setItem(rowIndex, 1, QTableWidgetItem(filename))
-        self.tableQueue.setItem(rowIndex, 2, QTableWidgetItem(state))
+        iRow = self.tableQueue.rowCount()
+        self.tableQueue.insertRow(iRow)
+        self.tableQueue.setItem(iRow, 0, QTableWidgetItem(id))
+        self.tableQueue.setItem(iRow, 1, QTableWidgetItem(filename))
+        self.tableQueue.setItem(iRow, 2, QTableWidgetItem(state))
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):
         rowCount = self.tableSections.rowCount()
-        rowIndex = self.tableSections.currentRow()
+        iRow = self.tableSections.currentRow()
         if rowCount == 0:
             self.btnSectionUp.setEnabled(False)
             self.btnSectionDown.setEnabled(False)
             self.btnSectionDelete.setEnabled(False)
         else:
             self.btnSectionDelete.setEnabled(True)
-            if rowIndex == 0:
+            if iRow == 0:
                 self.btnSectionUp.setEnabled(False)
             else:
                 self.btnSectionUp.setEnabled(True)
-            if rowIndex < rowCount-1:
+            if iRow < rowCount-1:
                 self.btnSectionDown.setEnabled(True)
             else:
                 self.btnSectionDown.setEnabled(False)
 
     def setQueueBtnStates(self):
         rowCount = self.tableQueue.rowCount()
-        rowIndex = self.tableQueue.currentRow()
+        iRow = self.tableQueue.currentRow()
         if rowCount == 0:
             self.btnQueueUp.setEnabled(False)
             self.btnQueueDown.setEnabled(False)
@@ -446,24 +457,29 @@ class MainUi(QtWidgets.QMainWindow):
         else:
             self.btnQueueDelete.setEnabled(True)
             self.btnQueueLoad.setEnabled(True)
-            if rowIndex == 0:
+            if iRow == 0:
                 self.btnQueueUp.setEnabled(False)
             else:
                 self.btnQueueUp.setEnabled(True)
-            if rowIndex < rowCount-1:
+            if iRow < rowCount-1:
                 self.btnQueueDown.setEnabled(True)
             else:
                 self.btnQueueDown.setEnabled(False)
 
     def queueDeleteSelectedRow(self):
-        iRow = self.tableQueue.currentRow()
-        itemID = self.tableQueue.item(iRow, 0)
-        jobID = itemID.text()
+        jobID, iRow = self.queueGetJobIDFromRow()
         self.tableQueue.removeRow(iRow)
         self.jobs.removeJob(jobID)
         if(iRow > 0):
             self.tableQueue.setCurrentCell(iRow-1, 0)
         self.setQueueBtnStates()
+
+    def queueGetJobIDFromRow(self, iRow = False):
+        if iRow is False:
+            iRow = self.tableQueue.currentRow()
+        itemID = self.tableQueue.item(iRow, 0)
+        jobID = itemID.text()
+        return jobID, iRow
 
     # Updates the directories combo element
     def updateDirs(self, dirs):
@@ -486,6 +502,21 @@ class MainUi(QtWidgets.QMainWindow):
                 stateItem = self.tableQueue.item(iRow, 2)
                 stateItem.setText(self.getJobStateString(state))
                 break
+
+    # Switch jobs
+    def switchJobs(self, move):
+        self.jobsSwitching = True
+        # Get both switched jobs
+        fromJobID = self.queueGetJobIDFromRow(move['from'])[0]
+        fromJob = self.jobs.getJob(fromJobID)
+        toJobID = self.queueGetJobIDFromRow(move['to'])[0]
+        toJob = self.jobs.getJob(toJobID)
+        # Switch job IDs
+        self.jobs.updateJob('tmp', fromJob)
+        self.jobs.updateJob(fromJobID, toJob)
+        self.jobs.updateJob(toJobID, fromJob)
+        self.jobs.removeJob('tmp')
+        self.jobsSwitching = False
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
