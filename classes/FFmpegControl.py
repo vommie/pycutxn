@@ -40,13 +40,19 @@ class FFmpegControl:
         srcPath = job.getSrcFilePathLong()
         tgtPath = job.getTgtFilePathLong()
         if(self.isSamePath(srcPath, tgtPath)):
-            print('Error: Input and Output Path are the same')
-            self.onExit(job, -100, 'Input and Output Path are the same', 'Input and Output Path are the same')
+            msg = 'Error: Input and Output Path are the same.'
+            print(msg)
+            self.onExit(job, -100, msg, msg)
             return False
         # Set FFmpeg options
         in_file = ffmpeg.input(srcPath)
         # Build sections
         sections = job.getSections()
+        if(len(sections) == 0):
+            msg = 'Error: No sections to render.'
+            print(msg)
+            self.onExit(job, -101, msg, msg)
+            return False
         mapping = []
         totalSeconds = 0
         for section in sections:

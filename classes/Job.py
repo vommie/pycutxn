@@ -29,6 +29,10 @@ class Job():
             },
             'sections': [],
             'state': 0,
+            'error': {
+                'id': False,
+                'message': False
+            }
         }
 
     def initPaths(self, filePath):
@@ -112,6 +116,12 @@ class Job():
     def getID(self):
         return self.id
 
+    def getErrorID(self):
+        return self._props['error'].get('id')
+
+    def getErrorMsg(self):
+        return self._props['error'].get('message')
+
     # Props Setters
 
     def setProps(self, props):
@@ -148,6 +158,14 @@ class Job():
 
     def setState(self, state):
         self._props.update({'state': state})
+        self.propValueChanged()
+
+    def setErrorID(self, id):
+        self._props['error'].update({'id': id})
+        self.propValueChanged()
+
+    def setErrorMsg(self, msg):
+        self._props['error'].update({'message': msg})
         self.propValueChanged()
 
     def setID(self, id):

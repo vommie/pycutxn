@@ -92,6 +92,8 @@ class MainUi(QtWidgets.QMainWindow):
         if code == 0:
             state = 1
         else:
+            job.setErrorID(code)
+            job.setErrorMsg(str(error))
             state = 3
         job.setState(state)
         # todo append output and error to job, display it if clicked on queue item
