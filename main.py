@@ -131,6 +131,9 @@ class MainUi(QtWidgets.QMainWindow):
                 pass
         self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
+        # MPV render widget
+        self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
+        self.renderFrame.setAttribute(Qt.WA_NativeWindow)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
