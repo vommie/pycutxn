@@ -1,3 +1,5 @@
+import sys
+
 class Functions:
 
     @staticmethod
@@ -43,3 +45,9 @@ class Functions:
         s, ms = s.split('.')
         if asFloat: return float(h) * 3600 + float(m) * 60 + float(s) + (float(ms) / 1000)
         else: return float(h) * 3600 + float(m) * 60 + float(s)
+
+    # Get the system opener name for the current OS / system
+    @staticmethod
+    def getCurrentSysOpener():
+        # Todo: use os.startfile() on windows
+        return "open" if sys.platform == "darwin" else "xdg-open"

@@ -1196,6 +1196,9 @@
     <layout class="QVBoxLayout" name="verticalLayout_8">
      <item>
       <widget class="QTableWidget" name="tableQueue">
+       <property name="contextMenuPolicy">
+        <enum>Qt::ActionsContextMenu</enum>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
@@ -1440,6 +1443,34 @@
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionPlayFile">
+   <property name="icon">
+    <iconset resource="../res/res.qrc">
+     <normaloff>:/icons/ic_play_arrow_24px.svg</normaloff>:/icons/ic_play_arrow_24px.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Play file</string>
+   </property>
+  </action>
+  <action name="actionOpenFolder">
+   <property name="icon">
+    <iconset resource="../res/res.qrc">
+     <normaloff>:/icons/ic_folder_24px.svg</normaloff>:/icons/ic_folder_24px.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Open folder</string>
+   </property>
+  </action>
+  <action name="actionShowError">
+   <property name="text">
+    <string>Show Error</string>
+   </property>
+  </action>
+  <action name="actionShowLog">
+   <property name="text">
+    <string>Show Log</string>
    </property>
   </action>
  </widget>

@@ -3,11 +3,13 @@
 import sys
 import datetime
 import json
+import subprocess
 
 from libs.mpv import *
 
 from classes.PlayerControl import PlayerControl
 from classes.DirsUi import DirsUi
+from classes.LogUi import LogUi
 from classes.Functions import Functions
 from classes.Config import Config
 from classes.Jobs import Jobs
@@ -49,6 +51,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.FFmpegControl.bindToExit(self.onFFmpegExit)
         # Init member variables
         self.dirsUi = DirsUi(self)
+        self.logUi = LogUi(self)
         timeFormat = '0:00:0.0'
         self.playerTimeCurrent = timeFormat
         self.sectionTimeStart = timeFormat
@@ -59,60 +62,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.iconIsNotMuted = QIcon(':/icons/ic_volume_up_24px.svg')
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
-
-    # Event handler while ffmpeg is rendering
-    def onFFmpegProgress(self, line, job, totalSeconds):
-        if self.jobsSwapping:
-            return
-        if not isinstance(line, list):
-            return
-        if not len(line) == 2:
-            return
-        if line[0] == 'progress':
-            if line[1] == 'end':
-                # Reset progress bar
-                pass
-        elif line[0] == 'speed':
-            # Set speed label
-            pass
-        elif line[0] == 'fps':
-            # set fps label
-            pass
-        elif line[0] == 'out_time':
-            currentSecond = int(
-                Functions.timeStrToSeconds(line[1][:-3], True) * 100)
-            totalSeconds = int(totalSeconds * 100)
-            if currentSecond > totalSeconds:
-                currentSecond = totalSeconds
-            self.progressBarRender.setValue(currentSecond)
-
-    # Event handler when ffmpeg exits rendering
-    def onFFmpegExit(self, job, code, output, error):
-        if self.progressBarRender.isEnabled():
-            self.progressBarRender.setValue(0)
-            self.progressBarRender.setEnabled(False)
-        state = job.getState()
-        if code == 0:
-            state = 1
-        else:
-            job.setErrorID(code)
-            job.setErrorMsg(str(error))
-            state = 3
-        job.setState(state)
-        # todo append output and error to job, display it if clicked on queue item
-        # Update queue table with job state
-        id = job.getID()
-        self.updateQueueJobState(id, state)
-        self.runNextWaitJob()
-
-    # Event handler when ffmpeg starts to render
-    def onFFmpegStart(self, job, totalSeconds):
-        job.setState(4)
-        self.updateQueueJobState(job.getID(), 4)
-        if not self.progressBarRender.isEnabled():
-            self.progressBarRender.setEnabled(True)
-        self.progressBarRender.setMaximum(int(totalSeconds * 100))
-        self.progressBarRender.setValue(0)
 
     def initGuiEvents(self):
         # Player control
@@ -130,29 +79,30 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
         self.sliderPlayer.sliderReleased.connect(self.onSliderPlayerReleased)
         # Sections
-        self.tableSections.currentCellChanged.connect(
-            self.onTableSectionCurrCellChanged)
-        self.tableSections.itemDoubleClicked.connect(
-            self.onTableSectionItemDblClicked)
+        self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
+        self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
         self.btnSectionAdd2.clicked.connect(self.onBtnSectionAddClicked)
         self.btnSectionDelete.clicked.connect(self.onBtnSectionDeleteClicked)
         self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
         # Job Finalization
-        self.lineEditTgtFileName.textChanged.connect(
-            self.onLineEditTgtFileNameChanged)
+        self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
         self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
         self.btnTgtWxSuffix.clicked.connect(self.onBtnExportWxClicked)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
-        self.cmbTgtDirs.currentTextChanged.connect(
-            self.onCmbTgtDirsCurrTextChanged)
+        self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
         # Queue
-        self.tableQueue.currentCellChanged.connect(
-            self.onTableQueueCurrCellChanged)
+        self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
+        self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
         self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
         self.btnQueueUp.clicked.connect(self.onBtnQueueUpClicked)
         self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
+        # Actions
+        self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
+        self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
+        self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
+        self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
 
     def initGui(self):
         # GUI elements options
@@ -166,16 +116,23 @@ class MainUi(QtWidgets.QMainWindow):
         # Set GUI from config
         self.updateDirs(self.config.getTargetDirs())
         self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())
-        # Jobs
+        # Queue Jobs
         for id, job in self.jobs.jobs.items():
             try:
                 int(id) # Skip 'default' job
                 state = job.getState()
+                if state == 4:
+                    job.setErrorID(-105)
+                    job.setErrorMsg('Job had state "Rendering" when the program started.')
+                    job.setState(3)
                 self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-                if(state == 0):
+                if state == 0:
                     self.runNextWaitJob()
             except:
                 pass
+
+        self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -201,7 +158,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.videoFilePath = videoFilePath
         self.jobs.newCurrentJob(videoFilePath)
         self.lineEditTgtFileName.setText(
-            self.jobs.getCurrentJob().getTgtFileName())
+        self.jobs.getCurrentJob().getTgtFileName())
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
@@ -254,7 +211,7 @@ class MainUi(QtWidgets.QMainWindow):
         else:
             self.btnMute.setIcon(self.iconIsNotMuted)
 
-    # Player observer events
+    # Player observer event handlers
 
     def onPlayerPause(self, action, state):
         if not self.frameStep:
@@ -287,7 +244,7 @@ class MainUi(QtWidgets.QMainWindow):
     def onPlayerVolume(self, action, volume):
         self.sliderVolume.setValue(volume)
 
-    # GUI control events
+    # GUI control event handlers
 
     def onBtnPauseClicked(self):
         self.playerControl.pause()
@@ -384,6 +341,15 @@ class MainUi(QtWidgets.QMainWindow):
     def onTableQueueCurrCellChanged(self, row, col):
         self.setQueueBtnStates()
 
+    def onTableQueueCellDblClicked(self, row, col):
+        state = self.queueGetCurrentState(row)
+        if state == 4:
+            return
+        elif state == 1:
+            self.queuePlayFile()
+        elif state == 3:
+            self.queueShowError()
+
     def onBtnQueueDeleteClicked(self):
         self.queueDeleteSelectedRow()
 
@@ -392,6 +358,91 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnQueueDownClicked(self):
         self.swapJobs(Functions.moveTableRow(self.tableQueue, 1))
+
+    def onQueueContextMenu(self, point):
+        menu = QtWidgets.QMenu(self)
+        if self.tableQueue.itemAt(point):
+            state = self.queueGetCurrentState()
+            if state == 4:
+                return
+            if state == 1:
+                menu.addAction(self.actionPlayFile)
+            menu.addAction(self.actionOpenFolder)
+            menu.addSeparator()
+            if state != 0:
+                menu.addAction(self.actionShowLog)
+            if state == 3:
+                menu.addAction(self.actionShowError)
+        point = self.tableQueue.mapToGlobal(point)
+        menu.popup(point)
+
+    def onQueueCtxActionPlayFile(self):
+        self.queuePlayFile()
+
+    def onQueueCtxActionOpenFolder(self):
+        self.queueOpenFolder()
+
+    def onQueueCtxActionShowLog(self):
+        self.queueShowLog()
+
+    def onQueueCtxActionShowError(self):
+        self.queueShowError()
+
+    # Other Event handlers
+
+    # Event handler while ffmpeg is rendering
+    def onFFmpegProgress(self, line, job, totalSeconds):
+        if self.jobsSwapping:
+            return
+        if not isinstance(line, list):
+            return
+        if not len(line) == 2:
+            return
+        if line[0] == 'progress':
+            if line[1] == 'end':
+                # Reset progress bar
+                pass
+        elif line[0] == 'speed':
+            # Set speed label
+            pass
+        elif line[0] == 'fps':
+            # set fps label
+            pass
+        elif line[0] == 'out_time':
+            currentSecond = int(
+                Functions.timeStrToSeconds(line[1][:-3], True) * 100)
+            totalSeconds = int(totalSeconds * 100)
+            if currentSecond > totalSeconds:
+                currentSecond = totalSeconds
+            self.progressBarRender.setValue(currentSecond)
+
+    # Event handler when ffmpeg exits rendering
+    def onFFmpegExit(self, job, code, output, error):
+        if self.progressBarRender.isEnabled():
+            self.progressBarRender.setValue(0)
+            self.progressBarRender.setEnabled(False)
+        state = job.getState()
+        if code == 0:
+            state = 1
+        else:
+            job.setErrorID(code)
+            job.setErrorMsg(str(error))
+            state = 3
+        job.setState(state)
+        # todo append output and error to job, display it if clicked on queue item
+        # Update queue table with job state
+        id = job.getID()
+        self.updateQueueJobState(id, state)
+        self.runNextWaitJob()
+
+    # Event handler when ffmpeg starts to render
+    def onFFmpegStart(self, job, totalSeconds):
+        job.setState(4)
+        self.updateQueueJobState(job.getID(), 4)
+        if not self.progressBarRender.isEnabled():
+            self.progressBarRender.setEnabled(True)
+        self.progressBarRender.setMaximum(int(totalSeconds * 100))
+        self.progressBarRender.setValue(0)
 
     # GUI Control
 
@@ -423,9 +474,12 @@ class MainUi(QtWidgets.QMainWindow):
     def queueAddRow(self, id, filename, state):
         iRow = self.tableQueue.rowCount()
         self.tableQueue.insertRow(iRow)
-        self.tableQueue.setItem(iRow, 0, QTableWidgetItem(id))
-        self.tableQueue.setItem(iRow, 1, QTableWidgetItem(filename))
-        self.tableQueue.setItem(iRow, 2, QTableWidgetItem(state))
+        itemID = QTableWidgetItem(id)
+        itemFilename = QTableWidgetItem(filename)
+        itemState = QTableWidgetItem(state)
+        self.tableQueue.setItem(iRow, 0, itemID)
+        self.tableQueue.setItem(iRow, 1, itemFilename)
+        self.tableQueue.setItem(iRow, 2, itemState)
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):
@@ -481,6 +535,26 @@ class MainUi(QtWidgets.QMainWindow):
         jobID = itemID.text()
         return jobID, iRow
 
+    def queueGetCurrentState(self, iRow = False):
+        if iRow is False:
+            iRow = self.tableQueue.currentRow()
+        itemState = self.tableQueue.item(iRow, 2)
+        stateStr = itemState.text()
+        state = self.jobStateStrToID(stateStr)
+        return state
+
+    def jobStateStrToID(self, stateStr):
+        stateStr = stateStr.lower()
+        id = False
+        try:
+            for key, state in self.jobStates.items():
+                if state.lower() == stateStr:
+                    id = key
+                    break
+        except:
+            id = False
+        return id
+
     # Updates the directories combo element
     def updateDirs(self, dirs):
         self.dirs = dirs
@@ -505,7 +579,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     # Swap jobs
     def swapJobs(self, move):
-        print('swapJobs')
         self.jobsSwapping = True
         # Get both jobs to swap
         job1ID = self.queueGetJobIDFromRow(move['from'])[0]
@@ -518,6 +591,32 @@ class MainUi(QtWidgets.QMainWindow):
         job1.setPosition(job2Pos)
         job2.setPosition(job1Pos)
         self.jobsSwapping = False
+
+    def queuePlayFile(self):
+        jobID = self.queueGetJobIDFromRow()[0]
+        job = self.jobs.getJob(jobID)
+        filePathLong = job.getTgtFilePathLong()
+        opener = Functions.getCurrentSysOpener()
+        subprocess.call([opener, filePathLong])
+
+    def queueOpenFolder(self):
+        jobID = self.queueGetJobIDFromRow()[0]
+        job = self.jobs.getJob(jobID)
+        dir = job.getTgtDirName()
+        opener = Functions.getCurrentSysOpener()
+        subprocess.call([opener, dir])
+
+    def queueShowLog(self):
+        self.logUi.show()
+
+    def queueShowError(self):
+        jobID = self.queueGetJobIDFromRow()[0]
+        job = self.jobs.getJob(jobID)
+        errorID = job.getErrorID()
+        errorMsg = job.getErrorMsg()
+        self.logUi.setTitle('Error %s' % errorID)
+        self.logUi.setLogText(errorMsg)
+        self.logUi.show()
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
