@@ -138,7 +138,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
         import locale
         locale.setlocale(locale.LC_NUMERIC, 'C')
-        player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11')
+        player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal')
         # player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='debug')
         self.playerControl = PlayerControl(player, self.config)
         # Register observers
