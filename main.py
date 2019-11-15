@@ -13,7 +13,7 @@ from classes.LogUi import LogUi
 from classes.Functions import Functions
 from classes.Config import Config
 from classes.Jobs import Jobs
-from classes.FFmpegControl import FFmpegControl
+from classes.FFmpegThread import FFmpegThread
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
@@ -45,10 +45,7 @@ class MainUi(QtWidgets.QMainWindow):
             3: 'Error',
             4: 'Rendering'
         }
-        self.FFmpegControl = FFmpegControl()
-        self.FFmpegControl.bindToProgress(self.onFFmpegProgress)
-        self.FFmpegControl.bindToStart(self.onFFmpegStart)
-        self.FFmpegControl.bindToExit(self.onFFmpegExit)
+        self.ffmpegIsBusy = False
         # Init member variables
         self.dirsUi = DirsUi(self)
         self.logUi = LogUi(self)
@@ -128,6 +125,7 @@ class MainUi(QtWidgets.QMainWindow):
                     state = 3
                 self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
                 if state == 0:
+                    print('starting... state: 0')
                     self.runNextWaitJob()
             except:
                 pass
@@ -176,11 +174,35 @@ class MainUi(QtWidgets.QMainWindow):
         self.runNextWaitJob()
 
     def runNextWaitJob(self):
-        if self.FFmpegControl.busy():
+        print('runNextWaitJob')
+        if self.ffmpegIsBusy:
             return False
         job = self.getNextWaitingJob()
-        if(job):
-            self.FFmpegControl.renderJob(job)
+        print('next job: %s' % job)
+        if job and self.checkJobForRenderbility(job):
+            print('time to start ffmpeg ...')
+            # totalSeconds = self.getTotalSeconds(job)
+            self.FFmpegThread = FFmpegThread(job)
+            print('ffmpeg thread instance')
+            self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
+            self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
+            self.FFmpegThread.ffmpegProcess.connect(self.onFFmpegProgress)
+            self.FFmpegThread.ffmpegExit.connect(self.onFFmpegExit)
+            self.FFmpegThread.start()
+            print('ffmpeg thread started ...')
+
+    def checkJobForRenderbility(self, job):
+        if Functions.isSameString(job.getSrcFilePathLong(), job.getTgtFilePathLong()):
+            msg = 'Error: Input and Output Path are the same.'
+            print(msg)
+            self.onFFmpegExit([job, -100, msg, msg])
+            return False
+        if len(job.getSections()) == 0:
+            msg = 'Error: No sections to render.'
+            print(msg)
+            self.onFFmpegExit([job, -101, msg, msg])
+            return False
+        return True
 
     def getNextWaitingJob(self):
         job = False
@@ -391,7 +413,9 @@ class MainUi(QtWidgets.QMainWindow):
     # Other Event handlers
 
     # Event handler while ffmpeg is rendering
-    def onFFmpegProgress(self, line, job, totalSeconds):
+    @pyqtSlot('PyQt_PyObject')
+    def onFFmpegProgress(self, atts):
+        line, job, totalSeconds = atts
         if self.jobsSwapping:
             return
         if not isinstance(line, list):
@@ -417,7 +441,10 @@ class MainUi(QtWidgets.QMainWindow):
             self.progressBarRender.setValue(currentSecond)
 
     # Event handler when ffmpeg exits rendering
-    def onFFmpegExit(self, job, code, output, error):
+    @pyqtSlot('PyQt_PyObject')
+    def onFFmpegExit(self, atts):
+        print('exit')
+        job, code, output, error = atts
         if self.progressBarRender.isEnabled():
             self.progressBarRender.setValue(0)
             self.progressBarRender.setEnabled(False)
@@ -436,13 +463,20 @@ class MainUi(QtWidgets.QMainWindow):
         self.runNextWaitJob()
 
     # Event handler when ffmpeg starts to render
-    def onFFmpegStart(self, job, totalSeconds):
+    @pyqtSlot('PyQt_PyObject')
+    def onFFmpegStart(self, atts):
+        self.ffmpegIsBusy = True
+        job = atts[0]
+        totalSeconds = atts[1]
         job.setState(4)
         self.updateQueueJobState(job.getID(), 4)
         if not self.progressBarRender.isEnabled():
             self.progressBarRender.setEnabled(True)
         self.progressBarRender.setMaximum(int(totalSeconds * 100))
         self.progressBarRender.setValue(0)
+
+    def onFFmpegThreadFinished(self):
+        self.ffmpegIsBusy = False
 
     # GUI Control
 

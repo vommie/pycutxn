@@ -51,3 +51,8 @@ class Functions:
     def getCurrentSysOpener():
         # Todo: use os.startfile() on windows
         return "open" if sys.platform == "darwin" else "xdg-open"
+
+    # Check if two strings are the same
+    @staticmethod
+    def isSameString(string1, string2):
+        return string1 == string2

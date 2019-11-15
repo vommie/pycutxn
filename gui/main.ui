@@ -427,7 +427,7 @@
            </property>
            <property name="icon">
             <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/ic_water.svg</normaloff>:/icons/ic_water.svg</iconset>
+             <normaloff>:/icons/ic_remove_24px.svg</normaloff>:/icons/ic_remove_24px.svg</iconset>
            </property>
            <property name="iconSize">
             <size>
