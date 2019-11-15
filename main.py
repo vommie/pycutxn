@@ -58,11 +58,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.iconIsMuted = QIcon(':/icons/ic_volume_off_24px.svg')
         self.iconIsNotMuted = QIcon(':/icons/ic_volume_up_24px.svg')
         self.frameStep = False
-        self.jobsSwitching = False # Prevents crash when printing progress while jobs in queue getting switched
+        self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
 
     # Event handler while ffmpeg is rendering
     def onFFmpegProgress(self, line, job, totalSeconds):
-        if self.jobsSwitching:
+        if self.jobsSwapping:
             return
         if not isinstance(line, list):
             return
@@ -388,10 +388,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.queueDeleteSelectedRow()
 
     def onBtnQueueUpClicked(self):
-        self.switchJobs(Functions.moveTableRow(self.tableQueue, -1))
+        self.swapJobs(Functions.moveTableRow(self.tableQueue, -1))
 
     def onBtnQueueDownClicked(self):
-        self.switchJobs(Functions.moveTableRow(self.tableQueue, 1))
+        self.swapJobs(Functions.moveTableRow(self.tableQueue, 1))
 
     # GUI Control
 
@@ -503,20 +503,21 @@ class MainUi(QtWidgets.QMainWindow):
                 stateItem.setText(self.getJobStateString(state))
                 break
 
-    # Switch jobs
-    def switchJobs(self, move):
-        self.jobsSwitching = True
-        # Get both switched jobs
-        fromJobID = self.queueGetJobIDFromRow(move['from'])[0]
-        fromJob = self.jobs.getJob(fromJobID)
-        toJobID = self.queueGetJobIDFromRow(move['to'])[0]
-        toJob = self.jobs.getJob(toJobID)
-        # Switch job IDs
-        self.jobs.updateJob('tmp', fromJob)
-        self.jobs.updateJob(fromJobID, toJob)
-        self.jobs.updateJob(toJobID, fromJob)
-        self.jobs.removeJob('tmp')
-        self.jobsSwitching = False
+    # Swap jobs
+    def swapJobs(self, move):
+        print('swapJobs')
+        self.jobsSwapping = True
+        # Get both jobs to swap
+        job1ID = self.queueGetJobIDFromRow(move['from'])[0]
+        job1 = self.jobs.getJob(job1ID)
+        job1Pos = job1.getPosition()
+        job2ID = self.queueGetJobIDFromRow(move['to'])[0]
+        job2 = self.jobs.getJob(job2ID)
+        job2Pos = job2.getPosition()
+        # # Swap job positions
+        job1.setPosition(job2Pos)
+        job2.setPosition(job1Pos)
+        self.jobsSwapping = False
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()

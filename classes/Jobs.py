@@ -71,18 +71,6 @@ class Jobs:
 
     # Other functions
 
-    def jobsPropsToJobs(self, jobsProps):
-        for id, props in jobsProps.items():
-            job = Job(id, props=props)
-            # When job state is 4 (rendering), then set error
-            if job.getState() == 4:
-                job.setState(3)
-                job.setErrorID(-102)
-                job.setErrorMsg('Error: Job had state 4 (Rendering) when initially loaded.')
-            job.bindToProps(self.onJobPropsUpdated)
-            # self.jobs.update({id: job})
-            self.updateJob(id, job)
-
     def generateID(self):
         keys = self.jobs.keys()
         id = 0
@@ -91,3 +79,35 @@ class Jobs:
                 break
             id += 1
         return str(id)
+
+    def jobsPropsToJobs(self, jobsProps):
+        # Create the default job
+        defJob = Job('default', props=jobsProps.get('default'))
+        jobsProps.pop('default', None)
+        defJob.bindToProps(self.onJobPropsUpdated)
+        self.updateJob('default', defJob)
+        # Create jobs and check their position for duplicates
+        jobs = {}
+        jobsDups = {}
+        for id, props in jobsProps.items():
+            job = Job(id, props=props)
+            position = job.getPosition()
+            try:
+                jobs[position]
+                jobsDups.update({position: job})
+            except:
+                jobs.update({position: job})
+        # Sort positions (remove gaps and append duplicates)
+        position = 0
+        for key in sorted(jobs.keys()):
+            job = jobs[key]
+            job.setPosition(position)
+            position += 1
+            job.bindToProps(self.onJobPropsUpdated)
+            self.updateJob(job.getID(), job)
+        for key in sorted(jobsDups.keys()):
+            job = jobsDups[key]
+            job.setPosition(position)
+            position += 1
+            job.bindToProps(self.onJobPropsUpdated)
+            self.updateJob(job.getID(), job)

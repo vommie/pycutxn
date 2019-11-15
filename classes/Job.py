@@ -15,6 +15,7 @@ class Job():
 
     def initProps(self):
         self._props = {
+            'position': 0,
             'srcFile': {
                 'dirName': False,
                 'fileName': False,
@@ -122,6 +123,9 @@ class Job():
     def getErrorMsg(self):
         return self._props['error'].get('message')
 
+    def getPosition(self):
+        return self._props.get('position')
+
     # Props Setters
 
     def setProps(self, props):
@@ -166,6 +170,11 @@ class Job():
 
     def setErrorMsg(self, msg):
         self._props['error'].update({'message': msg})
+        self.propValueChanged()
+
+    def setPosition(self, position):
+        # todo: check, position is not used, or move other jobs 1 down
+        self._props.update({'position': position})
         self.propValueChanged()
 
     def setID(self, id):
