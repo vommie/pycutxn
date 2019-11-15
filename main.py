@@ -125,12 +125,12 @@ class MainUi(QtWidgets.QMainWindow):
                     job.setErrorID(-105)
                     job.setErrorMsg('Job had state "Rendering" when the program started.')
                     job.setState(3)
+                    state = 3
                 self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
                 if state == 0:
                     self.runNextWaitJob()
             except:
                 pass
-
         self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
 
