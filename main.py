@@ -49,6 +49,7 @@ class MainUi(QtWidgets.QMainWindow):
             5: 'Paused'
         }
         self.ffmpegProcess = False
+        self.ffmpegKilled = False
         # Init member variables
         self.dirsUi = DirsUi(self)
         self.logUi = LogUi(self)
@@ -99,6 +100,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnQueueUp.clicked.connect(self.onBtnQueueUpClicked)
         self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
         self.btnQueuePause.clicked.connect(self.onBtnQueuePauseClicked)
+        self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
         # Actions
         self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
         self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
@@ -406,6 +408,9 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnQueuePauseClicked(self):
         self.toggleQueuePause()
 
+    def onBtnQueueKillClicked(self):
+        self.killFFmpegProcess()
+
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
         if self.tableQueue.itemAt(point):
@@ -478,8 +483,13 @@ class MainUi(QtWidgets.QMainWindow):
         if code == 0:
             state = 1
         else:
-            job.setErrorID(code)
-            job.setErrorMsg(str(error))
+            if not self.ffmpegKilled:
+                job.setErrorID(code)
+                job.setErrorMsg(str(error))
+            else:
+                self.ffmpegKilled = False
+                job.setErrorID(-332)
+                job.setErrorMsg('ffmpeg killed while rendering by the user.')
             state = 3
         job.setState(state)
         # todo append output and error to job, display it if clicked on queue item
@@ -691,6 +701,12 @@ class MainUi(QtWidgets.QMainWindow):
                 self.updateQueueJobState(job.getID(), 4)
             else:
                 self.runNextWaitJob()
+
+    def killFFmpegProcess(self):
+        if self.ffmpegProcess:
+            os.kill(self.ffmpegProcess.pid, signal.SIGKILL)
+            self.ffmpegKilled = True
+
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
