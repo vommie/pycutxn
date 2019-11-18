@@ -49,8 +49,8 @@ class FFmpegThread(QThread):
         joined = ffmpeg.concat(*mapping, v=1, a=1).node
         output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:")
         # Run ffmpeg
-        self.ffmpegStart.emit([job, totalSeconds])
         process = output.run_async(overwrite_output=True, pipe_stdout=True, pipe_stderr=True)
+        self.ffmpegStart.emit([job, totalSeconds, process])
         print('async runned')
         # Handle stdout (progress information), by passing it to callback functions
         for line in process.stdout:

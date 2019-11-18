@@ -4,6 +4,8 @@ import sys
 import datetime
 import json
 import subprocess
+import os
+import signal
 
 from libs.mpv import *
 
@@ -43,9 +45,10 @@ class MainUi(QtWidgets.QMainWindow):
             1: 'Finished',
             2: 'Pending',
             3: 'Error',
-            4: 'Rendering'
+            4: 'Rendering',
+            5: 'Paused'
         }
-        self.ffmpegIsBusy = False
+        self.ffmpegProcess = False
         # Init member variables
         self.dirsUi = DirsUi(self)
         self.logUi = LogUi(self)
@@ -95,6 +98,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
         self.btnQueueUp.clicked.connect(self.onBtnQueueUpClicked)
         self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
+        self.btnQueuePause.clicked.connect(self.onBtnQueuePauseClicked)
         # Actions
         self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
         self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
@@ -121,6 +125,11 @@ class MainUi(QtWidgets.QMainWindow):
                 if state == 4:
                     job.setErrorID(-105)
                     job.setErrorMsg('Job had state "Rendering" when the program started.')
+                    job.setState(3)
+                    state = 3
+                elif state == 5:
+                    job.setErrorId(-124)
+                    job.setErrorMsg('Job had state "Paused" when the program started.')
                     job.setState(3)
                     state = 3
                 self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
@@ -178,7 +187,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def runNextWaitJob(self):
         print('runNextWaitJob')
-        if self.ffmpegIsBusy:
+        print('ffmpegProcess: %s, checked: %s' % (self.ffmpegProcess, self.btnQueuePause.isChecked()))
+        if self.ffmpegProcess or self.btnQueuePause.isChecked():
             return False
         job = self.getNextWaitingJob()
         print('next job: %s' % job)
@@ -208,8 +218,17 @@ class MainUi(QtWidgets.QMainWindow):
         return True
 
     def getNextWaitingJob(self):
+        return self.getNextJobByStateID(0)
+
+    def getNextPausedJob(self):
+        return self.getNextJobByStateID(5)
+
+    def getNextRenderingJob(self):
+        return self.getNextJobByStateID(4)
+
+    def getNextJobByStateID(self, stateID):
         job = False
-        jobItems = self.tableQueue.findItems(self.getJobStateString(0), Qt.MatchExactly)
+        jobItems = self.tableQueue.findItems(self.getJobStateString(stateID), Qt.MatchExactly)
         if(jobItems):
             iRow = self.tableQueue.row(jobItems[0])
             jobItem = self.tableQueue.item(iRow, 0)
@@ -384,6 +403,9 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnQueueDownClicked(self):
         self.swapJobs(Functions.moveTableRow(self.tableQueue, 1))
 
+    def onBtnQueuePauseClicked(self):
+        self.toggleQueuePause()
+
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
         if self.tableQueue.itemAt(point):
@@ -447,6 +469,7 @@ class MainUi(QtWidgets.QMainWindow):
     @pyqtSlot('PyQt_PyObject')
     def onFFmpegExit(self, atts):
         print('exit')
+        self.ffmpegProcess = False
         job, code, output, error = atts
         if self.progressBarRender.isEnabled():
             self.progressBarRender.setValue(0)
@@ -468,10 +491,10 @@ class MainUi(QtWidgets.QMainWindow):
     # Event handler when ffmpeg starts to render
     @pyqtSlot('PyQt_PyObject')
     def onFFmpegStart(self, atts):
-        self.ffmpegIsBusy = True
         job = atts[0]
         totalSeconds = atts[1]
         job.setState(4)
+        self.ffmpegProcess = atts[2]
         self.updateQueueJobState(job.getID(), 4)
         if not self.progressBarRender.isEnabled():
             self.progressBarRender.setEnabled(True)
@@ -479,7 +502,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.progressBarRender.setValue(0)
 
     def onFFmpegThreadFinished(self):
-        self.ffmpegIsBusy = False
+        self.ffmpegProcess = False
 
     # GUI Control
 
@@ -654,6 +677,20 @@ class MainUi(QtWidgets.QMainWindow):
         self.logUi.setTitle('Error %s' % errorID)
         self.logUi.setLogText(errorMsg)
         self.logUi.show()
+
+    def toggleQueuePause(self):
+        if self.btnQueuePause.isChecked():
+            if self.ffmpegProcess:
+                os.kill(self.ffmpegProcess.pid, signal.SIGSTOP)
+                job = self.getNextRenderingJob()
+                self.updateQueueJobState(job.getID(), 5)
+        else:
+            if self.ffmpegProcess:
+                os.kill(self.ffmpegProcess.pid, signal.SIGCONT)
+                job = self.getNextPausedJob()
+                self.updateQueueJobState(job.getID(), 4)
+            else:
+                self.runNextWaitJob()
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
