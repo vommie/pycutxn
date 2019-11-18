@@ -492,6 +492,8 @@ class MainUi(QtWidgets.QMainWindow):
                 job.setErrorMsg('ffmpeg killed while rendering by the user.')
             state = 3
         job.setState(state)
+        if self.btnQueueKill.isEnabled():
+            self.btnQueueKill.setEnabled(False)
         # todo append output and error to job, display it if clicked on queue item
         # Update queue table with job state
         id = job.getID()
@@ -510,6 +512,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.progressBarRender.setEnabled(True)
         self.progressBarRender.setMaximum(int(totalSeconds * 100))
         self.progressBarRender.setValue(0)
+        if not self.btnQueueKill.isEnabled():
+            self.btnQueueKill.setEnabled(True)
 
     def onFFmpegThreadFinished(self):
         self.ffmpegProcess = False
