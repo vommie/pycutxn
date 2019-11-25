@@ -89,12 +89,20 @@ class Jobs:
         # Create jobs and check their position for duplicates
         jobs = {}
         jobsDups = {}
+        positionDup = 0
         for id, props in jobsProps.items():
             job = Job(id, props=props)
             position = job.getPosition()
             try:
                 jobs[position]
-                jobsDups.update({position: job})
+                while 1:
+                    try:
+                        jobsDups[positionDup]
+                        positionDup += 1
+                    except:
+                        jobsDups.update({positionDup: job})
+                        break
+
             except:
                 jobs.update({position: job})
         # Sort positions (remove gaps and append duplicates)

@@ -184,7 +184,8 @@ class MainUi(QtWidgets.QMainWindow):
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
         state = job.getState()
-        self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
+        iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
+        job.setPosition(iRow)
         self.runNextWaitJob()
 
     def runNextWaitJob(self):
@@ -554,6 +555,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.tableQueue.setItem(iRow, 0, itemID)
         self.tableQueue.setItem(iRow, 1, itemFilename)
         self.tableQueue.setItem(iRow, 2, itemState)
+        return iRow
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):
