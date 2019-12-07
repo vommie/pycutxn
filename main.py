@@ -53,10 +53,10 @@ class MainUi(QtWidgets.QMainWindow):
         # Init member variables
         self.dirsUi = DirsUi(self)
         self.logUi = LogUi(self)
-        timeFormat = '0:00:0.0'
-        self.playerTimeCurrent = timeFormat
-        self.sectionTimeStart = timeFormat
-        self.sectionTimeEnd = timeFormat
+        self.timeFormat = '0:00:0.0'
+        self.playerTimeCurrent = self.timeFormat
+        self.sectionTimeStart = self.timeFormat
+        self.sectionTimeEnd = self.timeFormat
         self.iconPlay = QIcon(':/icons/ic_play_arrow_24px.svg')
         self.iconPause = QIcon(':/icons/ic_pause_24px.svg')
         self.iconIsMuted = QIcon(':/icons/ic_volume_off_24px.svg')
@@ -101,6 +101,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
         self.btnQueuePause.clicked.connect(self.onBtnQueuePauseClicked)
         self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
+        self.btnQueueLoad.clicked.connect(self.onBtnQueueLoadClicked)
         # Actions
         self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
         self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
@@ -142,9 +143,12 @@ class MainUi(QtWidgets.QMainWindow):
                 pass
         self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
-        # MPV render widget
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
+        self.sliderPlayerIsPressed = False
+        self.sliderPlayer.setMinimum(0)
+        self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
+        self.btnPause.setIcon(self.iconPause)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -155,6 +159,8 @@ class MainUi(QtWidgets.QMainWindow):
         player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal')
         # player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='debug')
         self.playerControl = PlayerControl(player, self.config)
+        self.playerControl.volume(self.config.getPlayerVolume())
+        self.setMuteState(self.config.getPlayerIsMuted())
         # Register observers
         self.playerControl.player.observe_property('pause', self.onPlayerPause)
         self.playerControl.player.observe_property(
@@ -167,19 +173,30 @@ class MainUi(QtWidgets.QMainWindow):
             'volume', self.onPlayerVolume)
 
     def newFile(self, videoFilePath):
+        print('newFile()')
         self.videoFilePath = videoFilePath
+        self.resetSections()
         self.jobs.newCurrentJob(videoFilePath)
-        self.lineEditTgtFileName.setText(
-        self.jobs.getCurrentJob().getTgtFileName())
-        self.sliderPlayerIsPressed = False
-        self.sliderPlayer.setMinimum(0)
-        self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
+        self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
         self.btnTgtWxSuffix.setChecked(False)
-        window.playerControl.play(videoFilePath)
-        self.playerControl.volume(self.config.getPlayerVolume())
-        self.setMuteState(self.config.getPlayerIsMuted())
-        self.btnPause.setIcon(self.iconPause)
+        self.boxTgtFileCount.setValue(0)
+        self.playerControl.play(videoFilePath)
         self.setPlayerControlsState(True)
+        self.playerTimeCurrent = self.timeFormat
+        self.sectionTimeStart = self.timeFormat
+
+    def loadJobFromQueue(self):
+        print('loadJobFromQueue()')
+        jobID = self.queueGetJobIDFromRow()[0]
+        job = self.jobs.getJob(jobID)
+        self.newFile(job.getSrcFilePathLong())
+        sections = job.getSections()
+        for section in sections:
+            self.sectionAddRow(section[0], section[1])
+            self.jobs.getCurrentJob().addSection(section[0], section[1])
+        self.boxTgtFileCount.setValue(job.getTgtFileCount())
+        self.lineEditTgtFileName.setText(job.getTgtFileName())
+        # Todo: Add Filters
 
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
@@ -269,21 +286,26 @@ class MainUi(QtWidgets.QMainWindow):
         self.frameStep = False
 
     def onPlayerPercentPos(self, action, pos):
-        if not self.sliderPlayerIsPressed:
-            self.sliderPlayer.setValue(
-                pos * self.config.getPlayerSliderFactor())
+        try:
+            if not self.sliderPlayerIsPressed:
+                self.sliderPlayer.setValue(pos * self.config.getPlayerSliderFactor())
+        except:
+            pass
 
     def onPlayerTimePos(self, action, timestamp):
         # Convert timestamp format s.ms to h:m:s.ms
-        timeSplit = str(timestamp).split('.', 1)
-        timeMs = timeSplit[1]
-        if len(timeMs) == 1:
-            timeMs = '%s0' % timeSplit[1]
-        timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
-        time = "%s.%s" % (Functions.convertSecondsToHMFS(
-            int(timeSplit[0])), timeMs)
-        self.playerTimeCurrent = time
-        self.labelPlayerTimeCurr.setText(time)
+        try:
+            timeSplit = str(timestamp).split('.', 1)
+            timeMs = timeSplit[1]
+            if len(timeMs) == 1:
+                timeMs = '%s0' % timeSplit[1]
+            timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
+            time = "%s.%s" % (Functions.convertSecondsToHMFS(
+                int(timeSplit[0])), timeMs)
+            self.playerTimeCurrent = time
+            self.labelPlayerTimeCurr.setText(time)
+        except:
+            pass
 
     def onPlayerDuration(self, action, duration):
         self.duration = duration
@@ -411,6 +433,9 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnQueueKillClicked(self):
         self.killFFmpegProcess()
+
+    def onBtnQueueLoadClicked(self):
+        self.loadJobFromQueue()
 
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
@@ -545,6 +570,10 @@ class MainUi(QtWidgets.QMainWindow):
         if(rowIndex > 0):
             self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
+
+    def resetSections(self):
+        for i in range(self.tableSections.rowCount()):
+            self.tableSections.removeRow(0)
 
     def queueAddRow(self, id, filename, state):
         iRow = self.tableQueue.rowCount()
