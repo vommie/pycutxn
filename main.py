@@ -123,6 +123,9 @@ class MainUi(QtWidgets.QMainWindow):
         # Set GUI from config
         self.updateDirs(self.config.getTargetDirs())
         self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())
+        if self.config.getQueueIsPaused():
+            self.btnQueuePause.setChecked(True)
+            self.toggleQueuePause()
         # Queue Jobs
         for id, job in self.jobs.jobs.items():
             try:
@@ -139,7 +142,7 @@ class MainUi(QtWidgets.QMainWindow):
                     job.setState(3)
                     state = 3
                 self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-                if state == 0:
+                if state == 0 and not self.btnQueuePause.isChecked():
                     print('starting... state: 0')
                     self.runNextWaitJob()
             except:
@@ -752,11 +755,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     def toggleQueuePause(self):
         if self.btnQueuePause.isChecked():
+            self.btnQueuePause.setIcon(self.iconPlay)
+            self.config.setQueueIsPaused(True)
             if self.ffmpegProcess:
                 os.kill(self.ffmpegProcess.pid, signal.SIGSTOP)
                 job = self.getNextRenderingJob()
                 self.updateQueueJobState(job.getID(), 5)
         else:
+            self.btnQueuePause.setIcon(self.iconPause)
+            self.config.setQueueIsPaused(False)
             if self.ffmpegProcess:
                 os.kill(self.ffmpegProcess.pid, signal.SIGCONT)
                 job = self.getNextPausedJob()

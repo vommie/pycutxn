@@ -12,6 +12,7 @@ class Config:
             'playerisMuted': False,
             'targetDirName': '',
             'targetDirs': [],
+            'isQueuePaused': False,
         }
         self.initConfig()
 
@@ -56,6 +57,9 @@ class Config:
     def getTgtDirName(self):
         return self.config['targetDirName']
 
+    def getQueueIsPaused(self):
+        return self.config['queueIsPaused']
+
     def setPlayerVolume(self, volume):
         self.config['playerVolume'] = volume
         self.saveConfig()
@@ -70,4 +74,8 @@ class Config:
 
     def setTgtDirName(self, dirName):
         self.config['targetDirName'] = dirName
+        self.saveConfig()
+
+    def setQueueIsPaused(self, isPaused):
+        self.config['queueIsPaused'] = isPaused
         self.saveConfig()
