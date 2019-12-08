@@ -301,7 +301,7 @@
      <x>0</x>
      <y>0</y>
      <width>1210</width>
-     <height>29</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1503,13 +1503,48 @@
    </property>
   </action>
   <action name="actionShowError">
+   <property name="icon">
+    <iconset resource="../res/res.qrc">
+     <normaloff>:/icons/ic_receipt_24px.svg</normaloff>:/icons/ic_receipt_24px.svg</iconset>
+   </property>
    <property name="text">
     <string>Show Error</string>
    </property>
   </action>
   <action name="actionShowLog">
+   <property name="icon">
+    <iconset resource="../res/res.qrc">
+     <normaloff>:/icons/ic_receipt_24px.svg</normaloff>:/icons/ic_receipt_24px.svg</iconset>
+   </property>
    <property name="text">
     <string>Show Log</string>
+   </property>
+  </action>
+  <action name="actionStatePostpone">
+   <property name="icon">
+    <iconset resource="../res/res.qrc">
+     <normaloff>:/icons/ic_restore_24px.svg</normaloff>:/icons/ic_restore_24px.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Postpone Job</string>
+   </property>
+  </action>
+  <action name="actionStateReset">
+   <property name="icon">
+    <iconset resource="../res/res.qrc">
+     <normaloff>:/icons/ic_reply_24px.svg</normaloff>:/icons/ic_reply_24px.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Reset Job</string>
+   </property>
+  </action>
+  <action name="actionStateResume">
+   <property name="icon">
+    <iconset resource="../res/res.qrc">
+     <normaloff>:/icons/ic_forward_24px.svg</normaloff>:/icons/ic_forward_24px.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Resume Job</string>
    </property>
   </action>
  </widget>

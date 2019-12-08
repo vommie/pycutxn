@@ -1,5 +1,9 @@
 <RCC>
   <qresource prefix="icons">
+    <file>ic_receipt_24px.svg</file>
+    <file>ic_forward_24px.svg</file>
+    <file>ic_reply_24px.svg</file>
+    <file>ic_restore_24px.svg</file>
     <file>ic_keyboard_arrow_right_24px.svg</file>
     <file>ic_keyboard_arrow_left_24px.svg</file>
     <file>left-alignment.svg</file>

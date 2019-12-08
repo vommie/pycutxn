@@ -105,6 +105,9 @@ class MainUi(QtWidgets.QMainWindow):
         # Actions
         self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
         self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
+        self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
+        self.actionStateResume.triggered.connect(self.onQueueCtxActioStateResume)
+        self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
         self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
         self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
 
@@ -447,6 +450,13 @@ class MainUi(QtWidgets.QMainWindow):
                 menu.addAction(self.actionPlayFile)
             menu.addAction(self.actionOpenFolder)
             menu.addSeparator()
+            if state == 0:
+                menu.addAction(self.actionStatePostpone)
+            if state == 2:
+                menu.addAction(self.actionStateResume)
+            if state == 3 or state == 1:
+                menu.addAction(self.actionStateReset)
+            menu.addSeparator()
             if state != 0:
                 menu.addAction(self.actionShowLog)
             if state == 3:
@@ -459,6 +469,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onQueueCtxActionOpenFolder(self):
         self.queueOpenFolder()
+
+    def onQueueCtxActionStatePostpone(self):
+        self.queueSetState(2)
+
+    def onQueueCtxActioStateResume(self):
+        self.queueSetState(0)
+
+    def onQueueCtxActioStateReset(self):
+        self.queueSetState(0)
 
     def onQueueCtxActionShowLog(self):
         self.queueShowLog()
@@ -647,6 +666,14 @@ class MainUi(QtWidgets.QMainWindow):
         stateStr = itemState.text()
         state = self.jobStateStrToID(stateStr)
         return state
+
+    def queueSetState(self, state):
+        jobID, iRow = self.queueGetJobIDFromRow()
+        job = self.jobs.getJob(jobID)
+        job.setState(state)
+        itemState = QTableWidgetItem(self.jobStates[state])
+        self.tableQueue.setItem(iRow, 2, itemState)
+        self.runNextWaitJob()
 
     def jobStateStrToID(self, stateStr):
         stateStr = stateStr.lower()
