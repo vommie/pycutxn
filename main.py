@@ -321,6 +321,24 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI control event handlers
 
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+            links = []
+            for url in event.mimeData().urls():
+                links.append(str(url.toLocalFile()))
+            # self.emit(SIGNAL("dropped"), links[0])
+            self.newFile(links[0])
+        else:
+            event.ignore()
+
     def onBtnPauseClicked(self):
         self.playerControl.pause()
 
