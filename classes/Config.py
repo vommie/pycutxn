@@ -12,7 +12,7 @@ class Config:
             'playerisMuted': False,
             'targetDirName': '',
             'targetDirs': [],
-            'isQueuePaused': False,
+            'queueIsPaused': False
         }
         self.initConfig()
 

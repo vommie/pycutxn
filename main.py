@@ -28,12 +28,10 @@ class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainUi, self).__init__()
         uic.loadUi('./gui/main.ui', self)
-
         self.initMembers()
         self.initGui()
         self.initGuiEvents()
         self.initPlayer()
-
         self.show()
 
     def initMembers(self):
@@ -103,6 +101,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
         self.btnQueueLoad.clicked.connect(self.onBtnQueueLoadClicked)
         # Actions
+        self.actionQuit.triggered.connect(self.onExit)
         self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
         self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
         self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
@@ -294,7 +293,7 @@ class MainUi(QtWidgets.QMainWindow):
     def onPlayerPercentPos(self, action, pos):
         try:
             if not self.sliderPlayerIsPressed:
-                self.sliderPlayer.setValue(pos * self.config.getPlayerSliderFactor())
+                self.sliderPlayer.setValue(int(pos * self.config.getPlayerSliderFactor()))
         except:
             pass
 
@@ -317,9 +316,15 @@ class MainUi(QtWidgets.QMainWindow):
         self.duration = duration
 
     def onPlayerVolume(self, action, volume):
-        self.sliderVolume.setValue(volume)
+        self.sliderVolume.setValue(int(volume))
 
     # GUI control event handlers
+
+    def onExit(self):
+        self.closeApp()
+
+    def closeEvent(self, event):
+        self.closeApp()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
@@ -794,6 +799,8 @@ class MainUi(QtWidgets.QMainWindow):
             os.kill(self.ffmpegProcess.pid, signal.SIGKILL)
             self.ffmpegKilled = True
 
+    def closeApp(self):
+        pass
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
