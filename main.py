@@ -111,6 +111,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
 
     def initGui(self):
+        geometry = self.config.getAppGeometry()
+        if geometry: self.restoreGeometry(geometry)
+        state = self.config.getAppState()
+        if state: self.restoreState(state)
         # GUI elements options
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
@@ -800,7 +804,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.ffmpegKilled = True
 
     def closeApp(self):
-        pass
+        self.config.setAppGeometry(self.saveGeometry())
+        self.config.setAppState(self.saveState())
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
