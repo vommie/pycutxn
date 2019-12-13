@@ -413,6 +413,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onLineEditTgtFileNameChanged(self, text):
         self.jobs.getCurrentJob().setTgtFileName(text)
+        self.setBtnExportSaveState()
 
     def onBoxFileCountChanged(self, text):
         self.jobs.getCurrentJob().setTgtFileCount(text)
@@ -427,6 +428,7 @@ class MainUi(QtWidgets.QMainWindow):
         path = self.cmbTgtDirs.currentData()
         self.jobs.getCurrentJob().setTgtDirName(path)
         self.config.setTgtDirName(text)
+        self.setBtnExportSaveState()
 
     def onBtnMuteClicked(self):
         self.config.setPlayerIsMuted(not self.config.getPlayerIsMuted())
@@ -673,6 +675,12 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnQueueDown.setEnabled(True)
             else:
                 self.btnQueueDown.setEnabled(False)
+
+    def setBtnExportSaveState(self):
+        if len(self.cmbTgtDirs.currentText()) > 0 and len(self.lineEditTgtFileName.text()) > 0:
+            if not self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(True)
+        else:
+            if self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(False)
 
     def queueDeleteSelectedRow(self):
         jobID, iRow = self.queueGetJobIDFromRow()
