@@ -29,6 +29,10 @@ class Job():
                 'suffixes': []
             },
             'sections': [],
+            'filters': {
+                'crop': {},
+                'resize': {}
+            },
             'state': 0,
             'error': {
                 'id': False,
@@ -126,6 +130,76 @@ class Job():
     def getPosition(self):
         return self._props.get('position')
 
+    def getFilterCropState(self):
+        try:
+            self._props['filters']['crop']
+            return self._props['filters']['crop'].get('active')
+        except:
+            return False
+
+    def getFilterCropTop(self):
+        try:
+            self._props['filters']['crop']
+            return self._props['filters']['crop'].get('top')
+        except:
+            return False
+
+    def getFilterCropRight(self):
+        try:
+            self._props['filters']['crop']
+            return self._props['filters']['crop'].get('right')
+        except:
+            return False
+
+    def getFilterCropBottom(self):
+        try:
+            self._props['filters']['crop']
+            return self._props['filters']['crop'].get('bottom')
+        except:
+            return False
+
+    def getFilterCropLeft(self):
+        try:
+            self._props['filters']['crop']
+            return self._props['filters']['crop'].get('left')
+        except:
+            return False
+
+    def getFilterResizeState(self):
+        try:
+            self._props['filters']['resize']
+            return self._props['filters']['resize'].get('active')
+        except:
+            return False
+
+    def getFilterResizeWidth(self):
+        try:
+            self._props['filters']['resize']
+            return self._props['filters']['resize'].get('width')
+        except:
+            return False
+
+    def getFilterResizeHeight(self):
+        try:
+            self._props['filters']['resize']
+            return self._props['filters']['resize'].get('height')
+        except:
+            return False
+
+    def getFilterDeshakeState(self):
+        try:
+            self._props['filters']
+            return self._props['filters'].get('deshake')
+        except:
+            return False
+
+    def getFilterRotate(self):
+        try:
+            self._props['filters']
+            return self._props['filters'].get('rotate')
+        except:
+            return False
+
     # Props Setters
 
     def setProps(self, props):
@@ -175,6 +249,46 @@ class Job():
     def setPosition(self, position):
         # todo: check, position is not used, or move other jobs 1 down
         self._props.update({'position': position})
+        self.propValueChanged()
+
+    def setFilterCropState(self, state):
+        self._props['filters']['crop'].update({'active': state})
+        self.propValueChanged()
+
+    def setFilterCropTop(self, top):
+        self._props['filters']['crop'].update({'top': top})
+        self.propValueChanged()
+
+    def setFilterCropRight(self, right):
+        self._props['filters']['crop'].update({'right': right})
+        self.propValueChanged()
+
+    def setFilterCropBottom(self, bottom):
+        self._props['filters']['crop'].update({'bottom': bottom})
+        self.propValueChanged()
+
+    def setFilterCropLeft(self, left):
+        self._props['filters']['crop'].update({'left': left})
+        self.propValueChanged()
+
+    def setFilterResizeState(self, state):
+        self._props['filters']['resize'].update({'active': state})
+        self.propValueChanged()
+
+    def setFilterResizeWidth(self, width):
+        self._props['filters']['resize'].update({'width': width})
+        self.propValueChanged()
+
+    def setFilterResizeHeight(self, height):
+        self._props['filters']['resize'].update({'height': height})
+        self.propValueChanged()
+
+    def setFilterDeshakeState(self, state):
+        self._props['filters'].update({'deshake': state})
+        self.propValueChanged()
+
+    def setFilterRotate(self, deg):
+        self._props['filters'].update({'rotate': deg})
         self.propValueChanged()
 
     def setID(self, id):

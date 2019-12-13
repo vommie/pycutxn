@@ -23,7 +23,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
 import res  # pyrcc5 -o res.py res/res.qrc
 
-
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainUi, self).__init__()
@@ -91,6 +90,19 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
         self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
+        # Filters
+        self.btnFilterCrop.clicked.connect(self.onBtnFilterCropClicked)
+        self.boxFilterCropT.valueChanged.connect(self.onBoxFilterCropTChanged)
+        self.boxFilterCropR.valueChanged.connect(self.onBoxFilterCropRChanged)
+        self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
+        self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
+        self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
+        self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
+        self.boxFilterResizeH.valueChanged.connect(self.onBoxFilterResizeHChanged)
+        self.btnFilterDeshake.clicked.connect(self.onBtnFilterDeshake)
+        self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
+        self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
+        self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
         # Queue
         self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
         self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
@@ -429,6 +441,69 @@ class MainUi(QtWidgets.QMainWindow):
         self.jobs.getCurrentJob().setTgtDirName(path)
         self.config.setTgtDirName(text)
         self.setBtnExportSaveState()
+
+    def onBtnFilterCropClicked(self):
+        job = self.jobs.getCurrentJob()
+        job.setFilterCropState(self.btnFilterCrop.isChecked())
+
+    def onBoxFilterCropTChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        job.setFilterCropTop(text)
+
+    def onBoxFilterCropRChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        job.setFilterCropRight(text)
+
+    def onBoxFilterCropBChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        job.setFilterCropBottom(text)
+
+    def onBoxFilterCropLChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        job.setFilterCropLeft(text)
+
+    def onBtnFilterResizeClicked(self):
+        job = self.jobs.getCurrentJob()
+        job.setFilterResizeState(self.btnFilterResize.isChecked())
+
+    def onBoxFilterResizeWChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        job.setFilterResizeWidth(text)
+
+    def onBoxFilterResizeHChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        job.setFilterResizeHeight(text)
+
+    def onBtnFilterDeshake(self):
+        job = self.jobs.getCurrentJob()
+        job.setFilterDeshakeState(self.btnFilterDeshake.isChecked())
+
+    def onBtnFilterRotateLeft(self):
+        job = self.jobs.getCurrentJob()
+        if self.btnFilterRotateLeft.isChecked():
+            job.setFilterRotate(-90)
+        else:
+            job.setFilterRotate(False)
+        self.btnFilterRotateRight.setChecked(False)
+        self.btnFilterRotate180.setChecked(False)
+
+    def onBtnFilterRotateRight(self):
+        job = self.jobs.getCurrentJob()
+        if self.btnFilterRotateRight.isChecked():
+            job.setFilterRotate(90)
+        else:
+            job.setFilterRotate(False)
+        self.btnFilterRotateLeft.setChecked(False)
+        self.btnFilterRotate180.setChecked(False)
+
+    def onBtnFilterRotate180(self):
+        job = self.jobs.getCurrentJob()
+        if self.btnFilterRotate180.isChecked():
+            job.setFilterRotate(180)
+        else:
+            job.setFilterRotate(False)
+        self.btnFilterRotateLeft.setChecked(False)
+        self.btnFilterRotateRight.setChecked(False)
 
     def onBtnMuteClicked(self):
         self.config.setPlayerIsMuted(not self.config.getPlayerIsMuted())
