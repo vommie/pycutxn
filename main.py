@@ -175,9 +175,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
         self.btnPause.setIcon(self.iconPause)
 
-    def x(self):
-        print('clicked')
-
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
@@ -461,14 +458,17 @@ class MainUi(QtWidgets.QMainWindow):
         job.setFilterCropState(self.btnFilterCrop.isChecked())
 
     def onBoxFilterCropTChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        self.setMissingCropProperties(job)
         videoHeight = self.videoProps.get('height')
         if videoHeight and text >= videoHeight:
             self.boxFilterCropT.setValue(videoHeight)
             text = videoHeight
-        job = self.jobs.getCurrentJob()
         job.setFilterCropY(text)
 
     def onBoxFilterCropRChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        self.setMissingCropProperties(job)
         videoWidth = self.videoProps.get('width')
         if not videoWidth: return
         if text >= videoWidth:
@@ -476,10 +476,11 @@ class MainUi(QtWidgets.QMainWindow):
             width = 0
         else:
             width = int(videoWidth) - int(text)
-        job = self.jobs.getCurrentJob()
         job.setFilterCropWidth(width)
 
     def onBoxFilterCropBChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        self.setMissingCropProperties(job)
         videoHeight = self.videoProps.get('height')
         if not videoHeight: return
         if text >= videoHeight:
@@ -487,15 +488,18 @@ class MainUi(QtWidgets.QMainWindow):
             height = 0
         else:
             height = int(videoHeight) - int(text)
-        job = self.jobs.getCurrentJob()
         job.setFilterCropHeight(height)
 
     def onBoxFilterCropLChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        self.setMissingCropProperties(job)
         videoWidth = self.videoProps.get('width')
         if videoWidth and text >= videoWidth:
             self.boxFilterCropL.setValue(videoWidth)
             text = videoWidth
-        job = self.jobs.getCurrentJob()
+
+        width = job.getFilterCropWidth() - text
+        job.setFilterCropWidth(width)
         job.setFilterCropX(text)
 
     def onBtnFilterResizeClicked(self):
@@ -925,6 +929,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     def resetVideoProps(self):
         self.videoProps = {}
+
+    def setMissingCropProperties(self, job):
+        if not job.getFilterCropX(): job.setFilterCropX(0)
+        if not job.getFilterCropY(): job.setFilterCropY(0)
+        if not job.getFilterCropWidth(): job.setFilterCropWidth(self.videoProps.get('width'))
+        if not job.getFilterCropHeight(): job.setFilterCropHeight(self.videoProps.get('height'))
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:
