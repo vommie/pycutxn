@@ -27,13 +27,23 @@ class FFmpegThread(QThread):
         sections = job.getSections()
         mapping = []
         totalSeconds = 0
+        # Todo: Add Crop, Resize, Deshake, Rotate (90, -90, 180)
         for section in sections:
-            # ffmpeg
             video = (
                 in_file.video
                 .trim(start=section[0], end=section[1])
                 .setpts('PTS-STARTPTS')
             )
+            rotate = job.getFilterRotate()
+            if rotate:
+                if rotate == 90: rotate = 1
+                elif rotate == -90: rotate = 2
+                if rotate == 1 or rotate == 2: video = ( video .filter('transpose', rotate) )
+                else: video = ( video .filter('transpose', 2) .filter('transpose', 2) )
+            crop = job.getFilterCrop()
+            # if job.getFilterCropState():
+
+
             mapping.append(video)
             audio = (
                 in_file.audio

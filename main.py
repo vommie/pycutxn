@@ -60,6 +60,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.iconIsNotMuted = QIcon(':/icons/ic_volume_up_24px.svg')
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
+        self.resetVideoProps()
 
     def initGuiEvents(self):
         # Player control
@@ -190,19 +191,18 @@ class MainUi(QtWidgets.QMainWindow):
         self.setMuteState(self.config.getPlayerIsMuted())
         # Register observers
         self.playerControl.player.observe_property('pause', self.onPlayerPause)
-        self.playerControl.player.observe_property(
-            'percent-pos', self.onPlayerPercentPos)
-        self.playerControl.player.observe_property(
-            'duration', self.onPlayerDuration)
-        self.playerControl.player.observe_property(
-            'time-pos', self.onPlayerTimePos)
-        self.playerControl.player.observe_property(
-            'volume', self.onPlayerVolume)
+        self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
+        self.playerControl.player.observe_property('duration', self.onPlayerDuration)
+        self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
+        self.playerControl.player.observe_property('volume', self.onPlayerVolume)
+        self.playerControl.player.observe_property('width', self.onPlayerWidth)
+        self.playerControl.player.observe_property('height', self.onPlayerHeight)
 
     def newFile(self, videoFilePath):
         print('newFile()')
-        self.videoFilePath = videoFilePath
+        self.resetVideoProps()
         self.resetSections()
+        self.resetCropInputs()
         self.jobs.newCurrentJob(videoFilePath)
         self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
         self.btnTgtWxSuffix.setChecked(False)
@@ -340,6 +340,14 @@ class MainUi(QtWidgets.QMainWindow):
     def onPlayerVolume(self, action, volume):
         self.sliderVolume.setValue(int(volume))
 
+    def onPlayerWidth(self, action, width):
+        if width:
+            self.videoProps.update({'width': width})
+
+    def onPlayerHeight(self, action, height):
+        if height:
+            self.videoProps.update({'height': height})
+
     # GUI control event handlers
 
     def onExit(self):
@@ -453,20 +461,42 @@ class MainUi(QtWidgets.QMainWindow):
         job.setFilterCropState(self.btnFilterCrop.isChecked())
 
     def onBoxFilterCropTChanged(self, text):
+        videoHeight = self.videoProps.get('height')
+        if videoHeight and text >= videoHeight:
+            self.boxFilterCropT.setValue(videoHeight)
+            text = videoHeight
         job = self.jobs.getCurrentJob()
-        job.setFilterCropTop(text)
+        job.setFilterCropY(text)
 
     def onBoxFilterCropRChanged(self, text):
+        videoWidth = self.videoProps.get('width')
+        if not videoWidth: return
+        if text >= videoWidth:
+            self.boxFilterCropR.setValue(videoWidth)
+            width = 0
+        else:
+            width = int(videoWidth) - int(text)
         job = self.jobs.getCurrentJob()
-        job.setFilterCropRight(text)
+        job.setFilterCropWidth(width)
 
     def onBoxFilterCropBChanged(self, text):
+        videoHeight = self.videoProps.get('height')
+        if not videoHeight: return
+        if text >= videoHeight:
+            self.boxFilterCropB.setValue(videoHeight)
+            height = 0
+        else:
+            height = int(videoHeight) - int(text)
         job = self.jobs.getCurrentJob()
-        job.setFilterCropBottom(text)
+        job.setFilterCropHeight(height)
 
     def onBoxFilterCropLChanged(self, text):
+        videoWidth = self.videoProps.get('width')
+        if videoWidth and text >= videoWidth:
+            self.boxFilterCropL.setValue(videoWidth)
+            text = videoWidth
         job = self.jobs.getCurrentJob()
-        job.setFilterCropLeft(text)
+        job.setFilterCropX(text)
 
     def onBtnFilterResizeClicked(self):
         job = self.jobs.getCurrentJob()
@@ -718,6 +748,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.tableQueue.setItem(iRow, 2, itemState)
         return iRow
 
+    def resetCropInputs(self):
+        self.boxFilterCropT.setValue(0)
+        self.boxFilterCropR.setValue(0)
+        self.boxFilterCropB.setValue(0)
+        self.boxFilterCropL.setValue(0)
+
     # Set the states of the section buttons
     def setSectionBtnStates(self):
         rowCount = self.tableSections.rowCount()
@@ -886,6 +922,9 @@ class MainUi(QtWidgets.QMainWindow):
                 self.updateQueueJobState(job.getID(), 4)
             else:
                 self.runNextWaitJob()
+
+    def resetVideoProps(self):
+        self.videoProps = {}
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:
