@@ -127,6 +127,9 @@ class MainUi(QtWidgets.QMainWindow):
         if geometry: self.restoreGeometry(geometry)
         state = self.config.getAppState()
         if state: self.restoreState(state)
+        # Add custom slider to control the player time position
+        self.sliderPlayer = Slider(Qt.Horizontal)
+        self.framePlayerProgress.insertWidget(0, self.sliderPlayer)
         # GUI elements options
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
@@ -170,6 +173,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
         self.btnPause.setIcon(self.iconPause)
+
+    def x(self):
+        print('clicked')
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -606,13 +612,13 @@ class MainUi(QtWidgets.QMainWindow):
             return
         if line[0] == 'progress':
             if line[1] == 'end':
-                # Reset progress bar
+                # Todo: Reset progress bar
                 pass
         elif line[0] == 'speed':
-            # Set speed label
+            # Todo: Set speed label
             pass
         elif line[0] == 'fps':
-            # set fps label
+            # Todo: set fps label
             pass
         elif line[0] == 'out_time':
             currentSecond = int(
@@ -889,6 +895,34 @@ class MainUi(QtWidgets.QMainWindow):
     def closeApp(self):
         self.config.setAppGeometry(self.saveGeometry())
         self.config.setAppState(self.saveState())
+
+# Custom slider class lets user clicks on position
+class Slider(QtWidgets.QSlider):
+
+    def mousePressEvent(self, event):
+        super(Slider, self).mousePressEvent(event)
+        if event.button() == Qt.LeftButton:
+            val = self.pixelPosToRangeValue(event.pos())
+            self.sliderMoved.emit(val)
+            self.setValue(val)
+
+    def pixelPosToRangeValue(self, pos):
+        opt = QtWidgets.QStyleOptionSlider()
+        self.initStyleOption(opt)
+        gr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderGroove, self)
+        sr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderHandle, self)
+
+        if self.orientation() == Qt.Horizontal:
+            sliderLength = sr.width()
+            sliderMin = gr.x()
+            sliderMax = gr.right() - sliderLength + 1
+        else:
+            sliderLength = sr.height()
+            sliderMin = gr.y()
+            sliderMax = gr.bottom() - sliderLength + 1
+        pr = pos - sr.center() + sr.topLeft()
+        p = pr.x() if self.orientation() == Qt.Horizontal else pr.y()
+        return QtWidgets.QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), p - sliderMin, sliderMax - sliderMin, opt.upsideDown)
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
