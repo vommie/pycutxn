@@ -45,8 +45,8 @@ class FFmpegThread(QThread):
                 h = job.getFilterCropHeight()
                 x = job.getFilterCropX()
                 y = job.getFilterCropY()
-                if x and y and w and h: print('x: %s, y: %s, w: %s, h: %s' % (x, y, w, h))
-                if x and y and w and h: video = ( video .crop(x=x, y=y, width=w, height=h) )
+                print('x: %s, y: %s, w: %s, h: %s' % (x, y, w, h))
+                video = ( video .crop(x=x, y=y, width=w, height=h) )
 
             mapping.append(video)
             audio = (

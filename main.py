@@ -457,50 +457,26 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         job.setFilterCropState(self.btnFilterCrop.isChecked())
 
-    def onBoxFilterCropTChanged(self, text):
+    def onBoxFilterCropTChanged(self, px):
         job = self.jobs.getCurrentJob()
         self.setMissingCropProperties(job)
-        videoHeight = self.videoProps.get('height')
-        if videoHeight and text >= videoHeight:
-            self.boxFilterCropT.setValue(videoHeight)
-            text = videoHeight
-        job.setFilterCropY(text)
+        job.setFilterCropY(px)
+        job.setFilterCropHeight(self.videoProps.get('height') - px)
 
-    def onBoxFilterCropRChanged(self, text):
+    def onBoxFilterCropRChanged(self, px):
         job = self.jobs.getCurrentJob()
         self.setMissingCropProperties(job)
-        videoWidth = self.videoProps.get('width')
-        if not videoWidth: return
-        if text >= videoWidth:
-            self.boxFilterCropR.setValue(videoWidth)
-            width = 0
-        else:
-            width = int(videoWidth) - int(text)
-        job.setFilterCropWidth(width)
+        job.setFilterCropWidth(self.videoProps.get('width') - px - int(self.boxFilterCropL.value()))
 
-    def onBoxFilterCropBChanged(self, text):
+    def onBoxFilterCropBChanged(self, px):
         job = self.jobs.getCurrentJob()
         self.setMissingCropProperties(job)
-        videoHeight = self.videoProps.get('height')
-        if not videoHeight: return
-        if text >= videoHeight:
-            self.boxFilterCropB.setValue(videoHeight)
-            height = 0
-        else:
-            height = int(videoHeight) - int(text)
-        job.setFilterCropHeight(height)
 
-    def onBoxFilterCropLChanged(self, text):
+    def onBoxFilterCropLChanged(self, px):
         job = self.jobs.getCurrentJob()
         self.setMissingCropProperties(job)
-        videoWidth = self.videoProps.get('width')
-        if videoWidth and text >= videoWidth:
-            self.boxFilterCropL.setValue(videoWidth)
-            text = videoWidth
-
-        width = job.getFilterCropWidth() - text
-        job.setFilterCropWidth(width)
-        job.setFilterCropX(text)
+        job.setFilterCropX(px)
+        job.setFilterCropWidth(self.videoProps.get('width') - px - int(self.boxFilterCropR.value()))
 
     def onBtnFilterResizeClicked(self):
         job = self.jobs.getCurrentJob()
