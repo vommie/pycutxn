@@ -461,7 +461,7 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         self.setMissingCropProperties(job)
         job.setFilterCropY(px)
-        job.setFilterCropHeight(self.videoProps.get('height') - px)
+        job.setFilterCropHeight(self.videoProps.get('height') - px - int(self.boxFilterCropB.value()))
 
     def onBoxFilterCropRChanged(self, px):
         job = self.jobs.getCurrentJob()
@@ -471,6 +471,7 @@ class MainUi(QtWidgets.QMainWindow):
     def onBoxFilterCropBChanged(self, px):
         job = self.jobs.getCurrentJob()
         self.setMissingCropProperties(job)
+        job.setFilterCropHeight(self.videoProps.get('height') - px - int(self.boxFilterCropT.value()))
 
     def onBoxFilterCropLChanged(self, px):
         job = self.jobs.getCurrentJob()
@@ -952,5 +953,5 @@ class Slider(QtWidgets.QSlider):
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
 # window.newFile('/home/vommie/videos/test.mp4')
-window.newFile('/home/vommie/videos/test.mp4')
+window.newFile('/home/vommie/dev/personal/pycut/test.mp4')
 app.exec_()
