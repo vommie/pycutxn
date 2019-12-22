@@ -62,6 +62,58 @@ class MainUi(QtWidgets.QMainWindow):
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
         self.resetVideoProps()
 
+    def initGui(self):
+        geometry = self.config.getAppGeometry()
+        if geometry: self.restoreGeometry(geometry)
+        state = self.config.getAppState()
+        if state: self.restoreState(state)
+        # GUI elements options
+        header = self.tableSections.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header = self.tableQueue.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        # Set GUI from config
+        self.updateDirs(self.config.getTargetDirs())
+        self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())
+        if self.config.getQueueIsPaused():
+            self.btnQueuePause.setChecked(True)
+            self.toggleQueuePause()
+        # Queue Jobs
+        for id, job in self.jobs.jobs.items():
+            try:
+                int(id) # Skip 'default' job
+                state = job.getState()
+                if state == 4:
+                    job.setErrorID(-105)
+                    job.setErrorMsg('Job had state "Rendering" when the program started.')
+                    job.setState(3)
+                    state = 3
+                elif state == 5:
+                    job.setErrorId(-124)
+                    job.setErrorMsg('Job had state "Paused" when the program started.')
+                    job.setState(3)
+                    state = 3
+                self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
+                if state == 0 and not self.btnQueuePause.isChecked():
+                    print('starting... state: 0')
+                    self.runNextWaitJob()
+            except:
+                pass
+        self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
+        self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
+        self.renderFrame.setAttribute(Qt.WA_NativeWindow)
+        # Add custom slider to control the player time position
+        self.sliderPlayer = Slider(Qt.Horizontal)
+        self.framePlayerProgress.insertWidget(0, self.sliderPlayer)
+        self.sliderPlayerIsPressed = False
+        self.sliderPlayer.setMinimum(0)
+        self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
+        self.btnPause.setIcon(self.iconPause)
+
     def initGuiEvents(self):
         # Player control
         self.btnPause.clicked.connect(self.onBtnPauseClicked)
@@ -122,58 +174,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
         self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
         self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
-
-    def initGui(self):
-        geometry = self.config.getAppGeometry()
-        if geometry: self.restoreGeometry(geometry)
-        state = self.config.getAppState()
-        if state: self.restoreState(state)
-        # Add custom slider to control the player time position
-        self.sliderPlayer = Slider(Qt.Horizontal)
-        self.framePlayerProgress.insertWidget(0, self.sliderPlayer)
-        # GUI elements options
-        header = self.tableSections.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
-        header = self.tableQueue.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
-        # Set GUI from config
-        self.updateDirs(self.config.getTargetDirs())
-        self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())
-        if self.config.getQueueIsPaused():
-            self.btnQueuePause.setChecked(True)
-            self.toggleQueuePause()
-        # Queue Jobs
-        for id, job in self.jobs.jobs.items():
-            try:
-                int(id) # Skip 'default' job
-                state = job.getState()
-                if state == 4:
-                    job.setErrorID(-105)
-                    job.setErrorMsg('Job had state "Rendering" when the program started.')
-                    job.setState(3)
-                    state = 3
-                elif state == 5:
-                    job.setErrorId(-124)
-                    job.setErrorMsg('Job had state "Paused" when the program started.')
-                    job.setState(3)
-                    state = 3
-                self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-                if state == 0 and not self.btnQueuePause.isChecked():
-                    print('starting... state: 0')
-                    self.runNextWaitJob()
-            except:
-                pass
-        self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
-        self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
-        self.renderFrame.setAttribute(Qt.WA_NativeWindow)
-        self.sliderPlayerIsPressed = False
-        self.sliderPlayer.setMinimum(0)
-        self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
-        self.btnPause.setIcon(self.iconPause)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -929,8 +929,9 @@ class Slider(QtWidgets.QSlider):
         super(Slider, self).mousePressEvent(event)
         if event.button() == Qt.LeftButton:
             val = self.pixelPosToRangeValue(event.pos())
-            self.sliderMoved.emit(val)
             self.setValue(val)
+            self.sliderMoved.emit(val)
+            self.sliderReleased.emit()
 
     def pixelPosToRangeValue(self, pos):
         opt = QtWidgets.QStyleOptionSlider()
