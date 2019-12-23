@@ -220,6 +220,8 @@ class MainUi(QtWidgets.QMainWindow):
         jobID = self.queueGetJobIDFromRow()[0]
         job = self.jobs.getJob(jobID)
         self.newFile(job.getSrcFilePathLong())
+        if not self.setTgtDirByData(job.getTgtDirName()):
+            print('Error: Cannot sex target path found in job')
         sections = job.getSections()
         for section in sections:
             self.sectionAddRow(section[0], section[1])
@@ -908,6 +910,15 @@ class MainUi(QtWidgets.QMainWindow):
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()
         self.jobs.getCurrentJob().setTgtDirName(path)
+
+    def setTgtDirByData(self, path):
+        if self.cmbTgtDirs.currentData == path:
+            return True
+        index = self.cmbTgtDirs.findData(path)
+        if not index == -1:
+            self.cmbTgtDirs.setCurrentIndex(index)
+            return True
+        return False
 
     def resetVideoProps(self):
         print('resetVideoProps()')
