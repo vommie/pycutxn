@@ -197,17 +197,19 @@ class MainUi(QtWidgets.QMainWindow):
 
     def newFile(self, videoFilePath):
         print('newFile()')
-        # Before file gets loaded
+        # Reset GUI and variables
         self.resetVideoProps()
         self.resetSections()
         self.resetCropInputs()
-        self.jobs.newCurrentJob(videoFilePath)
-        self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
         self.btnTgtWxSuffix.setChecked(False)
         self.boxTgtFileCount.setValue(0)
         self.playerTimeCurrent = self.timeFormat
         self.sectionTimeStart = self.timeFormat
-        # File loading
+        # Create new job
+        self.jobs.newCurrentJob(videoFilePath)
+        self.setCurrTgtDir()
+        self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
+        # Load video file
         self.videoProps = Functions.getVideoProperties(videoFilePath)
         if self.videoProps:
             self.playerControl.play(videoFilePath)
@@ -453,8 +455,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.dirsUi.show()
 
     def onCmbTgtDirsCurrTextChanged(self, text):
-        path = self.cmbTgtDirs.currentData()
-        self.jobs.getCurrentJob().setTgtDirName(path)
+        self.setCurrTgtDir()
         self.config.setTgtDirName(text)
         self.setBtnExportSaveState()
 
@@ -903,6 +904,10 @@ class MainUi(QtWidgets.QMainWindow):
                 self.updateQueueJobState(job.getID(), 4)
             else:
                 self.runNextWaitJob()
+
+    def setCurrTgtDir(self):
+        path = self.cmbTgtDirs.currentData()
+        self.jobs.getCurrentJob().setTgtDirName(path)
 
     def resetVideoProps(self):
         print('resetVideoProps()')
