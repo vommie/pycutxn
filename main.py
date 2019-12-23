@@ -23,6 +23,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
 import res  # pyrcc5 -o res.py res/res.qrc
 
+import ffmpeg
+
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainUi, self).__init__()
@@ -192,11 +194,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.player.observe_property('duration', self.onPlayerDuration)
         self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
         self.playerControl.player.observe_property('volume', self.onPlayerVolume)
-        self.playerControl.player.observe_property('width', self.onPlayerWidth)
-        self.playerControl.player.observe_property('height', self.onPlayerHeight)
 
     def newFile(self, videoFilePath):
         print('newFile()')
+        # Before file gets loaded
         self.resetVideoProps()
         self.resetSections()
         self.resetCropInputs()
@@ -204,10 +205,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
         self.btnTgtWxSuffix.setChecked(False)
         self.boxTgtFileCount.setValue(0)
-        self.playerControl.play(videoFilePath)
-        self.setPlayerControlsState(True)
         self.playerTimeCurrent = self.timeFormat
         self.sectionTimeStart = self.timeFormat
+        # File loading
+        self.videoProps = Functions.getVideoProperties(videoFilePath)
+        if self.videoProps:
+            self.playerControl.play(videoFilePath)
+            self.setPlayerControlsState(True)
 
     def loadJobFromQueue(self):
         print('loadJobFromQueue()')
@@ -221,6 +225,15 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxTgtFileCount.setValue(job.getTgtFileCount())
         self.lineEditTgtFileName.setText(job.getTgtFileName())
         # Todo: Add Filters
+        self.loadFilterCrop(job)
+
+    def loadFilterCrop(self, job):
+        print('loadFilterCrop()')
+        self.btnFilterCrop.setChecked(job.getFilterCropState())
+        self.boxFilterCropT.setValue(job.getFilterCropT())
+        self.boxFilterCropR.setValue(job.getFilterCropR())
+        self.boxFilterCropB.setValue(job.getFilterCropB())
+        self.boxFilterCropL.setValue(job.getFilterCropL())
 
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
@@ -337,14 +350,6 @@ class MainUi(QtWidgets.QMainWindow):
     def onPlayerVolume(self, action, volume):
         self.sliderVolume.setValue(int(volume))
 
-    def onPlayerWidth(self, action, width):
-        if width:
-            self.videoProps.update({'width': width})
-
-    def onPlayerHeight(self, action, height):
-        if height:
-            self.videoProps.update({'height': height})
-
     # GUI control event handlers
 
     def onExit(self):
@@ -459,25 +464,19 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBoxFilterCropTChanged(self, px):
         job = self.jobs.getCurrentJob()
-        self.setMissingCropProperties(job)
-        job.setFilterCropY(px)
-        job.setFilterCropHeight(self.videoProps.get('height') - px - int(self.boxFilterCropB.value()))
+        job.setFilterCropT(px)
 
     def onBoxFilterCropRChanged(self, px):
         job = self.jobs.getCurrentJob()
-        self.setMissingCropProperties(job)
-        job.setFilterCropWidth(self.videoProps.get('width') - px - int(self.boxFilterCropL.value()))
+        job.setFilterCropR(px)
 
     def onBoxFilterCropBChanged(self, px):
         job = self.jobs.getCurrentJob()
-        self.setMissingCropProperties(job)
-        job.setFilterCropHeight(self.videoProps.get('height') - px - int(self.boxFilterCropT.value()))
+        job.setFilterCropB(px)
 
     def onBoxFilterCropLChanged(self, px):
         job = self.jobs.getCurrentJob()
-        self.setMissingCropProperties(job)
-        job.setFilterCropX(px)
-        job.setFilterCropWidth(self.videoProps.get('width') - px - int(self.boxFilterCropR.value()))
+        job.setFilterCropL(px)
 
     def onBtnFilterResizeClicked(self):
         job = self.jobs.getCurrentJob()
@@ -730,6 +729,7 @@ class MainUi(QtWidgets.QMainWindow):
         return iRow
 
     def resetCropInputs(self):
+        print('resetCropInputs()')
         self.boxFilterCropT.setValue(0)
         self.boxFilterCropR.setValue(0)
         self.boxFilterCropB.setValue(0)
@@ -905,13 +905,8 @@ class MainUi(QtWidgets.QMainWindow):
                 self.runNextWaitJob()
 
     def resetVideoProps(self):
+        print('resetVideoProps()')
         self.videoProps = {}
-
-    def setMissingCropProperties(self, job):
-        if not job.getFilterCropX(): job.setFilterCropX(0)
-        if not job.getFilterCropY(): job.setFilterCropY(0)
-        if not job.getFilterCropWidth(): job.setFilterCropWidth(self.videoProps.get('width'))
-        if not job.getFilterCropHeight(): job.setFilterCropHeight(self.videoProps.get('height'))
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:

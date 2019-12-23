@@ -1,4 +1,5 @@
 import sys
+import ffmpeg
 
 class Functions:
 
@@ -56,3 +57,20 @@ class Functions:
     @staticmethod
     def isSameString(string1, string2):
         return string1 == string2
+
+    # Get video properties from ffprobe
+    @staticmethod
+    def getVideoProperties(videoFilePath):
+        print('probeFile()')
+        props = {}
+        probe = ffmpeg.probe(videoFilePath)
+        video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+        try:
+            width = int(video_stream['width'])
+            height = int(video_stream['height'])
+            if width and height:
+                props.update({'width' : width})
+                props.update({'height' : height})
+        except:
+            props = {}
+        return props

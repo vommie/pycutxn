@@ -137,31 +137,39 @@ class Job():
         except:
             return False
 
-    def getFilterCropX(self):
+    def getFilterCropT(self):
         try:
             self._props['filters']['crop']
-            return self._props['filters']['crop'].get('x')
+            px = self._props['filters']['crop'].get('t')
+            if not px: px = 0
+            return px
         except:
             return False
 
-    def getFilterCropY(self):
+    def getFilterCropR(self):
         try:
             self._props['filters']['crop']
-            return self._props['filters']['crop'].get('y')
+            px = self._props['filters']['crop'].get('r')
+            if not px: px = 0
+            return px
         except:
             return False
 
-    def getFilterCropWidth(self):
+    def getFilterCropB(self):
         try:
             self._props['filters']['crop']
-            return self._props['filters']['crop'].get('width')
+            px = self._props['filters']['crop'].get('b')
+            if not px: px = 0
+            return px
         except:
             return False
 
-    def getFilterCropHeight(self):
+    def getFilterCropL(self):
         try:
             self._props['filters']['crop']
-            return self._props['filters']['crop'].get('height')
+            px = self._props['filters']['crop'].get('l')
+            if not px: px = 0
+            return px
         except:
             return False
 
@@ -255,20 +263,20 @@ class Job():
         self._props['filters']['crop'].update({'active': state})
         self.propValueChanged()
 
-    def setFilterCropX(self, top):
-        self._props['filters']['crop'].update({'x': top})
+    def setFilterCropT(self, px):
+        self._props['filters']['crop'].update({'t': px})
         self.propValueChanged()
 
-    def setFilterCropY(self, right):
-        self._props['filters']['crop'].update({'y': right})
+    def setFilterCropR(self, px):
+        self._props['filters']['crop'].update({'r': px})
         self.propValueChanged()
 
-    def setFilterCropWidth(self, bottom):
-        self._props['filters']['crop'].update({'width': bottom})
+    def setFilterCropB(self, px):
+        self._props['filters']['crop'].update({'b': px})
         self.propValueChanged()
 
-    def setFilterCropHeight(self, left):
-        self._props['filters']['crop'].update({'height': left})
+    def setFilterCropL(self, px):
+        self._props['filters']['crop'].update({'l': px})
         self.propValueChanged()
 
     def setFilterResizeState(self, state):
