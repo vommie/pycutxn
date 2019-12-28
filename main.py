@@ -158,11 +158,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterResizeH.valueChanged.connect(self.onBoxFilterResizeHChanged)
         self.btnFilterDeshake.clicked.connect(self.onBtnFilterDeshake)
         self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
-        # self.btnFilterRotateLeft.toggled.connect(self.onBtnFilterRotateLeft)
         self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
-        # self.btnFilterRotateRight.toggled.connect(self.onBtnFilterRotateRight)
         self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
-        # self.btnFilterRotate180.toggled.connect(self.onBtnFilterRotate180)
         # Queue
         self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
         self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
