@@ -42,13 +42,6 @@ class FFmpegThread(QThread):
                     .trim(start=section[0], end=section[1])
                     .setpts('PTS-STARTPTS')
                 )
-                # Rotation
-                rotate = job.getFilterRotate()
-                if rotate:
-                    if rotate == 90: rotate = 1
-                    elif rotate == -90: rotate = 2
-                    if rotate == 1 or rotate == 2: video = ( video .filter('transpose', rotate) )
-                    else: video = ( video .filter('transpose', 2) .filter('transpose', 2) )
                 # Cropping
                 if job.getFilterCropState():
                     t = job.getFilterCropT()
@@ -59,7 +52,14 @@ class FFmpegThread(QThread):
                     videoHeight = videoProps.get('height')
                     w = videoWidth - l - r
                     h = videoHeight - t - b
-                    video = ( video .crop(x=l, y=t, width=w, height=h) )
+                    video = ( video .crop(x=l, y=t, width=w, height=h) ) # Todo: If video first gets rotated, this calculation has to be rotated too
+                # Rotation
+                rotate = job.getFilterRotate()
+                if rotate:
+                    if rotate == 90: rotate = 1
+                    elif rotate == -90: rotate = 2
+                    if rotate == 1 or rotate == 2: video = ( video .filter('transpose', rotate) )
+                    else: video = ( video .filter('transpose', 2) .filter('transpose', 2) )
                 # Finalization
                 mapping.append(video)
                 audio = (

@@ -153,12 +153,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
         self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
         self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
+        self.btnFilterResize.toggled.connect(self.onBtnFilterResizeClicked)
         self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
         self.boxFilterResizeH.valueChanged.connect(self.onBoxFilterResizeHChanged)
         self.btnFilterDeshake.clicked.connect(self.onBtnFilterDeshake)
         self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
+        # self.btnFilterRotateLeft.toggled.connect(self.onBtnFilterRotateLeft)
         self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
+        # self.btnFilterRotateRight.toggled.connect(self.onBtnFilterRotateRight)
         self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
+        # self.btnFilterRotate180.toggled.connect(self.onBtnFilterRotate180)
         # Queue
         self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
         self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
@@ -202,6 +206,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.resetVideoProps()
         self.resetSections()
         self.resetCropInputs()
+        self.resetRotationBtns()
         self.btnTgtWxSuffix.setChecked(False)
         self.boxTgtFileCount.setValue(0)
         self.playerTimeCurrent = self.timeFormat
@@ -231,6 +236,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.lineEditTgtFileName.setText(job.getTgtFileName())
         # Todo: Add Filters
         self.loadFilterCrop(job)
+        self.loadFilterRotate(job)
 
     def loadFilterCrop(self, job):
         print('loadFilterCrop()')
@@ -249,6 +255,19 @@ class MainUi(QtWidgets.QMainWindow):
         value = job.getFilterCropL()
         if value: self.boxFilterCropL.setValue(value)
         else: self.boxFilterCropL.setValue(0)
+
+    def loadFilterRotate(self, job):
+        print('loadFilterRotate()')
+        rotation = job.getFilterRotate()
+        if rotation == 90:
+            self.btnFilterRotateRight.setChecked(True)
+            self.onBtnFilterRotateRight()
+        elif rotation == -90:
+            self.btnFilterRotateLeft.setChecked(True)
+            self.onBtnFilterRotateLeft()
+        elif rotation == 180:
+            self.btnFilterRotate180.setChecked(True)
+            self.onBtnFilterRotate180()
 
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
@@ -509,6 +528,7 @@ class MainUi(QtWidgets.QMainWindow):
         job.setFilterDeshakeState(self.btnFilterDeshake.isChecked())
 
     def onBtnFilterRotateLeft(self):
+        print('onBtnFilterRotateLeft()')
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateLeft.isChecked():
             job.setFilterRotate(-90)
@@ -518,6 +538,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnFilterRotate180.setChecked(False)
 
     def onBtnFilterRotateRight(self):
+        print('onBtnFilterRotateRight()')
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateRight.isChecked():
             job.setFilterRotate(90)
@@ -527,6 +548,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnFilterRotate180.setChecked(False)
 
     def onBtnFilterRotate180(self):
+        print('onBtnFilterRotate180()')
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotate180.isChecked():
             job.setFilterRotate(180)
@@ -748,6 +770,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterCropR.setValue(0)
         self.boxFilterCropB.setValue(0)
         self.boxFilterCropL.setValue(0)
+
+    def resetRotationBtns(self):
+        print('resetRotationBtns()')
+        self.btnFilterRotateRight.setChecked(False)
+        self.btnFilterRotateRight.setChecked(False)
+        self.btnFilterRotateRight.setChecked(False)
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):
