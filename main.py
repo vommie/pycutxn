@@ -205,8 +205,9 @@ class MainUi(QtWidgets.QMainWindow):
         # Reset GUI and variables
         self.resetVideoProps()
         self.resetSections()
-        self.resetCropInputs()
-        self.resetRotationBtns()
+        self.resetCropFilter()
+        self.resetRotateFilter()
+        self.resetResizeFilter()
         self.btnTgtWxSuffix.setChecked(False)
         self.boxTgtFileCount.setValue(0)
         self.playerTimeCurrent = self.timeFormat
@@ -237,6 +238,7 @@ class MainUi(QtWidgets.QMainWindow):
         # Todo: Add Filters
         self.loadFilterCrop(job)
         self.loadFilterRotate(job)
+        self.loadFilterResize(job)
 
     def loadFilterCrop(self, job):
         print('loadFilterCrop()')
@@ -268,6 +270,17 @@ class MainUi(QtWidgets.QMainWindow):
         elif rotation == 180:
             self.btnFilterRotate180.setChecked(True)
             self.onBtnFilterRotate180()
+
+    def loadFilterResize(self, job):
+        state = job.getFilterResizeState()
+        if state: self.btnFilterResize.setChecked(True)
+        else: self.btnFilterResize.setChecked(False)
+        value = job.getFilterResizeWidth()
+        if value: self.boxFilterResizeW.setValue(value)
+        else: self.boxFilterResizeW.setValue(0)
+        value = job.getFilterResizeHeight()
+        if value: self.boxFilterResizeH.setValue(value)
+        else: self.boxFilterResizeH.setValue(0)
 
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
@@ -764,18 +777,25 @@ class MainUi(QtWidgets.QMainWindow):
         self.tableQueue.setItem(iRow, 2, itemState)
         return iRow
 
-    def resetCropInputs(self):
-        print('resetCropInputs()')
+    def resetCropFilter(self):
+        print('resetCropFilter()')
+        self.btnFilterCrop.setChecked(False)
         self.boxFilterCropT.setValue(0)
         self.boxFilterCropR.setValue(0)
         self.boxFilterCropB.setValue(0)
         self.boxFilterCropL.setValue(0)
 
-    def resetRotationBtns(self):
-        print('resetRotationBtns()')
+    def resetRotateFilter(self):
+        print('resetRotateFilter()')
         self.btnFilterRotateRight.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
+
+    def resetResizeFilter(self):
+        print('resetResizeFilter()')
+        self.boxFilterResizeW.setValue(0)
+        self.boxFilterResizeH.setValue(0)
+        self.btnFilterResize.setChecked(False)
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):

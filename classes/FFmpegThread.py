@@ -53,6 +53,17 @@ class FFmpegThread(QThread):
                     w = videoWidth - l - r
                     h = videoHeight - t - b
                     video = ( video .crop(x=l, y=t, width=w, height=h) ) # Todo: If video first gets rotated, this calculation has to be rotated too
+                # Resizing
+                if job.getFilterResizeState():
+                    width = job.getFilterResizeWidth()
+                    height = job.getFilterResizeHeight()
+                    if width and not height:
+                        video = ( video .filter('scale', width, -1) )
+                    elif height and not width:
+                        video = ( video .filter('scale', -1,height) )
+                    elif width and height:
+                        video = ( video .filter('scale', width, height) )
+                        video = ( video .filter('setsar', 1, 1) )
                 # Rotation
                 rotate = job.getFilterRotate()
                 if rotate:
