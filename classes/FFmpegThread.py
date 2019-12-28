@@ -42,6 +42,9 @@ class FFmpegThread(QThread):
                     .trim(start=section[0], end=section[1])
                     .setpts('PTS-STARTPTS')
                 )
+                # Deshaking
+                if job.getFilterDeshakeState():
+                    video = ( video .filter('deshake', edge=0, blocksize=4, contrast=32) )
                 # Cropping
                 if job.getFilterCropState():
                     t = job.getFilterCropT()

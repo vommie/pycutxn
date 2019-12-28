@@ -157,6 +157,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
         self.boxFilterResizeH.valueChanged.connect(self.onBoxFilterResizeHChanged)
         self.btnFilterDeshake.clicked.connect(self.onBtnFilterDeshake)
+        self.btnFilterDeshake.toggled.connect(self.onBtnFilterDeshake)
         self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
         self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
         self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
@@ -205,6 +206,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.resetCropFilter()
         self.resetRotateFilter()
         self.resetResizeFilter()
+        self.resetDeshakeFilter()
         self.btnTgtWxSuffix.setChecked(False)
         self.boxTgtFileCount.setValue(0)
         self.playerTimeCurrent = self.timeFormat
@@ -236,6 +238,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadFilterCrop(job)
         self.loadFilterRotate(job)
         self.loadFilterResize(job)
+        self.loadFilterDeshake(job)
 
     def loadFilterCrop(self, job):
         print('loadFilterCrop()')
@@ -278,6 +281,11 @@ class MainUi(QtWidgets.QMainWindow):
         value = job.getFilterResizeHeight()
         if value: self.boxFilterResizeH.setValue(value)
         else: self.boxFilterResizeH.setValue(0)
+
+    def loadFilterDeshake(self, job):
+        state = job.getFilterDeshakeState()
+        if state: self.btnFilterDeshake.setChecked(True)
+        else: self.btnFilterDeshake.setChecked(False)
 
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
@@ -793,6 +801,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterResizeW.setValue(0)
         self.boxFilterResizeH.setValue(0)
         self.btnFilterResize.setChecked(False)
+
+    def resetDeshakeFilter(self):
+        print('resetDeshakeFilter()')
+        self.btnFilterDeshake.setChecked(False)
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):
