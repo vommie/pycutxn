@@ -147,6 +147,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
         # Filters
         self.btnFilterCrop.clicked.connect(self.onBtnFilterCropClicked)
+        self.btnFilterCrop.toggled.connect(self.onBtnFilterCropClicked)
         self.boxFilterCropT.valueChanged.connect(self.onBoxFilterCropTChanged)
         self.boxFilterCropR.valueChanged.connect(self.onBoxFilterCropRChanged)
         self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
@@ -233,11 +234,21 @@ class MainUi(QtWidgets.QMainWindow):
 
     def loadFilterCrop(self, job):
         print('loadFilterCrop()')
-        self.btnFilterCrop.setChecked(job.getFilterCropState())
-        self.boxFilterCropT.setValue(job.getFilterCropT())
-        self.boxFilterCropR.setValue(job.getFilterCropR())
-        self.boxFilterCropB.setValue(job.getFilterCropB())
-        self.boxFilterCropL.setValue(job.getFilterCropL())
+        state = job.getFilterCropState()
+        if state: self.btnFilterCrop.setChecked(True)
+        else: self.btnFilterCrop.setChecked(False)
+        value = job.getFilterCropT()
+        if value: self.boxFilterCropT.setValue(value)
+        else: self.boxFilterCropT.setValue(0)
+        value = job.getFilterCropR()
+        if value: self.boxFilterCropR.setValue(value)
+        else: self.boxFilterCropR.setValue(0)
+        value = job.getFilterCropB()
+        if value: self.boxFilterCropB.setValue(value)
+        else: self.boxFilterCropB.setValue(0)
+        value = job.getFilterCropL()
+        if value: self.boxFilterCropL.setValue(value)
+        else: self.boxFilterCropL.setValue(0)
 
     def addJob(self):
         id, job = self.jobs.saveCurrentJob()
