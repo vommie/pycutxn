@@ -161,6 +161,15 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
         self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
         self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
+        # Filters Up/Down Buttons
+        self.btnFilterCropDown.clicked.connect(self.onBtnFilterCropDownClicked)
+        self.btnFilterCropUp.clicked.connect(self.onBtnFilterCropUpClicked)
+        self.btnFilterResizeDown.clicked.connect(self.onBtnFilterResizeDownClicked)
+        self.btnFilterResizeUp.clicked.connect(self.onBtnFilterResizeUpClicked)
+        self.btnFilterRotateDown.clicked.connect(self.onBtnFilterRotateDownClicked)
+        self.btnFilterRotateUp.clicked.connect(self.onBtnFilterRotateUpClicked)
+        self.btnFilterDeshakeDown.clicked.connect(self.onBtnFilterDeshakeDownClicked)
+        self.btnFilterDeshakeUp.clicked.connect(self.onBtnFilterDeshakeUpClicked)
         # Queue
         self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
         self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
@@ -662,6 +671,38 @@ class MainUi(QtWidgets.QMainWindow):
     def onQueueCtxActionShowError(self):
         self.queueShowError()
 
+    def onBtnFilterCropDownClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterCrop)
+        self.moveRowInFiltersGrid(index, True)
+
+    def onBtnFilterCropUpClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterCrop)
+        self.moveRowInFiltersGrid(index, False)
+
+    def onBtnFilterResizeDownClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterResize)
+        self.moveRowInFiltersGrid(index, True)
+
+    def onBtnFilterResizeUpClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterResize)
+        self.moveRowInFiltersGrid(index, False)
+
+    def onBtnFilterRotateDownClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterRotate)
+        self.moveRowInFiltersGrid(index, True)
+
+    def onBtnFilterRotateUpClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterRotate)
+        self.moveRowInFiltersGrid(index, False)
+
+    def onBtnFilterDeshakeDownClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterDeshake)
+        self.moveRowInFiltersGrid(index, True)
+
+    def onBtnFilterDeshakeUpClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterDeshake)
+        self.moveRowInFiltersGrid(index, False)
+
     # Other Event handlers
 
     # Event handler while ffmpeg is rendering
@@ -974,6 +1015,32 @@ class MainUi(QtWidgets.QMainWindow):
                 self.updateQueueJobState(job.getID(), 4)
             else:
                 self.runNextWaitJob()
+
+    def moveRowInFiltersGrid(self, index, moveDown):
+        items = []
+        for i in range(self.gridLayoutFilters.rowCount()):
+            items.append(self.gridLayoutFilters.takeAt(0))
+        for i in range(len(items)):
+            if moveDown:
+                if i-1 == index:
+                    self.gridLayoutFilters.addItem(items[i-1], i, 0)
+                elif i == index:
+                    self.gridLayoutFilters.addItem(items[i+1], i, 0)
+                else:
+                    self.gridLayoutFilters.addItem(items[i], i, 0)
+            else:
+                if i+1 == index:
+                    self.gridLayoutFilters.addItem(items[i+1], i, 0)
+                elif i == index:
+                    self.gridLayoutFilters.addItem(items[i-1], i, 0)
+                else:
+                    self.gridLayoutFilters.addItem(items[i], i, 0)
+
+    def getIndexOfLayoutInFiltersGrid(self, widget):
+        layout = self.gridLayoutFilters.layout()
+        if not layout: return -1
+        index = layout.indexOf(widget)
+        return index
 
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()
