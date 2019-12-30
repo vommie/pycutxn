@@ -1018,7 +1018,10 @@ class MainUi(QtWidgets.QMainWindow):
 
     def moveRowInFiltersGrid(self, index, moveDown):
         items = []
-        for i in range(self.gridLayoutFilters.rowCount()):
+        rowCount = self.gridLayoutFilters.rowCount()
+        if moveDown and index == rowCount-1: return
+        elif not moveDown and index == 0: return
+        for i in range(rowCount):
             items.append(self.gridLayoutFilters.takeAt(0))
         for i in range(len(items)):
             if moveDown:
