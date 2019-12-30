@@ -63,6 +63,33 @@ class MainUi(QtWidgets.QMainWindow):
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
         self.resetVideoProps()
+        # Filters
+        self.filterAtts = {
+            'crop': {
+                'position': 0,
+                'layout': self.layoutFilterCrop,
+                'btnUp': self.btnFilterCropUp,
+                'btnDown': self.btnFilterCropDown
+            },
+            'resize': {
+                'position': 1,
+                'layout': self.layoutFilterResize,
+                'btnUp': self.btnFilterResizeUp,
+                'btnDown': self.btnFilterResizeDown
+            },
+            'rotate': {
+                'position': 2,
+                'layout': self.layoutFilterRotate,
+                'btnUp': self.btnFilterRotateUp,
+                'btnDown': self.btnFilterRotateDown
+            },
+            'deshake': {
+                'position': 3,
+                'layout': self.layoutFilterDeshake,
+                'btnUp': self.btnFilterDeshakeUp,
+                'btnDown': self.btnFilterDeshakeDown
+            }
+        }
 
     def initGui(self):
         geometry = self.config.getAppGeometry()
@@ -674,34 +701,42 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFilterCropDownClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterCrop)
         self.moveRowInFiltersGrid(index, True)
+        self.setFilterBtnStates()
 
     def onBtnFilterCropUpClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterCrop)
         self.moveRowInFiltersGrid(index, False)
+        self.setFilterBtnStates()
 
     def onBtnFilterResizeDownClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterResize)
         self.moveRowInFiltersGrid(index, True)
+        self.setFilterBtnStates()
 
     def onBtnFilterResizeUpClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterResize)
         self.moveRowInFiltersGrid(index, False)
+        self.setFilterBtnStates()
 
     def onBtnFilterRotateDownClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterRotate)
         self.moveRowInFiltersGrid(index, True)
+        self.setFilterBtnStates()
 
     def onBtnFilterRotateUpClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterRotate)
         self.moveRowInFiltersGrid(index, False)
+        self.setFilterBtnStates()
 
     def onBtnFilterDeshakeDownClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterDeshake)
         self.moveRowInFiltersGrid(index, True)
+        self.setFilterBtnStates()
 
     def onBtnFilterDeshakeUpClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterDeshake)
         self.moveRowInFiltersGrid(index, False)
+        self.setFilterBtnStates()
 
     # Other Event handlers
 
@@ -1019,8 +1054,8 @@ class MainUi(QtWidgets.QMainWindow):
     def moveRowInFiltersGrid(self, index, moveDown):
         items = []
         rowCount = self.gridLayoutFilters.rowCount()
-        if moveDown and index == rowCount-1: return
-        elif not moveDown and index == 0: return
+        if moveDown and index == rowCount-1: return False
+        elif not moveDown and index == 0: return False
         for i in range(rowCount):
             items.append(self.gridLayoutFilters.takeAt(0))
         for i in range(len(items)):
@@ -1038,12 +1073,24 @@ class MainUi(QtWidgets.QMainWindow):
                     self.gridLayoutFilters.addItem(items[i-1], i, 0)
                 else:
                     self.gridLayoutFilters.addItem(items[i], i, 0)
+        return True
 
-    def getIndexOfLayoutInFiltersGrid(self, widget):
+    def getIndexOfLayoutInFiltersGrid(self, filterLayout):
         layout = self.gridLayoutFilters.layout()
         if not layout: return -1
-        index = layout.indexOf(widget)
+        index = layout.indexOf(filterLayout)
         return index
+
+    def setFilterBtnStates(self):
+        for key in self.filterAtts:
+            atts = self.filterAtts[key]
+            index = self.getIndexOfLayoutInFiltersGrid(atts['layout'])
+            rowCount = self.gridLayoutFilters.rowCount()
+            if index > 0 and not atts['btnUp'].isEnabled(): atts['btnUp'].setEnabled(True)
+            elif index < rowCount-1 and not atts['btnDown'].isEnabled(): atts['btnDown'].setEnabled(True)
+            elif index == rowCount -1 and atts['btnDown'].isEnabled(): atts['btnDown'].setEnabled(False)
+            elif index == 0 and atts['btnUp'].isEnabled(): atts['btnUp'].setEnabled(False)
+            self.filterAtts[key]['position'] = index
 
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()

@@ -556,6 +556,9 @@
               </item>
               <item>
                <widget class="QPushButton" name="btnFilterCropUp">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>24</width>
@@ -1029,6 +1032,9 @@
               </property>
               <item>
                <widget class="QPushButton" name="btnFilterDeshakeDown">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>24</width>
