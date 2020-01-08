@@ -33,6 +33,7 @@ class Job():
                 'crop': {},
                 'resize': {}
             },
+            'filterPositions': {},
             'state': 0,
             'error': {
                 'id': False,
@@ -208,6 +209,13 @@ class Job():
         except:
             return False
 
+    def getFilterPositions(self):
+        try:
+            self._props['filtersPositions']
+            return self._props['filterPositions']
+        except:
+            return False
+
     # Props Setters
 
     def setProps(self, props):
@@ -297,6 +305,10 @@ class Job():
 
     def setFilterRotate(self, deg):
         self._props['filters'].update({'rotate': deg})
+        self.propValueChanged()
+
+    def setFilterPositions(self, positions):
+        self._props.update({'filterPositions': positions})
         self.propValueChanged()
 
     def setID(self, id):

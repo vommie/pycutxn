@@ -66,25 +66,21 @@ class MainUi(QtWidgets.QMainWindow):
         # Filters
         self.filterAtts = {
             'crop': {
-                'position': 0,
                 'layout': self.layoutFilterCrop,
                 'btnUp': self.btnFilterCropUp,
                 'btnDown': self.btnFilterCropDown
             },
             'resize': {
-                'position': 1,
                 'layout': self.layoutFilterResize,
                 'btnUp': self.btnFilterResizeUp,
                 'btnDown': self.btnFilterResizeDown
             },
             'rotate': {
-                'position': 2,
                 'layout': self.layoutFilterRotate,
                 'btnUp': self.btnFilterRotateUp,
                 'btnDown': self.btnFilterRotateDown
             },
             'deshake': {
-                'position': 3,
                 'layout': self.layoutFilterDeshake,
                 'btnUp': self.btnFilterDeshakeUp,
                 'btnDown': self.btnFilterDeshakeDown
@@ -256,6 +252,8 @@ class MainUi(QtWidgets.QMainWindow):
         if self.videoProps:
             self.playerControl.play(videoFilePath)
             self.setPlayerControlsState(True)
+        # Other
+        self.setFilterBtnStates()
 
     def loadJobFromQueue(self):
         print('loadJobFromQueue()')
@@ -1082,6 +1080,7 @@ class MainUi(QtWidgets.QMainWindow):
         return index
 
     def setFilterBtnStates(self):
+        filterPositions = {}
         for key in self.filterAtts:
             atts = self.filterAtts[key]
             index = self.getIndexOfLayoutInFiltersGrid(atts['layout'])
@@ -1090,7 +1089,9 @@ class MainUi(QtWidgets.QMainWindow):
             elif index < rowCount-1 and not atts['btnDown'].isEnabled(): atts['btnDown'].setEnabled(True)
             elif index == rowCount -1 and atts['btnDown'].isEnabled(): atts['btnDown'].setEnabled(False)
             elif index == 0 and atts['btnUp'].isEnabled(): atts['btnUp'].setEnabled(False)
-            self.filterAtts[key]['position'] = index
+            filterPositions.update({index: key})
+        job = self.jobs.getCurrentJob()
+        job.setFilterPositions(filterPositions)
 
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()
