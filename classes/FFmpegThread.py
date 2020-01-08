@@ -41,10 +41,7 @@ class FFmpegThread(QThread):
                     .trim(start=section[0], end=section[1])
                     .setpts('PTS-STARTPTS')
                 )
-
                 filterPositions = job.getFilterPositions()
-                if not filterPositions: filterPositions = { '1': 'crop', '2': 'resize', '3': 'rotate', '0': 'deshake' }
-
                 width = False
                 height = False
                 for position in sorted(filterPositions.keys()):

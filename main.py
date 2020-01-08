@@ -272,6 +272,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadFilterRotate(job)
         self.loadFilterResize(job)
         self.loadFilterDeshake(job)
+        self.loadFilterPositions(job)
 
     def loadFilterCrop(self, job):
         print('loadFilterCrop()')
@@ -1079,18 +1080,41 @@ class MainUi(QtWidgets.QMainWindow):
         return index
 
     def setFilterBtnStates(self):
+        print('setFilterBtnStates()')
         filterPositions = {}
+        rowCount = self.gridLayoutFilters.rowCount()
         for key in self.filterAtts:
             atts = self.filterAtts[key]
             index = self.getIndexOfLayoutInFiltersGrid(atts['layout'])
-            rowCount = self.gridLayoutFilters.rowCount()
-            if index > 0 and not atts['btnUp'].isEnabled(): atts['btnUp'].setEnabled(True)
-            elif index < rowCount-1 and not atts['btnDown'].isEnabled(): atts['btnDown'].setEnabled(True)
-            elif index == rowCount -1 and atts['btnDown'].isEnabled(): atts['btnDown'].setEnabled(False)
-            elif index == 0 and atts['btnUp'].isEnabled(): atts['btnUp'].setEnabled(False)
+            if index > 0: atts['btnUp'].setEnabled(True)
+            else: atts['btnUp'].setEnabled(False)
+            if index < rowCount-1: atts['btnDown'].setEnabled(True)
+            else: atts['btnDown'].setEnabled(False)
             filterPositions.update({index: key})
         job = self.jobs.getCurrentJob()
         job.setFilterPositions(filterPositions)
+
+    def loadFilterPositions(self, job):
+        print('loadFilterPositions()')
+        items = []
+        rowCount = self.gridLayoutFilters.rowCount()
+        for i in range(rowCount):
+            items.append(self.gridLayoutFilters.takeAt(0))
+        rowCount = self.gridLayoutFilters.rowCount()
+        filterPositions = job.getFilterPositions()
+        for position in sorted(filterPositions.keys()):
+            filter = filterPositions.get(position)
+            for item in items:
+                name = item.objectName()
+                atts = self.filterAtts.get(filter)
+                if not atts:
+                    # Todo: Error if filter is not defined
+                    return
+                layout = atts.get('layout')
+                searchName = layout.objectName()
+                if name == searchName:
+                    self.gridLayoutFilters.addItem(item, int(position), 0)
+        self.setFilterBtnStates()
 
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()
