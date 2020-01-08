@@ -1050,12 +1050,10 @@ class MainUi(QtWidgets.QMainWindow):
                 self.runNextWaitJob()
 
     def moveRowInFiltersGrid(self, index, moveDown):
-        items = []
         rowCount = self.gridLayoutFilters.rowCount()
         if moveDown and index == rowCount-1: return False
         elif not moveDown and index == 0: return False
-        for i in range(rowCount):
-            items.append(self.gridLayoutFilters.takeAt(0))
+        items = self.getFilterPositionItems()
         for i in range(len(items)):
             if moveDown:
                 if i-1 == index:
@@ -1094,13 +1092,19 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         job.setFilterPositions(filterPositions)
 
-    def loadFilterPositions(self, job):
-        print('loadFilterPositions()')
+    def getFilterPositionItems(self):
         items = []
         rowCount = self.gridLayoutFilters.rowCount()
         for i in range(rowCount):
-            items.append(self.gridLayoutFilters.takeAt(0))
-        rowCount = self.gridLayoutFilters.rowCount()
+            item = self.gridLayoutFilters.takeAt(0)
+            item.setSizeConstraint(QLayout.SetMinAndMaxSize)
+            item.setSpacing(6)
+            items.append(item)
+        return items
+
+    def loadFilterPositions(self, job):
+        print('loadFilterPositions()')
+        items = self.getFilterPositionItems()
         filterPositions = job.getFilterPositions()
         for position in sorted(filterPositions.keys()):
             filter = filterPositions.get(position)
