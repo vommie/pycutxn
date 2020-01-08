@@ -34,7 +34,6 @@ class FFmpegThread(QThread):
             sections = job.getSections()
             mapping = []
             totalSeconds = 0
-            # Todo: Add Crop, Resize, Deshake, Rotate (90, -90, 180)
             for section in sections:
                 # Trimming
                 video = (
@@ -42,38 +41,44 @@ class FFmpegThread(QThread):
                     .trim(start=section[0], end=section[1])
                     .setpts('PTS-STARTPTS')
                 )
-                # Deshaking
-                if job.getFilterDeshakeState():
-                    video = ( video .filter('deshake', edge=0, blocksize=4, contrast=32) )
-                # Cropping
-                if job.getFilterCropState():
-                    t = job.getFilterCropT()
-                    r = job.getFilterCropR()
-                    b = job.getFilterCropB()
-                    l = job.getFilterCropL()
-                    videoWidth = videoProps.get('width')
-                    videoHeight = videoProps.get('height')
-                    w = videoWidth - l - r
-                    h = videoHeight - t - b
-                    video = ( video .crop(x=l, y=t, width=w, height=h) ) # Todo: If video first gets rotated, this calculation has to be rotated too
-                # Resizing
-                if job.getFilterResizeState():
-                    width = job.getFilterResizeWidth()
-                    height = job.getFilterResizeHeight()
-                    if width and not height:
-                        video = ( video .filter('scale', width, -1) )
-                    elif height and not width:
-                        video = ( video .filter('scale', -1,height) )
-                    elif width and height:
-                        video = ( video .filter('scale', width, height) )
-                        video = ( video .filter('setsar', 1, 1) )
-                # Rotation
-                rotate = job.getFilterRotate()
-                if rotate:
-                    if rotate == 90: rotate = 1
-                    elif rotate == -90: rotate = 2
-                    if rotate == 1 or rotate == 2: video = ( video .filter('transpose', rotate) )
-                    else: video = ( video .filter('transpose', 2) .filter('transpose', 2) )
+
+                filterPositions = job.getFilterPositions()
+                if not filterPositions: filterPositions = { '1': 'crop', '2': 'resize', '3': 'rotate', '0': 'deshake' }
+
+                width = False
+                height = False
+                for position in sorted(filterPositions.keys()):
+                    filter = filterPositions.get(position)
+                    print('Applying filter nr. %s: %s' % (position, filter))
+                    if filter == 'deshake' and job.getFilterDeshakeState():
+                        video = ( video .filter('deshake', edge=0, blocksize=4, contrast=32) )
+                    elif filter == 'resize' and job.getFilterResizeState():
+                        width = job.getFilterResizeWidth()
+                        height = job.getFilterResizeHeight()
+                        if width and not height:
+                            video = ( video .filter('scale', width, -1) )
+                        elif height and not width:
+                            video = ( video .filter('scale', -1,height) )
+                        elif width and height:
+                            video = ( video .filter('scale', width, height) )
+                            video = ( video .filter('setsar', 1, 1) )
+                    elif filter == 'rotate':
+                        rotate = job.getFilterRotate()
+                        if rotate:
+                            if rotate == 90: rotate = 1
+                            elif rotate == -90: rotate = 2
+                            if rotate == 1 or rotate == 2: video = ( video .filter('transpose', rotate) )
+                            else: video = ( video .filter('transpose', 2) .filter('transpose', 2) )
+                    elif filter == 'crop' and job.getFilterCropState():
+                        t = job.getFilterCropT()
+                        r = job.getFilterCropR()
+                        b = job.getFilterCropB()
+                        l = job.getFilterCropL()
+                        if not width: width = videoProps.get('width')
+                        if not height: height = videoProps.get('height')
+                        w = width - l - r
+                        h = height - t - b
+                        video = ( video .crop(x=l, y=t, width=w, height=h) ) # Todo: If video first gets rotated, this calculation has to be rotated too
                 # Finalization
                 mapping.append(video)
                 audio = (

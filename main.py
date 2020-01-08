@@ -261,14 +261,13 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getJob(jobID)
         self.newFile(job.getSrcFilePathLong())
         if not self.setTgtDirByData(job.getTgtDirName()):
-            print('Error: Cannot sex target path found in job')
+            print('Error: Cannot set target path found in job')
         sections = job.getSections()
         for section in sections:
             self.sectionAddRow(section[0], section[1])
             self.jobs.getCurrentJob().addSection(section[0], section[1])
         self.boxTgtFileCount.setValue(job.getTgtFileCount())
         self.lineEditTgtFileName.setText(job.getTgtFileName())
-        # Todo: Add Filters
         self.loadFilterCrop(job)
         self.loadFilterRotate(job)
         self.loadFilterResize(job)

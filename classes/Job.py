@@ -211,8 +211,8 @@ class Job():
 
     def getFilterPositions(self):
         try:
-            self._props['filtersPositions']
-            return self._props['filterPositions']
+            self._props['filterPositions']
+            return self._props.get('filterPositions')
         except:
             return False
 
