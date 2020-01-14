@@ -1844,6 +1844,23 @@ QRadioButton::unchecked:hover {
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="Line" name="line">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnTagRateWarning">
+             <property name="text">
+              <string>Warn</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
