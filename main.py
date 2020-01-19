@@ -16,6 +16,7 @@ from classes.Functions import Functions
 from classes.Config import Config
 from classes.Jobs import Jobs
 from classes.FFmpegThread import FFmpegThread
+from classes.DB import DB
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
@@ -51,6 +52,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegKilled = False
         # Init member variables
         self.dirsUi = DirsUi(self)
+        self.db = DB(self.config.getDBPath())
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
         self.playerTimeCurrent = self.timeFormat
@@ -123,7 +125,6 @@ class MainUi(QtWidgets.QMainWindow):
                     state = 3
                 self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
                 if state == 0 and not self.btnQueuePause.isChecked():
-                    print('starting... state: 0')
                     self.runNextWaitJob()
             except:
                 pass
@@ -231,7 +232,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.player.observe_property('volume', self.onPlayerVolume)
 
     def newFile(self, videoFilePath):
-        print('newFile()')
+        self.log(1, 'New File ...')
+        self.log(1, 'Path: %s' % videoFilePath)
         # Reset GUI and variables
         self.resetVideoProps()
         self.resetSections()
@@ -256,12 +258,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.setFilterBtnStates()
 
     def loadJobFromQueue(self):
-        print('loadJobFromQueue()')
+        self.log(1, 'Loading job from queue ...')
         jobID = self.queueGetJobIDFromRow()[0]
         job = self.jobs.getJob(jobID)
+        self.log(1, 'JobID: %s, Object: %s' % (jobID, job))
         self.newFile(job.getSrcFilePathLong())
         if not self.setTgtDirByData(job.getTgtDirName()):
-            print('Error: Cannot set target path found in job')
+            self.log(1, 'Error: Cannot set target path found in job')
         sections = job.getSections()
         for section in sections:
             self.sectionAddRow(section[0], section[1])
@@ -275,7 +278,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadFilterPositions(job)
 
     def loadFilterCrop(self, job):
-        print('loadFilterCrop()')
         state = job.getFilterCropState()
         if state: self.btnFilterCrop.setChecked(True)
         else: self.btnFilterCrop.setChecked(False)
@@ -293,7 +295,6 @@ class MainUi(QtWidgets.QMainWindow):
         else: self.boxFilterCropL.setValue(0)
 
     def loadFilterRotate(self, job):
-        print('loadFilterRotate()')
         rotation = job.getFilterRotate()
         if rotation == 90:
             self.btnFilterRotateRight.setChecked(True)
@@ -329,33 +330,29 @@ class MainUi(QtWidgets.QMainWindow):
         self.runNextWaitJob()
 
     def runNextWaitJob(self):
-        print('runNextWaitJob')
-        print('ffmpegProcess: %s, checked: %s' % (self.ffmpegProcess, self.btnQueuePause.isChecked()))
+        self.log(1, 'Running next job ...')
         if self.ffmpegProcess or self.btnQueuePause.isChecked():
             return False
         job = self.getNextWaitingJob()
-        print('next job: %s' % job)
+        self.log(1, 'Job: %s' % job)
         if job and self.checkJobForRenderbility(job):
-            print('time to start ffmpeg ...')
-            # totalSeconds = self.getTotalSeconds(job)
             self.FFmpegThread = FFmpegThread(job)
-            print('ffmpeg thread instance')
             self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
             self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
             self.FFmpegThread.ffmpegProcess.connect(self.onFFmpegProgress)
             self.FFmpegThread.ffmpegExit.connect(self.onFFmpegExit)
             self.FFmpegThread.start()
-            print('ffmpeg thread started ...')
+            self.log(1, 'FFmpeg thread started.')
 
     def checkJobForRenderbility(self, job):
         if Functions.isSameString(job.getSrcFilePathLong(), job.getTgtFilePathLong()):
             msg = 'Error: Input and Output Path are the same.'
-            print(msg)
+            self.log(1, msg)
             self.onFFmpegExit([job, -100, msg, msg])
             return False
         if len(job.getSections()) == 0:
             msg = 'Error: No sections to render.'
-            print(msg)
+            self.log(1, msg)
             self.onFFmpegExit([job, -101, msg, msg])
             return False
         return True
@@ -580,7 +577,6 @@ class MainUi(QtWidgets.QMainWindow):
         job.setFilterDeshakeState(self.btnFilterDeshake.isChecked())
 
     def onBtnFilterRotateLeft(self):
-        print('onBtnFilterRotateLeft()')
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateLeft.isChecked():
             job.setFilterRotate(-90)
@@ -590,7 +586,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnFilterRotate180.setChecked(False)
 
     def onBtnFilterRotateRight(self):
-        print('onBtnFilterRotateRight()')
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateRight.isChecked():
             job.setFilterRotate(90)
@@ -600,7 +595,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnFilterRotate180.setChecked(False)
 
     def onBtnFilterRotate180(self):
-        print('onBtnFilterRotate180()')
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotate180.isChecked():
             job.setFilterRotate(180)
@@ -769,7 +763,7 @@ class MainUi(QtWidgets.QMainWindow):
     # Event handler when ffmpeg exits rendering
     @pyqtSlot('PyQt_PyObject')
     def onFFmpegExit(self, atts):
-        print('exit')
+        self.log(1, 'FFmpeg exited.')
         self.ffmpegProcess = False
         job, code, output, error = atts
         if self.progressBarRender.isEnabled():
@@ -857,7 +851,6 @@ class MainUi(QtWidgets.QMainWindow):
         return iRow
 
     def resetCropFilter(self):
-        print('resetCropFilter()')
         self.btnFilterCrop.setChecked(False)
         self.boxFilterCropT.setValue(0)
         self.boxFilterCropR.setValue(0)
@@ -865,19 +858,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterCropL.setValue(0)
 
     def resetRotateFilter(self):
-        print('resetRotateFilter()')
         self.btnFilterRotateRight.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
 
     def resetResizeFilter(self):
-        print('resetResizeFilter()')
         self.boxFilterResizeW.setValue(0)
         self.boxFilterResizeH.setValue(0)
         self.btnFilterResize.setChecked(False)
 
     def resetDeshakeFilter(self):
-        print('resetDeshakeFilter()')
         self.btnFilterDeshake.setChecked(False)
 
     # Set the states of the section buttons
@@ -1078,7 +1068,6 @@ class MainUi(QtWidgets.QMainWindow):
         return index
 
     def setFilterBtnStates(self):
-        print('setFilterBtnStates()')
         filterPositions = {}
         rowCount = self.gridLayoutFilters.rowCount()
         for key in self.filterAtts:
@@ -1103,7 +1092,7 @@ class MainUi(QtWidgets.QMainWindow):
         return items
 
     def loadFilterPositions(self, job):
-        print('loadFilterPositions()')
+        self.log(1, 'Loading filter positions ...')
         items = self.getFilterPositionItems()
         filterPositions = job.getFilterPositions()
         for position in sorted(filterPositions.keys()):
@@ -1134,8 +1123,12 @@ class MainUi(QtWidgets.QMainWindow):
         return False
 
     def resetVideoProps(self):
-        print('resetVideoProps()')
         self.videoProps = {}
+
+    def log(self, id, line):
+        if id == 1: self.logApp.appendPlainText(line)
+        elif id == 2: self.logFfmpeg.appendPlainText(line)
+        print(line)
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:

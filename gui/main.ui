@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1210</width>
-    <height>852</height>
+    <height>858</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -1824,6 +1824,12 @@ QRadioButton::unchecked:hover {
           <layout class="QHBoxLayout" name="layoutTagActions">
            <item>
             <widget class="QPushButton" name="btnTagsLast">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>24</height>
+              </size>
+             </property>
              <property name="text">
               <string>Load Last</string>
              </property>
@@ -1835,6 +1841,12 @@ QRadioButton::unchecked:hover {
            </item>
            <item>
             <widget class="QPushButton" name="btnTagsClear">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>24</height>
+              </size>
+             </property>
              <property name="text">
               <string>Clear</string>
              </property>
@@ -1852,7 +1864,32 @@ QRadioButton::unchecked:hover {
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="btnTagAvtive">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Active</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="btnTagRateWarning">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>24</height>
+              </size>
+             </property>
              <property name="text">
               <string>Warn</string>
              </property>
