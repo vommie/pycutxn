@@ -36,7 +36,7 @@ class Config:
         return self.settings.value('app/state')
 
     def getDBPath(self):
-        return self.settings.value('app/dbPath', '', type=str)
+        return self.settings.value('app/dbPath', False, type=str)
 
     def setPlayerVolume(self, volume):
         self.settings.setValue('player/volume', volume)
