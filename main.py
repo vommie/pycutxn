@@ -139,6 +139,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
         self.btnPause.setIcon(self.iconPause)
+        # Init categories tree
+        self.buildCategoriesTree()
 
     def initGuiEvents(self):
         # Player control
@@ -809,6 +811,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegProcess = False
 
     # GUI Control
+
+    def buildCategoriesTree(self):
+        tagTree = self.db.getCategoriesTree()
+        print(tagTree)
+        for tag in tagTree:
+            tag = tagTree[tag]
+            self.listWidgetTagsTree.addItem(tag['label'])
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
