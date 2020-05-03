@@ -280,7 +280,7 @@
      <x>0</x>
      <y>0</y>
      <width>1210</width>
-     <height>29</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1830,8 +1830,11 @@ QRadioButton::unchecked:hover {
                <height>24</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>Set tags of previously saved file</string>
+             </property>
              <property name="text">
-              <string>Load Last</string>
+              <string>Set last</string>
              </property>
              <property name="icon">
               <iconset resource="../res/res.qrc">
@@ -1847,8 +1850,11 @@ QRadioButton::unchecked:hover {
                <height>24</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>Resets all tags and rating</string>
+             </property>
              <property name="text">
-              <string>Clear</string>
+              <string>Reset</string>
              </property>
              <property name="icon">
               <iconset resource="../res/res.qrc">
@@ -1871,6 +1877,9 @@ QRadioButton::unchecked:hover {
                <height>24</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>Tags get only saved for file if the active state is set</string>
+             </property>
              <property name="text">
               <string>Active</string>
              </property>
@@ -1889,6 +1898,9 @@ QRadioButton::unchecked:hover {
                <width>16777215</width>
                <height>24</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>Warn if file gets saved but the active state is not set or if rating is missing.</string>
              </property>
              <property name="text">
               <string>Warn</string>

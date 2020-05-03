@@ -1018,7 +1018,7 @@ class MainUi(QtWidgets.QMainWindow):
         errorID = job.getErrorID()
         errorMsg = job.getErrorMsg()
         self.logUi.setTitle('Error %s' % errorID)
-        self.logUi.setLogText(errorMsg)
+        self.logUi.setLogText(errorMsg.replace('\\n', '\n'))
         self.logUi.show()
 
     def toggleQueuePause(self):
