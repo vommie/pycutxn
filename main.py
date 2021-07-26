@@ -140,7 +140,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
         self.btnPause.setIcon(self.iconPause)
         # Init categories tree
-        self.buildCategoriesTree()
+        # self.buildCategoriesTree() # Todo: Unkommentieren wenn pycut weiterentwickelt wird
 
     def initGuiEvents(self):
         # Player control

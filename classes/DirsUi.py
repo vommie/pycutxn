@@ -90,6 +90,6 @@ class DirsUi(QtWidgets.QDialog):
             self.tableDirs.setItem(iRow, 0, QTableWidgetItem(path))
             itemName = self.tableDirs.item(iRow, 1)
             name = itemName.text()
-            if path is not '' and name is not '':
+            if path != '' and name != '':
                 dirs.append([path, name])
         self.dirs = dirs
