@@ -42,9 +42,10 @@ class DB:
     def getCategoriesTree(self):
         conn = self.connect()
         c = conn.cursor()
-        tagTree = {}
-        for row in c.execute("select tagid, label, parentid, id from tags;"):
-            tagTree.update({row[0]: {'parentID': row[2], 'label': row[1]}})
+        tagTree = []
+        for row in c.execute("select tagid, label, parentid, id from tags order by parentid, label;"):
+            # tagTree.update({row[0]: {'parentID': row[2], 'label': row[1]}})
+            tagTree.append({'tagID': row[0], 'parentID': row[2], 'label': row[1]})
         conn.commit()
         self.disconnect(conn)
         return tagTree

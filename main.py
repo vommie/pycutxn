@@ -6,6 +6,7 @@ import json
 import subprocess
 import os
 import signal
+import re
 
 from libs.mpv import *
 
@@ -52,7 +53,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegKilled = False
         # Init member variables
         self.dirsUi = DirsUi(self)
+        self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db'); # Todo: Set path per UI
         self.db = DB(self.config.getDBPath())
+        self.tagTree = self.db.getCategoriesTree()
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
         self.playerTimeCurrent = self.timeFormat
@@ -140,7 +143,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
         self.btnPause.setIcon(self.iconPause)
         # Init categories tree
-        # self.buildCategoriesTree() # Todo: Unkommentieren wenn pycut weiterentwickelt wird
+        self.tagTreeItemPrefix = ''
+        self.buildTagsTree(-1)
 
     def initGuiEvents(self):
         # Player control
@@ -812,12 +816,25 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI Control
 
-    def buildCategoriesTree(self):
-        tagTree = self.db.getCategoriesTree()
-        print(tagTree)
-        for tag in tagTree:
-            tag = tagTree[tag]
-            self.listWidgetTagsTree.addItem(tag['label'])
+# [{'tagID': 15, 'parentID': -1, 'label': 'Audios'}, {'tagID': 13, 'parentID': -1, 'label': 'Drawings'}, {'tagID': 12, 'parentID': -1, 'label': 'Icons'}, {'tagID': 1, 'parentID': -1, 'label': 'Other'}, {'tagID': 2, 'parentID': -1, 'label': 'Photographs'}, {'tagID': 11, 'parentID': -1, 'label': 'Pictures'}, {'tagID': 17, 'parentID': -1, 'label': 'Root'}, {'tagID': 14, 'parentID': -1, 'label': 'Videos'}, {'tagID': 10, 'parentID': 2, 'label': 'Animals'}, {'tagID': 3, 'parentID': 2, 'label': 'Family'}, {'tagID': 9, 'parentID': 2, 'label': 'Flowers'}, {'tagID': 4, 'parentID': 2, 'label': 'Friends'}, {'tagID': 7, 'parentID': 2, 'label': 'Landscapes'}, {'tagID': 5, 'parentID': 2, 'label': 'Pets'}, {'tagID': 8, 'parentID': 2, 'label': 'Portraits'}, {'tagID': 6, 'parentID': 2, 'label': 'Travel'}, {'tagID': 18, 'parentID': 17, 'label': 'Sub1'}, {'tagID': 19, 'parentID': 17, 'label': 'Sub2'}, {'tagID': 23, 'parentID': 17, 'label': 'Sub3'}, {'tagID': 20, 'parentID': 18, 'label': 'Sub1Sub1'}, {'tagID': 21, 'parentID': 19, 'label': 'Sub2Sub1'}, {'tagID': 22, 'parentID': 19, 'label': 'Sub2Sub2'}]
+
+    def buildTagsTree(self, currTagID):
+        if currTagID != -1:
+            self.tagTreeItemPrefix = '%s%s' % ('╴', self.tagTreeItemPrefix)
+
+        for i, tag in enumerate(self.tagTree):
+            if tag['parentID'] == currTagID:
+                item = QListWidgetItem('%s%s' % (self.tagTreeItemPrefix, tag['label']))
+                item.setData(1, tag['tagID'])
+                item.setIcon(QIcon())
+                self.listWidgetTagsTree.addItem(item)
+                self.buildTagsTree(tag['tagID'])
+
+        self.tagTreeItemPrefix = self.tagTreeItemPrefix[0:-1]
+
+        # Get TagID from Item
+        # x = item.data(1)
+        # print(x)
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()

@@ -4,6 +4,9 @@ from .Functions import Functions
 import ffmpeg
 from PyQt5.QtCore import pyqtSignal, QThread
 
+# TODO:
+# Deshaker file per job, remove file after successful 2nd pass
+
 class FFmpegThread(QThread):
 
     ffmpegStart = pyqtSignal('PyQt_PyObject')
