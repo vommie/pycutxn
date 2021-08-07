@@ -27,8 +27,14 @@ class Jobs:
 
     # Current job
 
-    def newCurrentJob(self, videoFilePath):
-        job = Job('default', srcFilePath=videoFilePath)
+    def newCurrentJob(self, videoFilePath=False, job=False):
+        if videoFilePath and not job:
+            job = Job('default', srcFilePath=videoFilePath)
+        elif not videoFilePath and job:
+            job = copy.deepcopy(job)
+        else:
+            print('Critical Error: Cannot create new job as parameters have conflict or are all not set.')
+            exit(1)
         job.bindToProps(self.onJobPropsUpdated)
         self.jobs.update({'default': job})
 

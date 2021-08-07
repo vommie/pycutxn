@@ -31,9 +31,10 @@ class Job():
             'sections': [],
             'filters': {
                 'crop': {},
-                'resize': {}
+                'resize': {},
+                'rotate': False,
+                'deshake': False
             },
-            'filterPositions': {},
             'state': 0,
             'error': {
                 'id': False,
@@ -214,7 +215,7 @@ class Job():
             self._props['filterPositions']
             return self._props.get('filterPositions')
         except:
-            return { '1': 'crop', '2': 'resize', '3': 'rotate', '0': 'deshake' }
+            return { '0': 'crop', '1': 'resize', '2': 'rotate', '3': 'deshake' }
 
     # Props Setters
 

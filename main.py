@@ -238,75 +238,65 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
         self.playerControl.player.observe_property('volume', self.onPlayerVolume)
 
-    def newFile(self, videoFilePath):
-        self.log(1, 'New File ...')
-        self.log(1, 'Path: %s' % videoFilePath)
-        # Reset GUI and variables
-        self.resetVideoProps()
-        self.resetSections()
-        self.resetCropFilter()
-        self.resetRotateFilter()
-        self.resetResizeFilter()
-        self.resetDeshakeFilter()
-        self.btnTgtWxSuffix.setChecked(False)
-        self.boxTgtFileCount.setValue(0)
-        self.playerTimeCurrent = self.timeFormat
-        self.sectionTimeStart = self.timeFormat
-        # Create new job
-        self.jobs.newCurrentJob(videoFilePath)
-        self.setCurrTgtDir()
-        self.lineEditTgtFileName.setText(self.jobs.getCurrentJob().getTgtFileName())
-        # Load video file
-        self.videoProps = Functions.getVideoProperties(videoFilePath)
-        if self.videoProps:
-            self.playerControl.play(videoFilePath)
-            self.setPlayerControlsState(True)
-        # Set Tags & Rating
-        self.setTagsAndRating()
-        # Other
-        self.setFilterBtnStates()
-
-    def loadJobFromQueue(self):
-        self.log(1, 'Loading job from queue ...')
-        jobID = self.queueGetJobIDFromRow()[0]
-        job = self.jobs.getJob(jobID)
-        self.log(1, 'JobID: %s, Object: %s' % (jobID, job))
-        self.newFile(job.getSrcFilePathLong())
-        if not self.setTgtDirByData(job.getTgtDirName()):
-            self.log(1, 'Error: Cannot set target path found in job')
-        sections = job.getSections()
-        for section in sections:
-            self.sectionAddRow(section[0], section[1])
-            self.jobs.getCurrentJob().addSection(section[0], section[1])
-        self.boxTgtFileCount.setValue(job.getTgtFileCount())
-        self.lineEditTgtFileName.setText(job.getTgtFileName())
+    def newFile(self, videoFilePath = False):
+        self.log(1, '--------------------------------------')
+        if not videoFilePath:
+            self.log(1, 'Loading job from queue ...')
+            self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
+            job = self.jobs.getCurrentJob()
+            self.setTagsAndRating(False)
+            self.loadTargetDirName(job)
+        else:
+            self.log(1, 'Init new job from file ...')
+            self.jobs.newCurrentJob(videoFilePath)
+            job = self.jobs.getCurrentJob()
+            self.setCurrTgtDir()
+            self.setTagsAndRating(True)
+        if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
+        # Set properties
         self.loadFilterCrop(job)
         self.loadFilterRotate(job)
         self.loadFilterResize(job)
         self.loadFilterDeshake(job)
         self.loadFilterPositions(job)
-        self.setTagsAndRating(True)
+        self.loadSections(job)
+        self.loadTargetFileCount(job)
+        self.loadTargetFileName(job)
+        self.loadTargetFileCount(job)
+        self.btnTgtWxSuffix.setChecked(False) # Todo: Set from job if loaded
+        self.playerTimeCurrent = self.timeFormat
+        self.sectionTimeStart = self.timeFormat
+        self.setFilterBtnStates()
+        # Load video file
+        self.videoProps = Functions.getVideoProperties(videoFilePath)
+        if self.videoProps:
+            self.playerControl.play(videoFilePath)
+            self.setPlayerControlsState(True)
 
     def loadFilterCrop(self, job):
         state = job.getFilterCropState()
-        if state: self.btnFilterCrop.setChecked(True)
-        else: self.btnFilterCrop.setChecked(False)
-        value = job.getFilterCropT()
-        if value: self.boxFilterCropT.setValue(value)
-        else: self.boxFilterCropT.setValue(0)
-        value = job.getFilterCropR()
-        if value: self.boxFilterCropR.setValue(value)
-        else: self.boxFilterCropR.setValue(0)
-        value = job.getFilterCropB()
-        if value: self.boxFilterCropB.setValue(value)
-        else: self.boxFilterCropB.setValue(0)
-        value = job.getFilterCropL()
-        if value: self.boxFilterCropL.setValue(value)
-        else: self.boxFilterCropL.setValue(0)
+        if not state:
+            self.resetCropFilter()
+        else:
+            self.btnFilterCrop.setChecked(True)
+            value = job.getFilterCropT()
+            if value: self.boxFilterCropT.setValue(value)
+            else: self.boxFilterCropT.setValue(0)
+            value = job.getFilterCropR()
+            if value: self.boxFilterCropR.setValue(value)
+            else: self.boxFilterCropR.setValue(0)
+            value = job.getFilterCropB()
+            if value: self.boxFilterCropB.setValue(value)
+            else: self.boxFilterCropB.setValue(0)
+            value = job.getFilterCropL()
+            if value: self.boxFilterCropL.setValue(value)
+            else: self.boxFilterCropL.setValue(0)
 
     def loadFilterRotate(self, job):
         rotation = job.getFilterRotate()
-        if rotation == 90:
+        if not rotation:
+            self.resetRotateFilter()
+        elif rotation == 90:
             self.btnFilterRotateRight.setChecked(True)
             self.onBtnFilterRotateRight()
         elif rotation == -90:
@@ -318,14 +308,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     def loadFilterResize(self, job):
         state = job.getFilterResizeState()
-        if state: self.btnFilterResize.setChecked(True)
-        else: self.btnFilterResize.setChecked(False)
-        value = job.getFilterResizeWidth()
-        if value: self.boxFilterResizeW.setValue(value)
-        else: self.boxFilterResizeW.setValue(0)
-        value = job.getFilterResizeHeight()
-        if value: self.boxFilterResizeH.setValue(value)
-        else: self.boxFilterResizeH.setValue(0)
+        if not state: self.resetResizeFilter()
+        if state:
+            self.btnFilterResize.setChecked(True)
+            value = job.getFilterResizeWidth()
+            if value: self.boxFilterResizeW.setValue(value)
+            else: self.boxFilterResizeW.setValue(0)
+            value = job.getFilterResizeHeight()
+            if value: self.boxFilterResizeH.setValue(value)
+            else: self.boxFilterResizeH.setValue(0)
 
     def loadFilterDeshake(self, job):
         state = job.getFilterDeshakeState()
@@ -653,7 +644,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.killFFmpegProcess()
 
     def onBtnQueueLoadClicked(self):
-        self.loadJobFromQueue()
+        self.newFile()
 
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
@@ -835,17 +826,13 @@ class MainUi(QtWidgets.QMainWindow):
 
         self.tagTreeItemPrefix = self.tagTreeItemPrefix[0:-1]
 
-        # Get TagID from Item
-        # x = item.data(1)
-        # print(x)
-
-    def setTagsAndRating(self, forTarget = False):
+    def setTagsAndRating(self, forSource = True):
         job = self.jobs.getCurrentJob()
-        if forTarget: folderID = self.db.getFolderID(job.getTgtDirName())
-        else: folderID = self.db.getFolderID(job.getSrcDirName())
+        if forSource: folderID = self.db.getFolderID(job.getSrcDirName())
+        else: folderID = self.db.getFolderID(job.getTgtDirName())
         if not folderID: return False
-        if forTarget: imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
-        else: imageID = self.db.getImageID(folderID, job.getSrcFileNameLong())
+        if forSource: imageID = self.db.getImageID(folderID, job.getSrcFileNameLong())
+        else: imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
         if not imageID: return False
         rating = self.db.getRating(imageID)
         if rating: self.setBtnRating(rating)
@@ -854,6 +841,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setTags(tagIDs)
 
     def setBtnRating(self, rating):
+        self.log(1, 'Setze Rating: %s' % rating)
         if rating == 0: self.radioButton_rate0.setChecked(True)
         if rating == 1: self.radioButton_rate1.setChecked(True)
         if rating == 2: self.radioButton_rate2.setChecked(True)
@@ -923,8 +911,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def resetRotateFilter(self):
         self.btnFilterRotateRight.setChecked(False)
-        self.btnFilterRotateRight.setChecked(False)
-        self.btnFilterRotateRight.setChecked(False)
+        self.btnFilterRotateLeft.setChecked(False)
+        self.btnFilterRotate180.setChecked(False)
 
     def resetResizeFilter(self):
         self.boxFilterResizeW.setValue(0)
@@ -1156,7 +1144,6 @@ class MainUi(QtWidgets.QMainWindow):
         return items
 
     def loadFilterPositions(self, job):
-        self.log(1, 'Loading filter positions ...')
         items = self.getFilterPositionItems()
         filterPositions = job.getFilterPositions()
         for position in sorted(filterPositions.keys()):
@@ -1173,17 +1160,42 @@ class MainUi(QtWidgets.QMainWindow):
                     self.gridLayoutFilters.addItem(item, int(position), 0)
         self.setFilterBtnStates()
 
+    def loadSections(self, job):
+        self.resetSections()
+        sections = job.getSections()
+        if sections:
+            for section in sections:
+                self.sectionAddRow(section[0], section[1])
+
+    def loadTargetDirName(self, job):
+        if(job.getTgtDirName()): self.setTgtDirByData(job.getTgtDirName())
+
+    def loadTargetFileCount(self, job):
+        if(job.getTgtFileCount()): self.boxTgtFileCount.setValue(job.getTgtFileCount())
+
+    def loadTargetFileName(self, job):
+        if(job.getTgtFileName()): self.lineEditTgtFileName.setText(job.getTgtFileName())
+
+    def loadTargetFileCount(self, job):
+        if job.getTgtFileCount():
+            self.boxTgtFileCount.setValue(job.getTgtFileCount())
+        else:
+            self.boxTgtFileCount.setValue(0)
+
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()
         self.jobs.getCurrentJob().setTgtDirName(path)
 
     def setTgtDirByData(self, path):
+        print(path)
+        print(self.cmbTgtDirs.currentData)
         if self.cmbTgtDirs.currentData == path:
             return True
         index = self.cmbTgtDirs.findData(path)
         if not index == -1:
             self.cmbTgtDirs.setCurrentIndex(index)
             return True
+        self.log(1, 'Error: Cannot set target path to "%s"' % path)
         return False
 
     def resetVideoProps(self):
