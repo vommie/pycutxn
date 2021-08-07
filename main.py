@@ -54,6 +54,7 @@ class MainUi(QtWidgets.QMainWindow):
         # Init member variables
         self.dirsUi = DirsUi(self)
         self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db'); # Todo: Set path per UI
+        self.tagTreeSpaceChar = '╴'
         self.db = DB(self.config.getDBPath(), self.log)
         self.tagTree = self.db.getCategoriesTree()
         self.logUi = LogUi(self)
@@ -821,7 +822,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def buildTagsTree(self, currTagID):
         if currTagID != -1:
-            self.tagTreeItemPrefix = '%s%s' % ('╴', self.tagTreeItemPrefix)
+            self.tagTreeItemPrefix = '%s%s' % (self.tagTreeSpaceChar, self.tagTreeItemPrefix)
 
         for i, tag in enumerate(self.tagTree):
             if tag['parentID'] == currTagID:
@@ -830,6 +831,7 @@ class MainUi(QtWidgets.QMainWindow):
                 item.setIcon(QIcon())
                 self.listWidgetTagsTree.addItem(item)
                 self.buildTagsTree(tag['tagID'])
+                self.tagTree[i]['item'] = item
 
         self.tagTreeItemPrefix = self.tagTreeItemPrefix[0:-1]
 
@@ -848,6 +850,8 @@ class MainUi(QtWidgets.QMainWindow):
         rating = self.db.getRating(imageID)
         if rating: self.setBtnRating(rating)
         else: self.setBtnRating(0)
+        tagIDs = self.db.getTagIDs(imageID)
+        self.setTags(tagIDs)
 
     def setBtnRating(self, rating):
         if rating == 0: self.radioButton_rate0.setChecked(True)
@@ -856,6 +860,19 @@ class MainUi(QtWidgets.QMainWindow):
         if rating == 3: self.radioButton_rate3.setChecked(True)
         if rating == 4: self.radioButton_rate4.setChecked(True)
         if rating == 5: self.radioButton_rate5.setChecked(True)
+
+    def setTags(self, tagIDs):
+        # Clear tags
+        for i in range(self.listWidgetTagsTree.count()):
+            self.listWidgetTagsTree.item(i).setSelected(False)
+        # Set tags
+        selected = []
+        for tagID in tagIDs:
+            for tag in self.tagTree:
+                if tag['tagID'] == tagID:
+                    tag['item'].setSelected(True)
+                    selected.append(tag['item'].text().replace(self.tagTreeSpaceChar, ''))
+        self.log(1, 'Setze Tags: %s' % ', '.join(selected))
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()

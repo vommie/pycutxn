@@ -58,8 +58,18 @@ class DB:
     def setImageID(self, folderID):
         pass
 
-    def getCategories(self, imageID):
-        pass
+    def getTagIDs(self, imageID):
+        self.log(3, 'Get TagIDs for imageID: "%s" ...' % imageID)
+        conn = self.connect()
+        c = conn.cursor()
+        tags = []
+        for row in c.execute("select tagid from tagstree where imageid = %s" % imageID):
+            tags.append(row[0])
+        conn.commit()
+        self.disconnect(conn)
+        if tags: self.log(3, 'TagIDs found: %s' % tags)
+        else: self.log(3, 'No TagIDs found')
+        return tags
 
     def getRating(self, imageID):
         self.log(3, 'Get Rating for imageID: "%s" ...' % imageID)
