@@ -112,6 +112,9 @@
              <height>24</height>
             </size>
            </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
+           </property>
            <property name="toolTip">
             <string>1 frame backwards</string>
            </property>
@@ -134,6 +137,9 @@
              <width>100</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
            </property>
            <property name="toolTip">
             <string>1 frame forward</string>
@@ -165,6 +171,9 @@
              <height>24</height>
             </size>
            </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
+           </property>
            <property name="toolTip">
             <string>Section start</string>
            </property>
@@ -187,6 +196,9 @@
              <width>100</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
            </property>
            <property name="toolTip">
             <string>Section end</string>
@@ -217,6 +229,9 @@
              <width>100</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
            </property>
            <property name="toolTip">
             <string>Add section to sections list</string>
@@ -254,6 +269,9 @@
              <height>24</height>
             </size>
            </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
+           </property>
            <property name="toolTip">
             <string>Mute</string>
            </property>
@@ -270,6 +288,9 @@
              <width>70</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
            </property>
            <property name="maximum">
             <number>100</number>
@@ -403,6 +424,9 @@
               <height>22</height>
              </size>
             </property>
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
+            </property>
             <property name="maximum">
              <number>999</number>
             </property>
@@ -421,6 +445,9 @@
               <width>16777215</width>
               <height>24</height>
              </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
             </property>
             <property name="toolTip">
              <string>Add filename suffix</string>
@@ -460,6 +487,9 @@
               <width>16777215</width>
               <height>24</height>
              </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
             </property>
             <property name="insertPolicy">
              <enum>QComboBox::InsertAlphabetically</enum>
@@ -513,6 +543,9 @@
               <bold>false</bold>
               <strikeout>false</strikeout>
              </font>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
             </property>
             <property name="toolTip">
              <string>Save current session as job</string>
@@ -575,6 +608,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
                   <normaloff>:/icons/ic_expand_more_24px.svg</normaloff>:/icons/ic_expand_more_24px.svg</iconset>
@@ -591,6 +627,9 @@
                   <width>24</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
@@ -620,6 +659,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="text">
                <string>Crop</string>
               </property>
@@ -648,6 +690,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="maximum">
                <number>99999</number>
               </property>
@@ -672,6 +717,9 @@
                 <width>16777215</width>
                 <height>24</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
               </property>
               <property name="maximum">
                <number>99999</number>
@@ -698,6 +746,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="maximum">
                <number>99999</number>
               </property>
@@ -722,6 +773,9 @@
                 <width>16777215</width>
                 <height>24</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
               </property>
               <property name="maximum">
                <number>99999</number>
@@ -751,6 +805,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
                   <normaloff>:/icons/ic_expand_more_24px.svg</normaloff>:/icons/ic_expand_more_24px.svg</iconset>
@@ -764,6 +821,9 @@
                   <width>24</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
@@ -793,6 +853,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="text">
                <string>Resize</string>
               </property>
@@ -821,6 +884,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="maximum">
                <number>9999</number>
               </property>
@@ -846,6 +912,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="maximum">
                <number>9999</number>
               </property>
@@ -870,6 +939,9 @@
                 <width>16777215</width>
                 <height>24</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
               </property>
               <property name="layoutDirection">
                <enum>Qt::RightToLeft</enum>
@@ -899,6 +971,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="layoutDirection">
                <enum>Qt::RightToLeft</enum>
               </property>
@@ -927,6 +1002,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
                   <normaloff>:/icons/ic_expand_more_24px.svg</normaloff>:/icons/ic_expand_more_24px.svg</iconset>
@@ -940,6 +1018,9 @@
                   <width>24</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
@@ -962,6 +1043,9 @@
                 <width>16777215</width>
                 <height>24</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
               </property>
               <property name="text">
                <string>Left</string>
@@ -995,6 +1079,9 @@
                 <height>24</height>
                </size>
               </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
               <property name="text">
                <string>Right</string>
               </property>
@@ -1026,6 +1113,9 @@
                 <width>16777215</width>
                 <height>24</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
               </property>
               <property name="text">
                <string>180°</string>
@@ -1068,6 +1158,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
                   <normaloff>:/icons/ic_expand_more_24px.svg</normaloff>:/icons/ic_expand_more_24px.svg</iconset>
@@ -1081,6 +1174,9 @@
                   <width>24</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="icon">
                  <iconset resource="../res/res.qrc">
@@ -1097,6 +1193,9 @@
                 <width>16777215</width>
                 <height>24</height>
                </size>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
               </property>
               <property name="text">
                <string>Deshake</string>
@@ -1384,6 +1483,9 @@
                <height>21</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
              <property name="styleSheet">
               <string notr="true">QRadioButton {
 	spacing: 0px;
@@ -1453,6 +1555,9 @@ QRadioButton::unchecked:hover {
                <height>21</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
              <property name="styleSheet">
               <string notr="true">QRadioButton {
 	spacing: 0px;
@@ -1518,6 +1623,9 @@ QRadioButton::unchecked:hover {
                <width>0</width>
                <height>21</height>
               </size>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
              </property>
              <property name="styleSheet">
               <string notr="true">QRadioButton {
@@ -1585,6 +1693,9 @@ QRadioButton::unchecked:hover {
                <height>21</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
              <property name="styleSheet">
               <string notr="true">QRadioButton {
 	spacing: 0px;
@@ -1651,6 +1762,9 @@ QRadioButton::unchecked:hover {
                <height>21</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
              <property name="styleSheet">
               <string notr="true">QRadioButton {
 	spacing: 0px;
@@ -1716,6 +1830,9 @@ QRadioButton::unchecked:hover {
                <width>0</width>
                <height>21</height>
               </size>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
              </property>
              <property name="styleSheet">
               <string notr="true">QRadioButton {
@@ -1815,6 +1932,9 @@ QRadioButton::unchecked:hover {
                <height>16777215</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
              <property name="text">
               <string>0</string>
              </property>
@@ -1860,6 +1980,9 @@ QRadioButton::unchecked:hover {
                <height>24</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
              <property name="toolTip">
               <string>Set tags of previously saved file</string>
              </property>
@@ -1879,6 +2002,9 @@ QRadioButton::unchecked:hover {
                <width>16777215</width>
                <height>24</height>
               </size>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
              </property>
              <property name="toolTip">
               <string>Resets all tags and rating</string>
@@ -1907,6 +2033,9 @@ QRadioButton::unchecked:hover {
                <height>24</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
              <property name="toolTip">
               <string>Tags get only saved for file if the active state is set</string>
              </property>
@@ -1928,6 +2057,9 @@ QRadioButton::unchecked:hover {
                <width>16777215</width>
                <height>24</height>
               </size>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
              </property>
              <property name="toolTip">
               <string>Warn if file gets saved but the active state is not set or if rating is missing.</string>
@@ -2060,6 +2192,9 @@ QRadioButton::unchecked:hover {
            <height>24</height>
           </size>
          </property>
+         <property name="focusPolicy">
+          <enum>Qt::TabFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Pause job processing</string>
          </property>
@@ -2097,6 +2232,9 @@ QRadioButton::unchecked:hover {
            <width>80</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::TabFocus</enum>
          </property>
          <property name="toolTip">
           <string>Abort processing job</string>
@@ -2137,6 +2275,9 @@ QRadioButton::unchecked:hover {
            <height>24</height>
           </size>
          </property>
+         <property name="focusPolicy">
+          <enum>Qt::TabFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Load job as current session</string>
          </property>
@@ -2168,6 +2309,9 @@ QRadioButton::unchecked:hover {
            <width>80</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::TabFocus</enum>
          </property>
          <property name="toolTip">
           <string>Move job up</string>
@@ -2204,6 +2348,9 @@ QRadioButton::unchecked:hover {
            <height>24</height>
           </size>
          </property>
+         <property name="focusPolicy">
+          <enum>Qt::TabFocus</enum>
+         </property>
          <property name="toolTip">
           <string>Move job down</string>
          </property>
@@ -2238,6 +2385,9 @@ QRadioButton::unchecked:hover {
            <width>80</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::TabFocus</enum>
          </property>
          <property name="toolTip">
           <string>Delete job</string>

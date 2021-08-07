@@ -22,7 +22,7 @@ from classes.DB import DB
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont, QFontDatabase
 import res  # pyrcc5 -o res.py res/res.qrc
 
 import ffmpeg
@@ -54,7 +54,6 @@ class MainUi(QtWidgets.QMainWindow):
         # Init member variables
         self.dirsUi = DirsUi(self)
         self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db'); # Todo: Set path per UI
-        self.tagTreeSpaceChar = '╴'
         self.db = DB(self.config.getDBPath(), self.log)
         self.tagTree = self.db.getCategoriesTree()
         self.logUi = LogUi(self)
@@ -144,7 +143,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
         self.btnPause.setIcon(self.iconPause)
         # Init categories tree
-        self.tagTreeItemPrefix = ''
+        self.tagTreeItemPrefix =  ''
+        self.tagTreeSpaceChar = ' '
         self.buildTagsTree(-1)
 
     def initGuiEvents(self):
@@ -820,6 +820,9 @@ class MainUi(QtWidgets.QMainWindow):
                 item = QListWidgetItem('%s%s' % (self.tagTreeItemPrefix, tag['label']))
                 item.setData(1, tag['tagID'])
                 item.setIcon(QIcon())
+                fontWeight = -1
+                if tag['parentID'] == -1: fontWeight = QFont.Bold
+                item.setFont(QFont('DejaVu Sans Mono', -1, weight=fontWeight))
                 self.listWidgetTagsTree.addItem(item)
                 self.buildTagsTree(tag['tagID'])
                 self.tagTree[i]['item'] = item
