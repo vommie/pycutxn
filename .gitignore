@@ -52,3 +52,4 @@ docs/_build/
 
 jobs.json
 config.json
+*.bak
