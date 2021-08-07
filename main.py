@@ -54,7 +54,7 @@ class MainUi(QtWidgets.QMainWindow):
         # Init member variables
         self.dirsUi = DirsUi(self)
         self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db'); # Todo: Set path per UI
-        self.db = DB(self.config.getDBPath())
+        self.db = DB(self.config.getDBPath(), self.log)
         self.tagTree = self.db.getCategoriesTree()
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
@@ -260,6 +260,8 @@ class MainUi(QtWidgets.QMainWindow):
         if self.videoProps:
             self.playerControl.play(videoFilePath)
             self.setPlayerControlsState(True)
+        # Set Tags & Rating
+        self.setTagsAndRating()
         # Other
         self.setFilterBtnStates()
 
@@ -282,6 +284,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadFilterResize(job)
         self.loadFilterDeshake(job)
         self.loadFilterPositions(job)
+        self.setTagsAndRating(True)
 
     def loadFilterCrop(self, job):
         state = job.getFilterCropState()
@@ -816,8 +819,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI Control
 
-# [{'tagID': 15, 'parentID': -1, 'label': 'Audios'}, {'tagID': 13, 'parentID': -1, 'label': 'Drawings'}, {'tagID': 12, 'parentID': -1, 'label': 'Icons'}, {'tagID': 1, 'parentID': -1, 'label': 'Other'}, {'tagID': 2, 'parentID': -1, 'label': 'Photographs'}, {'tagID': 11, 'parentID': -1, 'label': 'Pictures'}, {'tagID': 17, 'parentID': -1, 'label': 'Root'}, {'tagID': 14, 'parentID': -1, 'label': 'Videos'}, {'tagID': 10, 'parentID': 2, 'label': 'Animals'}, {'tagID': 3, 'parentID': 2, 'label': 'Family'}, {'tagID': 9, 'parentID': 2, 'label': 'Flowers'}, {'tagID': 4, 'parentID': 2, 'label': 'Friends'}, {'tagID': 7, 'parentID': 2, 'label': 'Landscapes'}, {'tagID': 5, 'parentID': 2, 'label': 'Pets'}, {'tagID': 8, 'parentID': 2, 'label': 'Portraits'}, {'tagID': 6, 'parentID': 2, 'label': 'Travel'}, {'tagID': 18, 'parentID': 17, 'label': 'Sub1'}, {'tagID': 19, 'parentID': 17, 'label': 'Sub2'}, {'tagID': 23, 'parentID': 17, 'label': 'Sub3'}, {'tagID': 20, 'parentID': 18, 'label': 'Sub1Sub1'}, {'tagID': 21, 'parentID': 19, 'label': 'Sub2Sub1'}, {'tagID': 22, 'parentID': 19, 'label': 'Sub2Sub2'}]
-
     def buildTagsTree(self, currTagID):
         if currTagID != -1:
             self.tagTreeItemPrefix = '%s%s' % ('╴', self.tagTreeItemPrefix)
@@ -835,6 +836,26 @@ class MainUi(QtWidgets.QMainWindow):
         # Get TagID from Item
         # x = item.data(1)
         # print(x)
+
+    def setTagsAndRating(self, forTarget = False):
+        job = self.jobs.getCurrentJob()
+        if forTarget: folderID = self.db.getFolderID(job.getTgtDirName())
+        else: folderID = self.db.getFolderID(job.getSrcDirName())
+        if not folderID: return False
+        if forTarget: imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
+        else: imageID = self.db.getImageID(folderID, job.getSrcFileNameLong())
+        if not imageID: return False
+        rating = self.db.getRating(imageID)
+        if rating: self.setBtnRating(rating)
+        else: self.setBtnRating(0)
+
+    def setBtnRating(self, rating):
+        if rating == 0: self.radioButton_rate0.setChecked(True)
+        if rating == 1: self.radioButton_rate1.setChecked(True)
+        if rating == 2: self.radioButton_rate2.setChecked(True)
+        if rating == 3: self.radioButton_rate3.setChecked(True)
+        if rating == 4: self.radioButton_rate4.setChecked(True)
+        if rating == 5: self.radioButton_rate5.setChecked(True)
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
@@ -1154,6 +1175,7 @@ class MainUi(QtWidgets.QMainWindow):
     def log(self, id, line):
         if id == 1: self.logApp.appendPlainText(line)
         elif id == 2: self.logFfmpeg.appendPlainText(line)
+        elif id == 3: self.logDB.appendPlainText(line)
         print(line)
 
     def killFFmpegProcess(self):

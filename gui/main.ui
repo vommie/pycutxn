@@ -2289,8 +2289,14 @@ QRadioButton::unchecked:hover {
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="tabShape">
+        <enum>QTabWidget::Triangular</enum>
+       </property>
        <property name="currentIndex">
         <number>0</number>
+       </property>
+       <property name="movable">
+        <bool>true</bool>
        </property>
        <widget class="QWidget" name="tabApp">
         <attribute name="title">
@@ -2299,8 +2305,16 @@ QRadioButton::unchecked:hover {
         <layout class="QVBoxLayout" name="verticalLayout_11">
          <item>
           <widget class="QPlainTextEdit" name="logApp">
+           <property name="font">
+            <font>
+             <family>Noto Sans Mono</family>
+            </font>
+           </property>
            <property name="readOnly">
             <bool>true</bool>
+           </property>
+           <property name="placeholderText">
+            <string>App log</string>
            </property>
           </widget>
          </item>
@@ -2313,8 +2327,38 @@ QRadioButton::unchecked:hover {
         <layout class="QVBoxLayout" name="verticalLayout_12">
          <item>
           <widget class="QPlainTextEdit" name="logFfmpeg">
+           <property name="font">
+            <font>
+             <family>Noto Sans Mono</family>
+            </font>
+           </property>
            <property name="readOnly">
             <bool>true</bool>
+           </property>
+           <property name="placeholderText">
+            <string>FFmpeg log</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabDB">
+        <attribute name="title">
+         <string>DB</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_13">
+         <item>
+          <widget class="QPlainTextEdit" name="logDB">
+           <property name="font">
+            <font>
+             <family>Noto Sans Mono</family>
+            </font>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="placeholderText">
+            <string>Database log</string>
            </property>
           </widget>
          </item>
