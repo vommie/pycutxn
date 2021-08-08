@@ -327,9 +327,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     def saveSession(self):
         '''Saves the current job session as new job and into the database'''
+        self.log(1, 'Saving current session ...')
         job = self.addCurrentJobToQueue()
-        if not job: return False
+        if not job:
+            self.log(1, 'Error: Cannot add session to job queue.')
+            return False
+        self.log(1, 'Session saved as new job in queue.')
         self.saveCurrentTagsAndRating()
+        self.resetRating()
+        self.resetTagsTree()
 
     def addCurrentJobToQueue(self):
         '''Adds the current job session as new job to the jobs queue'''
@@ -872,16 +878,67 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         Saves the current tags and rating for the target file to the database
         '''
-        pass
+        if not self.isTaggingEnabled(): return False
+        job = self.jobs.getCurrentJob()
+        tagIDs = self.getSelectedTagIDsFromTagsTree()
+        rating = self.getRatingFromBtns()
+        if not tagIDs and not rating:
+            # TODO: Make warning
+            return True
 
-    def setBtnRating(self, rating):
-        self.log(1, 'Setting rating: %s' % rating)
-        if rating == 0: self.radioButton_rate0.setChecked(True)
-        if rating == 1: self.radioButton_rate1.setChecked(True)
-        if rating == 2: self.radioButton_rate2.setChecked(True)
-        if rating == 3: self.radioButton_rate3.setChecked(True)
-        if rating == 4: self.radioButton_rate4.setChecked(True)
-        if rating == 5: self.radioButton_rate5.setChecked(True)
+        folderID = self.db.getFolderID(job.getTgtDirName())
+        if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
+        if not folderID: return False
+        imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
+        if not imageID: imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
+        if not imageID: return False
+
+        if rating:
+            self.log(1, 'Save rating to database ...')
+            try: self.db.setRating(imageID, folderID, rating)
+            except:
+                self.log(1, 'Error: No database connection possible')
+                self.disableTaggerPanel()
+                return False
+            self.log(1, 'Rating saved: %s' % rating)
+        if tagIDs:
+            self.log(1, 'Save tags to database ...')
+            try: self.db.setTags(imageID, tagIDs)
+            except:
+                self.log(1, 'Error: No database connection possible')
+                self.disableTaggerPanel()
+                return False
+            self.log(1, 'Tags saved: %s' % tagIDs)
+        return True
+
+    def getSelectedTagIDsFromTagsTree(self):
+        '''
+        Gets all selected tags from the tags tree widget.
+
+        :return: Array with tag IDs of selected tag tree items
+        '''
+        tagIDs = []
+        for i, tag in enumerate(self.tagsTree):
+            tag = self.tagsTree[i]
+            item = tag['item']
+            if item.isSelected():
+                tagIDs.append(tag['tagID'])
+        return tagIDs
+
+    def getRatingFromBtns(self):
+        '''
+        Gets the currently selected rating from the rating radio buttons
+
+        :return: The current rating (int)
+        '''
+        rating = 0
+        if self.radioButton_rate0.isChecked(): return 0
+        if self.radioButton_rate1.isChecked(): return 1
+        if self.radioButton_rate2.isChecked(): return 2
+        if self.radioButton_rate3.isChecked(): return 3
+        if self.radioButton_rate4.isChecked(): return 4
+        if self.radioButton_rate5.isChecked(): return 5
+        return rating
 
     def selectTagsInTagsTree(self, tagIDs):
         '''
@@ -899,7 +956,16 @@ class MainUi(QtWidgets.QMainWindow):
                 if tag['tagID'] == tagID:
                     tag['item'].setSelected(True)
                     selected.append(tag['item'].text().replace(self.tagsTreeSpaceChar, ''))
-        self.log(1, 'Setting tags: %s' % ', '.join(selected))
+        self.log(1, 'Selecting tags: %s' % ', '.join(selected))
+
+    def setBtnRating(self, rating):
+        self.log(1, 'Selecting rating: %s' % rating)
+        if rating == 0: self.radioButton_rate0.setChecked(True)
+        if rating == 1: self.radioButton_rate1.setChecked(True)
+        if rating == 2: self.radioButton_rate2.setChecked(True)
+        if rating == 3: self.radioButton_rate3.setChecked(True)
+        if rating == 4: self.radioButton_rate4.setChecked(True)
+        if rating == 5: self.radioButton_rate5.setChecked(True)
 
     def disableTaggerPanel(self):
         '''Disables the Tagger panel. For use when no database connection is possible.'''

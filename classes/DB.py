@@ -31,16 +31,39 @@ class DB:
         except AttributeError:
             raise Exception('Cannot connect to Database')
         if folderID:
-            folderID = folderID[0]
-            folderID = int(folderID)
+            folderID = int(folderID[0])
             self.log(3, 'FolderID found: %s' % folderID)
         else:
-            self.log(3, 'No FolderID found')
+            self.log(3, 'No folderID found')
             folderID = False
         return folderID
 
-    def setFolderID(self):
-        pass
+    def insertNewPath(self, path):
+        if not path[:-1] == '/': path = '%s/' % path
+        self.log(3, 'Insert new path: "%s" ...' % path)
+        folderID = False
+        maxFolderID = False
+        try:
+            conn = self.connect()
+            c = conn.cursor()
+            c.execute("select max(folderid) from folders")
+            conn.commit()
+            maxFolderID = c.fetchone()
+        except AttributeError:
+            raise Exception('Cannot connect to Database')
+        if maxFolderID: maxFolderID = int(maxFolderID[0])
+        else: self.log(3, 'No max folderID found. Cannot create new folderID.')
+        if not maxFolderID: return False
+        folderID = maxFolderID + 1
+        try:
+            c.execute("insert into folders(folderid,pathname) values('%s','%s')" % (folderID, path))
+            conn.commit()
+            maxFolderID = c.fetchone()
+            self.disconnect(conn)
+        except AttributeError:
+            raise Exception('Cannot connect to Database')
+        self.log(3, 'Path inserted with folderID: "%s".' % folderID)
+        return folderID
 
     def getImageID(self, folderID, fileName):
         self.log(3, 'Get ImageID for folderID "%s" with file name "%s" ...' % (folderID, fileName))
@@ -63,8 +86,31 @@ class DB:
             imageID = False
         return imageID
 
-    def setImageID(self, folderID):
-        pass
+    def insertNewImage(self, folderID, fileName):
+        self.log(3, 'Insert new image: "%s" ...' % fileName)
+        imageID = False
+        maxImageID = False
+        try:
+            conn = self.connect()
+            c = conn.cursor()
+            c.execute("select max(imageid) from images")
+            conn.commit()
+            maxImageID = c.fetchone()
+        except AttributeError:
+            raise Exception('Cannot connect to Database')
+        if maxImageID: maxImageID = int(maxImageID[0])
+        else: self.log(3, 'No max folderID found. Cannot create new folderID.')
+        if not maxImageID: return False
+        imageID = maxImageID + 1
+        try:
+            c.execute("insert into images(imageid,folderID,filename,size,modifieddate) values('%s','%s','%s',0,0)" % (imageID, folderID, fileName))
+            conn.commit()
+            maxImageID = c.fetchone()
+            self.disconnect(conn)
+        except AttributeError:
+            raise Exception('Cannot connect to Database')
+        self.log(3, 'Image inserted with imageID: "%s".' % imageID)
+        return imageID
 
     def getTagIDs(self, imageID):
         self.log(3, 'Get TagIDs for imageID: "%s" ...' % imageID)
@@ -103,6 +149,18 @@ class DB:
             rating = False
         return rating
 
+    def setRating(self, imageID, folderID, rating):
+        self.log(3, 'Set rating "%s" for folderID "%s" / imageID: "%s" ...' % (rating, folderID, imageID))
+        try:
+            conn = self.connect()
+            c = conn.cursor()
+            c.execute("update images set rating='%s' where imageid='%s' and folderid='%s'" % (rating, imageID, folderID))
+            conn.commit()
+            self.disconnect(conn)
+        except AttributeError:
+            raise Exception('NoConnection')
+        return True
+
     def getTagsTree(self):
         self.log(3, 'Get tags tree ...')
         tagsTree = []
@@ -117,3 +175,21 @@ class DB:
             raise Exception('NoConnection')
         self.log(3, 'Tags tree found:\n%s' % tagsTree)
         return tagsTree
+
+    def setTags(self, imageID, tagIDs):
+        self.log(3, 'Set tagID "%s" for imageID "%s" ...' % (tagIDs, imageID))
+        try:
+            conn = self.connect()
+            c = conn.cursor()
+            c.execute("delete from tagstree where imageid = %s" % (imageID))
+            conn.commit()
+        except AttributeError:
+            raise Exception('NoConnection')
+        try:
+            for tagID in tagIDs:
+                c.execute("insert into tagstree (imageid,tagid) values (%s, %s)" % (imageID, tagID))
+            conn.commit()
+            self.disconnect(conn)
+        except AttributeError:
+            raise Exception('NoConnection')
+        return True
