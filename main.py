@@ -256,6 +256,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.setCurrTgtDir()
             self.setTagsAndRatingToTree(True)
         if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
+        self.log(1, 'Source path: "%s".' % videoFilePath)
         # Set properties
         self.loadFilterCrop(job)
         self.loadFilterRotate(job)
@@ -271,6 +272,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setFilterBtnStates()
         # Load video file
         self.videoProps = Functions.getVideoProperties(videoFilePath)
+        self.log(1, 'Video properties: %s' % self.videoProps)
         if self.videoProps:
             self.playerControl.play(videoFilePath)
             self.setPlayerControlsState(True)
@@ -328,6 +330,9 @@ class MainUi(QtWidgets.QMainWindow):
     def saveSession(self):
         '''Saves the current job session as new job and into the database'''
         self.log(1, 'Saving current session ...')
+        currentJob = self.jobs.getCurrentJob()
+        if not currentJob.getSections():
+            currentJob.addSection(self.timeFormat, self.videoProps['duration'])
         job = self.addCurrentJobToQueue()
         if not job:
             self.log(1, 'Error: Cannot add session to job queue.')
@@ -799,6 +804,8 @@ class MainUi(QtWidgets.QMainWindow):
         if self.btnQueueKill.isEnabled():
             self.btnQueueKill.setEnabled(False)
         # todo append output and error to job, display it if clicked on queue item
+        # if output: self.log(2, str(output))
+        # if error: self.log(2, str(error))
         # Update queue table with job state
         id = job.getID()
         self.updateQueueJobState(id, state)
@@ -885,7 +892,6 @@ class MainUi(QtWidgets.QMainWindow):
         if not tagIDs and not rating:
             # TODO: Make warning
             return True
-
         folderID = self.db.getFolderID(job.getTgtDirName())
         if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
         if not folderID: return False
