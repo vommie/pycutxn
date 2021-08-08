@@ -172,7 +172,6 @@ class MainUi(QtWidgets.QMainWindow):
         # Job Finalization
         self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
         self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
-        self.btnTgtWxSuffix.clicked.connect(self.onBtnExportWxClicked)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
         self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
@@ -263,7 +262,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadTargetFileCount(job)
         self.loadTargetFileName(job)
         self.loadTargetFileCount(job)
-        self.btnTgtWxSuffix.setChecked(False) # Todo: Set from job if loaded
         self.playerTimeCurrent = self.timeFormat
         self.sectionTimeStart = self.timeFormat
         self.setFilterBtnStates()
@@ -516,12 +514,6 @@ class MainUi(QtWidgets.QMainWindow):
     def onSliderPlayerReleased(self):
         self.sliderPlayerIsPressed = False
         self.setPlayerPosByPlayerSlider()
-
-    def onBtnExportWxClicked(self):
-        if self.btnTgtWxSuffix.isChecked():
-            self.jobs.getCurrentJob().addTgtFileSuffix('[WX]')
-        else:
-            self.jobs.getCurrentJob().removeTgtFileSuffix('[WX]')
 
     def onLineEditTgtFileNameChanged(self, text):
         self.jobs.getCurrentJob().setTgtFileName(text)

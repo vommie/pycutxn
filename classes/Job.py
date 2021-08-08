@@ -26,7 +26,6 @@ class Job():
                 'fileName': False,
                 'fileExt': False,
                 'count': 0,
-                'suffixes': []
             },
             'sections': [],
             'filters': {
@@ -92,9 +91,6 @@ class Job():
     def getTgtFileExt(self):
         return self._props['tgtFile'].get('fileExt')
 
-    def getTgtFileSuffixes(self):
-        return self._props['tgtFile'].get('suffixes')
-
     def getTgtFileCount(self):
         return self._props['tgtFile'].get('count')
 
@@ -103,11 +99,8 @@ class Job():
         fileNameLong = name
         ext = self.getTgtFileExt()
         count = self.getTgtFileCount()
-        suffix = ' '.join(self.getTgtFileSuffixes())
         if(count):
             fileNameLong = "%s - %02d" % (fileNameLong, count)
-        if(suffix):
-            fileNameLong = "%s - %s" % (fileNameLong, suffix)
         fileNameLong = "%s%s" % (fileNameLong, ext)
         return fileNameLong
 
@@ -326,24 +319,6 @@ class Job():
             'fileName': fileName,
             'fileExt': fileExt
         }
-
-    def addTgtFileSuffix(self, suffix):
-        suffixes = self._props['tgtFile'].get('suffixes')
-        if suffix not in suffixes:
-            suffixes.append(suffix)
-        self._props['tgtFile'].update({'suffixes': suffixes})
-        self.propValueChanged()
-
-    def removeTgtFileSuffix(self, suffix):
-        suffixes = self._props['tgtFile'].get('suffixes')
-        if suffix in suffixes:
-            suffixes.remove(suffix)
-        self._props['tgtFile'].update({'suffixes': suffixes})
-        self.propValueChanged()
-
-    def clearTgtFileSuffixes(self):
-        self._props['tgtFile'].update({'suffixes': []})
-        self.propValueChanged()
 
     def addSection(self, timeFrom, timeTo):
         sections = self._props.get('sections')
