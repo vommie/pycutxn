@@ -39,6 +39,11 @@ class Functions:
         text = text.rstrip('/')
         return text
 
+    @staticmethod
+    def appendTrailingSlash(text):
+        if not text[:-1] == '/': text = '%s/' % text
+        return text
+
     # H:M:S.f to seconds (int)
     @staticmethod
     def timeStrToSeconds(timeStr, asFloat=False):

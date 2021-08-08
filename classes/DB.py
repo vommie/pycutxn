@@ -19,7 +19,7 @@ class DB:
         if conn: conn.close()
 
     def getFolderID(self, path):
-        path = Functions.removeTrailingSlash(path)
+        path = Functions.appendTrailingSlash(path)
         self.log(3, 'Get FolderID for path: "%s" ...' % path)
         folderID = False
         try:
@@ -40,7 +40,7 @@ class DB:
         return folderID
 
     def insertNewPath(self, path):
-        path = Functions.removeTrailingSlash(path)
+        path = Functions.appendTrailingSlash(path)
         self.log(3, 'Insert new path: "%s" ...' % path)
         folderID = False
         maxFolderID = False

@@ -879,6 +879,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, 'Error: No database connection possible')
             self.disableTaggerPanel()
             return False
+        self.log(1, 'TRUE!!!')
         return True
 
     def saveCurrentTagsAndRating(self):
