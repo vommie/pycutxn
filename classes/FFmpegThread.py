@@ -111,9 +111,9 @@ class FFmpegThread(QThread):
                 try:
                     process = output.run_async(overwrite_output=True, pipe_stdout=True, pipe_stderr=True)
                     self.ffmpegStart.emit([job, totalSeconds, process])
-                    print('async runned')
                     # Handle stdout (progress information), by passing it to callback functions
                     for line in process.stdout:
+                        print(line)
                         line = line.decode('ascii').rstrip()
                         line = line.split('=')
                         self.ffmpegProcess.emit([line, job, totalSeconds])

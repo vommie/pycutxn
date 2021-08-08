@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from .Functions import Functions
 
 class DB:
 
@@ -18,7 +19,7 @@ class DB:
         if conn: conn.close()
 
     def getFolderID(self, path):
-        if not path[:-1] == '/': path = '%s/' % path
+        path = Functions.removeTrailingSlash(path)
         self.log(3, 'Get FolderID for path: "%s" ...' % path)
         folderID = False
         try:
@@ -39,7 +40,7 @@ class DB:
         return folderID
 
     def insertNewPath(self, path):
-        if not path[:-1] == '/': path = '%s/' % path
+        path = Functions.removeTrailingSlash(path)
         self.log(3, 'Insert new path: "%s" ...' % path)
         folderID = False
         maxFolderID = False

@@ -1,6 +1,6 @@
 import sys
 import ffmpeg
-
+import time
 class Functions:
 
     @staticmethod
@@ -61,16 +61,17 @@ class Functions:
     # Get video properties from ffprobe
     @staticmethod
     def getVideoProperties(videoFilePath):
-        print('probeFile()')
         props = {}
         probe = ffmpeg.probe(videoFilePath)
         video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+        print("video stream: %s" % video_stream)
         try:
             width = int(video_stream['width'])
             height = int(video_stream['height'])
             if width and height:
                 props.update({'width' : width})
                 props.update({'height' : height})
+            props.update({'duration' : '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(video_stream['duration']))), video_stream['duration'][-6:][:3])}) # ms to h:m:s.ms
         except:
             props = {}
         return props
