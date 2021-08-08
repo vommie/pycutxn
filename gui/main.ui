@@ -1851,6 +1851,19 @@ QRadioButton::unchecked:hover {
           </layout>
          </item>
          <item>
+          <widget class="QLabel" name="labelTaggerError">
+           <property name="text">
+            <string>No database connection possible.</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QListWidget" name="listWidgetTagsTree">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">

@@ -55,7 +55,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.dirsUi = DirsUi(self)
         self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db'); # Todo: Set path per UI
         self.db = DB(self.config.getDBPath(), self.log)
-        self.tagTree = self.db.getCategoriesTree()
+        self.labelTaggerError.setHidden(True)
+        try: self.tagsTree = self.db.getTagsTree()
+        except:
+            self.tagsTree = []
+            self.disableTaggerPanel()
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
         self.playerTimeCurrent = self.timeFormat
@@ -143,8 +147,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
         self.btnPause.setIcon(self.iconPause)
         # Init categories tree
-        self.tagTreeItemPrefix =  ''
-        self.tagTreeSpaceChar = ' '
+        self.tagsTreeItemPrefix =  ''
+        self.tagsTreeSpaceChar = ' '
         self.buildTagsTree(-1)
 
     def initGuiEvents(self):
@@ -243,14 +247,14 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, 'Loading job from queue ...')
             self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
             job = self.jobs.getCurrentJob()
-            self.setTagsAndRating(False)
+            self.setTagsAndRatingToTree(False)
             self.loadTargetDirName(job)
         else:
             self.log(1, 'Init new job from file ...')
             self.jobs.newCurrentJob(videoFilePath)
             job = self.jobs.getCurrentJob()
             self.setCurrTgtDir()
-            self.setTagsAndRating(True)
+            self.setTagsAndRatingToTree(True)
         if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
         # Set properties
         self.loadFilterCrop(job)
@@ -321,12 +325,23 @@ class MainUi(QtWidgets.QMainWindow):
         if state: self.btnFilterDeshake.setChecked(True)
         else: self.btnFilterDeshake.setChecked(False)
 
-    def addJob(self):
-        id, job = self.jobs.saveCurrentJob()
-        state = job.getState()
-        iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-        job.setPosition(iRow)
-        self.runNextWaitJob()
+    def saveSession(self):
+        '''Saves the current job session as new job and into the database'''
+        job = self.addCurrentJobToQueue()
+        if not job: return False
+        self.saveCurrentTagsAndRating()
+
+    def addCurrentJobToQueue(self):
+        '''Adds the current job session as new job to the jobs queue'''
+        try:
+            id, job = self.jobs.saveCurrentJob()
+            state = job.getState()
+            iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
+            job.setPosition(iRow)
+            self.runNextWaitJob()
+            return job
+        except:
+            return False
 
     def runNextWaitJob(self):
         self.log(1, 'Running next job ...')
@@ -523,7 +538,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.jobs.getCurrentJob().setTgtFileCount(text)
 
     def onBtnExportSave(self):
-        self.addJob()
+        self.saveSession()
 
     def onBtnExportDirsClicked(self):
         self.dirsUi.show()
@@ -804,12 +819,18 @@ class MainUi(QtWidgets.QMainWindow):
     # GUI Control
 
     def buildTagsTree(self, currTagID):
-        if currTagID != -1:
-            self.tagTreeItemPrefix = '%s%s' % (self.tagTreeSpaceChar, self.tagTreeItemPrefix)
+        '''
+        Fills the TagsTree widget with tags of the member variable "tagsTree".
+        This is a recursive function. Call it with currTagID parameter = -1
+        to start the process.
 
-        for i, tag in enumerate(self.tagTree):
+        :param currTagID: Set it to -1 to start the loop.
+        '''
+        if currTagID != -1:
+            self.tagsTreeItemPrefix = '%s%s' % (self.tagsTreeSpaceChar, self.tagsTreeItemPrefix)
+        for i, tag in enumerate(self.tagsTree):
             if tag['parentID'] == currTagID:
-                item = QListWidgetItem('%s%s' % (self.tagTreeItemPrefix, tag['label']))
+                item = QListWidgetItem('%s%s' % (self.tagsTreeItemPrefix, tag['label']))
                 item.setData(1, tag['tagID'])
                 item.setIcon(QIcon())
                 fontWeight = -1
@@ -817,26 +838,44 @@ class MainUi(QtWidgets.QMainWindow):
                 item.setFont(QFont('DejaVu Sans Mono', -1, weight=fontWeight))
                 self.listWidgetTagsTree.addItem(item)
                 self.buildTagsTree(tag['tagID'])
-                self.tagTree[i]['item'] = item
+                self.tagsTree[i]['item'] = item
+        self.tagsTreeItemPrefix = self.tagsTreeItemPrefix[0:-1]
 
-        self.tagTreeItemPrefix = self.tagTreeItemPrefix[0:-1]
+    def setTagsAndRatingToTree(self, forSource:bool = True):
+        '''
+        Gets the tags and rating for the source or target file of the current
+        job session and sets it into the tags tree and rating panel.
 
-    def setTagsAndRating(self, forSource = True):
+        :param forSource: Get the tags and ratings for the source filename if True, else get them from the target filename.
+        '''
+        if not self.isTaggingEnabled: return False
         job = self.jobs.getCurrentJob()
-        if forSource: folderID = self.db.getFolderID(job.getSrcDirName())
-        else: folderID = self.db.getFolderID(job.getTgtDirName())
-        if not folderID: return False
-        if forSource: imageID = self.db.getImageID(folderID, job.getSrcFileNameLong())
-        else: imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
-        if not imageID: return False
-        rating = self.db.getRating(imageID)
-        if rating: self.setBtnRating(rating)
-        else: self.setBtnRating(0)
-        tagIDs = self.db.getTagIDs(imageID)
-        self.setTags(tagIDs)
+        try:
+            if forSource: folderID = self.db.getFolderID(job.getSrcDirName())
+            else: folderID = self.db.getFolderID(job.getTgtDirName())
+            if not folderID: return False
+            if forSource: imageID = self.db.getImageID(folderID, job.getSrcFileNameLong())
+            else: imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
+            if not imageID: return False
+            rating = self.db.getRating(imageID)
+            if rating: self.setBtnRating(rating)
+            else: self.setBtnRating(0)
+            tagIDs = self.db.getTagIDs(imageID)
+            self.selectTagsInTagsTree(tagIDs)
+        except:
+            self.log(1, 'Error: No database connection possible')
+            self.disableTaggerPanel()
+            return False
+        return True
+
+    def saveCurrentTagsAndRating(self):
+        '''
+        Saves the current tags and rating for the target file to the database
+        '''
+        pass
 
     def setBtnRating(self, rating):
-        self.log(1, 'Setze Rating: %s' % rating)
+        self.log(1, 'Setting rating: %s' % rating)
         if rating == 0: self.radioButton_rate0.setChecked(True)
         if rating == 1: self.radioButton_rate1.setChecked(True)
         if rating == 2: self.radioButton_rate2.setChecked(True)
@@ -844,18 +883,43 @@ class MainUi(QtWidgets.QMainWindow):
         if rating == 4: self.radioButton_rate4.setChecked(True)
         if rating == 5: self.radioButton_rate5.setChecked(True)
 
-    def setTags(self, tagIDs):
+    def selectTagsInTagsTree(self, tagIDs):
+        '''
+        Selects a list of tag IDs on the tags tree. Clears all tags which are not in the list.
+
+        :param tagIDs: Array of tag IDs. Empty array clears all tags.
+        '''
         # Clear tags
         for i in range(self.listWidgetTagsTree.count()):
             self.listWidgetTagsTree.item(i).setSelected(False)
         # Set tags
         selected = []
         for tagID in tagIDs:
-            for tag in self.tagTree:
+            for tag in self.tagsTree:
                 if tag['tagID'] == tagID:
                     tag['item'].setSelected(True)
-                    selected.append(tag['item'].text().replace(self.tagTreeSpaceChar, ''))
-        self.log(1, 'Setze Tags: %s' % ', '.join(selected))
+                    selected.append(tag['item'].text().replace(self.tagsTreeSpaceChar, ''))
+        self.log(1, 'Setting tags: %s' % ', '.join(selected))
+
+    def disableTaggerPanel(self):
+        '''Disables the Tagger panel. For use when no database connection is possible.'''
+        self.resetTagsTree()
+        self.resetRating()
+        self.labelTaggerError.setHidden(False)
+        self.dockTagger.setEnabled(False)
+
+    def enableTaggerPanel(self):
+        '''Enables the Tagger panel. For use when database connection is possible.'''
+        self.labelTaggerError.setHidden(True)
+        self.dockTagger.setEnabled(True)
+
+    def isTaggingEnabled(self):
+        '''
+        Checks if tagging and rating is enabled.
+
+        :return: True if tagging and rating is enabled, False if not.
+        '''
+        return self.dockTagger.isEnabled()
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
@@ -885,6 +949,14 @@ class MainUi(QtWidgets.QMainWindow):
     def resetSections(self):
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
+
+    def resetTagsTree(self):
+        '''Resets the tag tree'''
+        self.selectTagsInTagsTree([])
+
+    def resetRating(self):
+        '''Sets the rating back to zero'''
+        self.setBtnRating(0)
 
     def queueAddRow(self, id, filename, state):
         iRow = self.tableQueue.rowCount()
