@@ -18,6 +18,13 @@ class DB:
     def disconnect(self, conn):
         if conn: conn.close()
 
+    def testConnection(self):
+        conn = self.connect()
+        if conn:
+            self.disconnect(conn)
+            return True
+        return False
+
     def getFolderID(self, path):
         path = Functions.appendTrailingSlash(path)
         self.log(3, 'Get FolderID for path: "%s" ...' % path)

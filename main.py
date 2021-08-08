@@ -276,6 +276,8 @@ class MainUi(QtWidgets.QMainWindow):
         if self.videoProps:
             self.playerControl.play(videoFilePath)
             self.setPlayerControlsState(True)
+        # Other
+        self.checkDBConnectivity()
 
     def loadFilterCrop(self, job):
         state = job.getFilterCropState()
@@ -372,12 +374,12 @@ class MainUi(QtWidgets.QMainWindow):
     def checkJobForRenderbility(self, job):
         if Functions.isSameString(job.getSrcFilePathLong(), job.getTgtFilePathLong()):
             msg = 'Error: Input and Output Path are the same.'
-            self.log(1, msg)
+            self.log(1, msg, 1)
             self.onFFmpegExit([job, -100, msg, msg])
             return False
         if len(job.getSections()) == 0:
             msg = 'Error: No sections to render.'
-            self.log(1, msg)
+            self.log(1, msg, 1)
             self.onFFmpegExit([job, -101, msg, msg])
             return False
         return True
@@ -875,8 +877,8 @@ class MainUi(QtWidgets.QMainWindow):
             else: self.setBtnRating(0)
             tagIDs = self.db.getTagIDs(imageID)
             self.selectTagsInTagsTree(tagIDs)
-        except:
-            self.log(1, 'Error: No database connection possible')
+        except Exception as e:
+            self.log(1, 'Error: %s' % e, 1)
             self.disableTaggerPanel()
             return False
         return True
@@ -892,18 +894,23 @@ class MainUi(QtWidgets.QMainWindow):
         if not tagIDs and not rating:
             # TODO: Make warning
             return True
-        folderID = self.db.getFolderID(job.getTgtDirName())
-        if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
-        if not folderID: return False
-        imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
-        if not imageID: imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
-        if not imageID: return False
+        try:
+            folderID = self.db.getFolderID(job.getTgtDirName())
+            if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
+            if not folderID: return False
+            imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
+            if not imageID: imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
+            if not imageID: return False
+        except Exception as e:
+            self.log(1, 'Error: %s' % e, 1)
+            self.disableTaggerPanel()
+            return False
 
         if rating:
             self.log(1, 'Save rating to database ...')
             try: self.db.setRating(imageID, folderID, rating)
             except:
-                self.log(1, 'Error: No database connection possible')
+                self.log(1, 'Error: No database connection possible', 1)
                 self.disableTaggerPanel()
                 return False
             self.log(1, 'Rating saved: %s' % rating)
@@ -911,7 +918,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, 'Save tags to database ...')
             try: self.db.setTags(imageID, tagIDs)
             except:
-                self.log(1, 'Error: No database connection possible')
+                self.log(1, 'Error: No database connection possible', 1)
                 self.disableTaggerPanel()
                 return False
             self.log(1, 'Tags saved: %s' % tagIDs)
@@ -975,6 +982,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def disableTaggerPanel(self):
         '''Disables the Tagger panel. For use when no database connection is possible.'''
+        if not self.dockTagger.isEnabled(): return
         self.resetTagsTree()
         self.resetRating()
         self.labelTaggerError.setHidden(False)
@@ -982,8 +990,14 @@ class MainUi(QtWidgets.QMainWindow):
 
     def enableTaggerPanel(self):
         '''Enables the Tagger panel. For use when database connection is possible.'''
+        if self.dockTagger.isEnabled(): return
         self.labelTaggerError.setHidden(True)
         self.dockTagger.setEnabled(True)
+
+    def checkDBConnectivity(self):
+        '''Checks if the database is available and sets Tagger panel status based on the result'''
+        if self.db.testConnection(): self.enableTaggerPanel()
+        else: self.disableTaggerPanel()
 
     def isTaggingEnabled(self):
         '''
@@ -1326,25 +1340,35 @@ class MainUi(QtWidgets.QMainWindow):
         self.jobs.getCurrentJob().setTgtDirName(path)
 
     def setTgtDirByData(self, path):
-        print(path)
-        print(self.cmbTgtDirs.currentData)
         if self.cmbTgtDirs.currentData == path:
             return True
         index = self.cmbTgtDirs.findData(path)
         if not index == -1:
             self.cmbTgtDirs.setCurrentIndex(index)
             return True
-        self.log(1, 'Error: Cannot set target path to "%s"' % path)
+        self.log(1, 'Error: Cannot set target path to "%s"' % path, 1)
         return False
 
     def resetVideoProps(self):
         self.videoProps = {}
 
-    def log(self, id, line):
-        if id == 1: self.logApp.appendPlainText(line)
-        elif id == 2: self.logFfmpeg.appendPlainText(line)
-        elif id == 3: self.logDB.appendPlainText(line)
+    def log(self, id, line, msgType=0, timestamp=True):
+        '''
+        Adds a line to a log
+
+        :param line: String to add to the log
+        :param msType: 0 = Normal, 1 = Error
+        :param timestamp: Adds a timestamp with h:m:s as prefix if true
+        '''
         print(line)
+        if timestamp:
+            line = '%s %s' % (datetime.datetime.now().strftime('%H:%M:%S'), line)
+        if msgType == 1:
+            line = '<font color="red">%s</color>' % line
+        line = '%s<br>' % line
+        if id == 1: self.logApp.insertHtml(line)
+        elif id == 2: self.logFFmpeg.insertHtml(line)
+        elif id == 3: self.logDB.insertHtml(line)
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:
