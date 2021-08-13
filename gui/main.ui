@@ -1912,6 +1912,9 @@ QRadioButton::unchecked:hover {
          <item>
           <widget class="QFrame" name="widgetTagRateEditCtrl">
            <layout class="QVBoxLayout" name="verticalLayout_14">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -1926,38 +1929,13 @@ QRadioButton::unchecked:hover {
             </property>
             <item>
              <layout class="QHBoxLayout" name="layoutLastTagsRating">
-              <item>
-               <widget class="QListWidget" name="listWidgetLastTags">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>46</height>
-                 </size>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollMode">
-                 <enum>QAbstractItemView::ScrollPerPixel</enum>
-                </property>
-                <property name="isWrapping" stdset="0">
-                 <bool>true</bool>
-                </property>
-                <property name="resizeMode">
-                 <enum>QListView::Adjust</enum>
-                </property>
-               </widget>
-              </item>
+              <property name="spacing">
+               <number>0</number>
+              </property>
               <item>
                <widget class="QPushButton" name="btnLastRating">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Ignored">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -1973,6 +1951,46 @@ QRadioButton::unchecked:hover {
                 </property>
                 <property name="text">
                  <string>0</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QListWidget" name="listWidgetLastTags">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>56</height>
+                 </size>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAsNeeded</enum>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="editTriggers">
+                 <set>QAbstractItemView::SelectedClicked</set>
+                </property>
+                <property name="textElideMode">
+                 <enum>Qt::ElideLeft</enum>
+                </property>
+                <property name="horizontalScrollMode">
+                 <enum>QAbstractItemView::ScrollPerPixel</enum>
+                </property>
+                <property name="flow">
+                 <enum>QListView::LeftToRight</enum>
+                </property>
+                <property name="isWrapping" stdset="0">
+                 <bool>true</bool>
+                </property>
+                <property name="resizeMode">
+                 <enum>QListView::Adjust</enum>
                 </property>
                </widget>
               </item>
@@ -1992,7 +2010,7 @@ QRadioButton::unchecked:hover {
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Set tags of previously saved file</string>
+                 <string>Set tags and rating of previously saved session</string>
                 </property>
                 <property name="text">
                  <string>Set last</string>

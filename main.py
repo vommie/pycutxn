@@ -7,6 +7,7 @@ import subprocess
 import os
 import signal
 import re
+import copy
 
 from libs.mpv import *
 
@@ -60,6 +61,8 @@ class MainUi(QtWidgets.QMainWindow):
         except:
             self.tagsTree = []
             self.disableTaggerPanel()
+        self.lastTagIDs = []
+        self.lastRating = 0
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
         self.playerTimeCurrent = self.timeFormat
@@ -226,6 +229,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
         # Tag & Rate
         self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
+        self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
+        self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
+        self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
+        self.btnTagsClear.clicked.connect(self.onBtnTagsClearClicked)
+        self.btnLastRating.clicked.connect(self.onBtnLastRatingClicked)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -251,8 +259,8 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param videoFilePath: The path to the video file to open. If not set, the currently selected job in the queue gets loaded.
         '''
-        self.log(1, '--------------------------------------')
-        self.log(3, '--------------------------------------')
+        self.log(1, '---New File-----------------------------------')
+        self.log(3, '---New File -----------------------------------')
         if not videoFilePath:
             self.log(1, 'Loading job from queue ...')
             self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
@@ -765,6 +773,21 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnTagRateHistorySaveClicked(self):
         self.setHistoryMode(False)
 
+    def onListWidgetLastTagsItemClicked(self, item):
+        tagID = item.data(100)
+        self.selectTagsInTagsTree([tagID], False)
+        item.setSelected(False)
+
+    def onBtnTagsLastClicked(self):
+        self.selectTagsInTagsTree(self.lastTagIDs, False)
+        self.setBtnRating(self.lastRating)
+
+    def onBtnTagsClearClicked(self):
+        self.resetTagsTree()
+
+    def onBtnLastRatingClicked(self):
+        self.setBtnRating(self.lastRating)
+
     # Other Event handlers
 
     # Event handler while ffmpeg is rendering
@@ -860,8 +883,6 @@ class MainUi(QtWidgets.QMainWindow):
         for i, tag in enumerate(self.tagsTree):
             if tag['parentID'] == currTagID:
                 item = QListWidgetItem('%s%s' % (self.tagsTreeItemPrefix, tag['label']))
-                item.setData(1, tag['tagID'])
-                item.setIcon(QIcon())
                 fontWeight = -1
                 if tag['parentID'] == -1: fontWeight = QFont.Bold
                 item.setFont(QFont('DejaVu Sans Mono', -1, weight=fontWeight))
@@ -942,6 +963,10 @@ class MainUi(QtWidgets.QMainWindow):
                 self.disableTaggerPanel()
                 return False
             self.log(1, 'Tags saved: %s' % tagIDs)
+
+        self.insertTagsInLastTagsList(tagIDs)
+        self.setLastRating(rating)
+
         return True
 
     def getSelectedTagIDsFromTagsTree(self):
@@ -973,15 +998,16 @@ class MainUi(QtWidgets.QMainWindow):
         if self.radioButton_rate5.isChecked(): return 5
         return rating
 
-    def selectTagsInTagsTree(self, tagIDs):
+    def selectTagsInTagsTree(self, tagIDs, clearTags=True):
         '''
         Selects a list of tag IDs on the tags tree. Clears all tags which are not in the list.
 
         :param tagIDs: Array of tag IDs. Empty array clears all tags.
+        _param clearTags: If True, all tags get cleared before the new tags get selected.
         '''
-        # Clear tags
-        for i in range(self.listWidgetTagsTree.count()):
-            self.listWidgetTagsTree.item(i).setSelected(False)
+        if clearTags:
+            for i in range(self.listWidgetTagsTree.count()):
+                self.listWidgetTagsTree.item(i).setSelected(False)
         # Set tags
         selected = []
         for tagID in tagIDs:
@@ -990,6 +1016,24 @@ class MainUi(QtWidgets.QMainWindow):
                     tag['item'].setSelected(True)
                     selected.append(tag['item'].text().replace(self.tagsTreeSpaceChar, ''))
         self.log(1, 'Selecting tags: %s' % ', '.join(selected))
+
+    def insertTagsInLastTagsList(self, tagIDs):
+        '''
+        Insert tags into the last tags listview
+
+        :param tagIDs: Array of tag IDs. Empty array clears all tags.
+        '''
+        self.lastTagIDs = tagIDs
+        for tagID in tagIDs:
+            for tag in self.tagsTree:
+                if tag['tagID'] == tagID:
+                    item = QListWidgetItem(tag['label'])
+                    item.setData(100, tag['tagID'])
+                    self.listWidgetLastTags.addItem(item)
+
+    def setLastRating(self, rating):
+        self.lastRating = rating
+        self.btnLastRating.setText(str(rating))
 
     def setBtnRating(self, rating):
         self.log(1, 'Selecting rating: %s' % rating)
@@ -1062,6 +1106,10 @@ class MainUi(QtWidgets.QMainWindow):
         '''Resets the tag tree'''
         self.log(1, 'Reset tags ...')
         self.selectTagsInTagsTree([])
+
+    def resetLastTagsList(self):
+        '''Resets the last tags list view'''
+        self.insertTagsInLastTagsList([])
 
     def resetRating(self):
         '''Sets the rating back to zero'''
