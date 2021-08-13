@@ -63,8 +63,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
         self.playerTimeCurrent = self.timeFormat
-        self.sectionTimeStart = self.timeFormat
-        self.sectionTimeEnd = self.timeFormat
         self.iconPlay = QIcon(':/icons/ic_play_arrow_24px.svg')
         self.iconPause = QIcon(':/icons/ic_pause_24px.svg')
         self.iconIsMuted = QIcon(':/icons/ic_volume_off_24px.svg')
@@ -269,6 +267,9 @@ class MainUi(QtWidgets.QMainWindow):
             self.setCurrTgtDir()
         if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
         self.log(1, 'Source path: "%s".' % videoFilePath)
+        # Get Video Props
+        self.videoProps = Functions.getVideoProperties(videoFilePath)
+        self.log(1, 'Video properties: %s' % self.videoProps)
         # Set properties
         self.loadFilterCrop(job)
         self.loadFilterRotate(job)
@@ -283,8 +284,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.sectionTimeStart = self.timeFormat
         self.setFilterBtnStates()
         # Load video file
-        self.videoProps = Functions.getVideoProperties(videoFilePath)
-        self.log(1, 'Video properties: %s' % self.videoProps)
         if self.videoProps:
             self.playerControl.play(videoFilePath)
             self.setPlayerControlsState(True)
@@ -1054,6 +1053,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.setSectionBtnStates()
 
     def resetSections(self):
+        self.sectionTimeStart = self.timeFormat
+        self.sectionTimeEnd = self.videoProps['duration']
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
 
