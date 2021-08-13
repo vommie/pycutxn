@@ -243,6 +243,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def newFile(self, videoFilePath = False):
         self.log(1, '--------------------------------------')
+        self.log(3, '--------------------------------------')
         if not videoFilePath:
             self.log(1, 'Loading job from queue ...')
             self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))

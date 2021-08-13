@@ -70,7 +70,7 @@ class Jobs:
 
     def saveJobs(self):
         with open(self.jobsFilePath, 'w') as outfile:
-            jobsProps = { }
+            jobsProps = {}
             for id, job in self.jobs.items():
                 jobsProps.update({id: job.getProps()})
             json.dump(jobsProps, outfile, indent=1)
