@@ -101,6 +101,8 @@ class MainUi(QtWidgets.QMainWindow):
         if geometry: self.restoreGeometry(geometry)
         state = self.config.getAppState()
         if state: self.restoreState(state)
+        # Other
+        self.toolTipBtnExportSave = self.btnExportSave.toolTip()
         # GUI elements options
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
@@ -150,6 +152,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.tagsTreeItemPrefix =  ''
         self.tagsTreeSpaceChar = ' '
         self.buildTagsTree(-1)
+        # Rag & Rate
+        self.setHistoryMode(False)
 
     def initGuiEvents(self):
         # Player control
@@ -222,6 +226,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
         self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
         self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
+        # Tag & Rate
+        self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -242,6 +248,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.player.observe_property('volume', self.onPlayerVolume)
 
     def newFile(self, videoFilePath = False):
+        '''
+        Loads a file as new curent job into PyCut. (Re)sets the GUI.
+
+        :param videoFilePath: The path to the video file to open. If not set, the currently selected job in the queue gets loaded.
+        '''
         self.log(1, '--------------------------------------')
         self.log(3, '--------------------------------------')
         if not videoFilePath:
@@ -250,12 +261,12 @@ class MainUi(QtWidgets.QMainWindow):
             job = self.jobs.getCurrentJob()
             self.setTagsAndRatingToTree(False)
             self.loadTargetDirName(job)
+            self.setHistoryMode(True)
         else:
             self.log(1, 'Init new job from file ...')
             self.jobs.newCurrentJob(videoFilePath)
             job = self.jobs.getCurrentJob()
             self.setCurrTgtDir()
-            self.setTagsAndRatingToTree(True)
         if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
         self.log(1, 'Source path: "%s".' % videoFilePath)
         # Set properties
@@ -665,7 +676,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.killFFmpegProcess()
 
     def onBtnQueueLoadClicked(self):
-        self.newFile()
+        self.newFile(False)
 
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
@@ -751,6 +762,9 @@ class MainUi(QtWidgets.QMainWindow):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterDeshake)
         self.moveRowInFiltersGrid(index, False)
         self.setFilterBtnStates()
+
+    def onBtnTagRateHistorySaveClicked(self):
+        self.setHistoryMode(False)
 
     # Other Event handlers
 
@@ -889,19 +903,25 @@ class MainUi(QtWidgets.QMainWindow):
         Saves the current tags and rating for the target file to the database
         '''
         if not self.isTaggingEnabled(): return False
+        self.log(1, 'Save Tags and Rating to DB ...')
         job = self.jobs.getCurrentJob()
         tagIDs = self.getSelectedTagIDsFromTagsTree()
         rating = self.getRatingFromBtns()
         if not tagIDs and not rating:
             # TODO: Make warning
+            self.log(1, 'No tags and no rating set.')
             return True
         try:
             folderID = self.db.getFolderID(job.getTgtDirName())
             if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
-            if not folderID: return False
+            if not folderID:
+                self.log(1, 'Got no folderID. Cannot save tags and rating.', 1)
+                return False
             imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
             if not imageID: imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
-            if not imageID: return False
+            if not imageID:
+                self.log(1, 'Got no imageID. Cannot save tags and rating.', 1)
+                return False
         except Exception as e:
             self.log(1, 'Error: %s' % e, 1)
             self.disableTaggerPanel()
@@ -1039,10 +1059,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     def resetTagsTree(self):
         '''Resets the tag tree'''
+        self.log(1, 'Reset tags ...')
         self.selectTagsInTagsTree([])
 
     def resetRating(self):
         '''Sets the rating back to zero'''
+        self.log(1, 'Reset rating ...')
         self.setBtnRating(0)
 
     def queueAddRow(self, id, filename, state):
@@ -1075,6 +1097,29 @@ class MainUi(QtWidgets.QMainWindow):
 
     def resetDeshakeFilter(self):
         self.btnFilterDeshake.setChecked(False)
+
+    def setHistoryMode(self, state):
+        '''
+        Enables or disables the Tag & Rate history mode by setting the member variable to the state
+        and controlling which elements in the GUI are visible or not.
+
+        :param state: True or False
+        '''
+        self.historyMode = state
+        self.setBtnExportSaveState()
+        if state:
+            self.log(1, 'Activate Tags and Rating History Mode.')
+            self.widgetTagRateHistoryCtrl.setVisible(True)
+            self.widgetTagRateEditCtrl.setVisible(False)
+            self.btnExportSave.setToolTip('Cannot save while Tags & Rating is in History Mode. Save current Tags & Rating first.')
+        else:
+            self.log(1, 'Disable Tags and Rating History Mode.')
+            self.widgetTagRateHistoryCtrl.setVisible(False)
+            self.widgetTagRateEditCtrl.setVisible(True)
+            self.btnExportSave.setToolTip(self.toolTipBtnExportSave)
+            self.saveCurrentTagsAndRating()
+            self.resetTagsTree()
+            self.resetRating()
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):
@@ -1116,7 +1161,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnQueueDown.setEnabled(False)
 
     def setBtnExportSaveState(self):
-        if len(self.cmbTgtDirs.currentText()) > 0 and len(self.lineEditTgtFileName.text()) > 0:
+        if len(self.cmbTgtDirs.currentText()) > 0 and len(self.lineEditTgtFileName.text()) > 0 and not self.historyMode:
             if not self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(True)
         else:
             if self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(False)
@@ -1324,11 +1369,10 @@ class MainUi(QtWidgets.QMainWindow):
     def loadTargetDirName(self, job):
         if(job.getTgtDirName()): self.setTgtDirByData(job.getTgtDirName())
 
-    def loadTargetFileCount(self, job):
-        if(job.getTgtFileCount()): self.boxTgtFileCount.setValue(job.getTgtFileCount())
-
     def loadTargetFileName(self, job):
-        if(job.getTgtFileName()): self.lineEditTgtFileName.setText(job.getTgtFileName())
+        if(job.getTgtFileName()):
+            self.lineEditTgtFileName.setText(job.getTgtFileName())
+            self.lineEditTagRateHistoryFile.setText(job.getTgtFileNameLong())
 
     def loadTargetFileCount(self, job):
         if job.getTgtFileCount():
