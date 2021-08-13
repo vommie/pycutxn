@@ -350,6 +350,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def saveSession(self):
         '''Saves the current job session as new job and into the database'''
+        if(self.historyMode): return False
         self.log(1, 'Saving current session ...')
         currentJob = self.jobs.getCurrentJob()
         if not currentJob.getSections():
