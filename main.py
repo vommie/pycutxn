@@ -54,7 +54,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegKilled = False
         # Init member variables
         self.dirsUi = DirsUi(self)
-        self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db'); # Todo: Set path per UI
+        self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
         self.db = DB(self.config.getDBPath(), self.log)
         self.labelTaggerError.setHidden(True)
         try: self.tagsTree = self.db.getTagsTree()
@@ -104,6 +104,7 @@ class MainUi(QtWidgets.QMainWindow):
         if state: self.restoreState(state)
         # Other
         self.toolTipBtnExportSave = self.btnExportSave.toolTip()
+        self.hideMsgBox()
         # GUI elements options
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
@@ -789,6 +790,13 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnLastRatingClicked(self):
         self.setBtnRating(self.lastRating)
 
+    def onMsgBoxYesClicked(self):
+        self.hideMsgBox()
+
+    def onMsgBoxNoClicked(self):
+        self.hideMsgBox()
+
+
     # Other Event handlers
 
     # Event handler while ffmpeg is rendering
@@ -870,6 +878,54 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegProcess = False
 
     # GUI Control
+
+    def showMsgBox(self, msg, choice="ok", okCallback=False, noCallBack=False):
+        '''
+        Shows the main message box with user interaction buttons
+
+        :param msg: The message to display
+        :param choice: "ok" displays button with "OK" as text. "okcancel" displays two buttons with "OK" and "Cancel" as text. "yesno" displays two buttons with "Yes" and "No" as text. False displays no buttons at all.
+        :param okCallback: Provide a callback function for the "yes"-button. If False, default callback function will be used.
+        :param noCallBack: Provide a callback function for the "no"-button. If False, default callback function will be used.
+        '''
+        self.msgLabel.setText(str(msg))
+
+        if not okCallback: self.btnMsgYes.clicked.connect(self.onMsgBoxYesClicked)
+        else: self.btnMsgYes.clicked.connect(okCallback)
+        if not noCallBack: self.btnMsgNo.clicked.connect(self.onMsgBoxNoClicked)
+        else: self.btnMsgNo.clicked.connect(noCallBack)
+
+        if not choice:
+            self.widgetMsgBtns.setVisible(False)
+            self.widgetMsgBtns.setEnabled(False)
+        elif choice == "ok":
+            self.widgetMsgBtns.setEnabled(True)
+            self.btnMsgYes.setText("OK")
+            self.btnMsgYes.setVisible(True)
+            self.btnMsgNo.setVisible(False)
+        elif choice == "okcancel":
+            self.widgetMsgBtns.setEnabled(True)
+            self.btnMsgYes.setText("OK")
+            self.btnMsgNo.setText("Cancel")
+            self.btnMsgYes.setVisible(True)
+            self.btnMsgNo.setVisible(True)
+        elif choice == "yesno":
+            self.widgetMsgBtns.setEnabled(True)
+            self.btnMsgYes.setText("Yes")
+            self.btnMsgNo.setText("No")
+            self.btnMsgYes.setVisible(True)
+            self.btnMsgNo.setVisible(True)
+        self.frameMsg.setVisible(True)
+        self.frameMsg.setEnabled(True)
+
+    def hideMsgBox(self):
+        '''
+        Hides the main message box
+        '''
+        self.frameMsg.setVisible(False)
+        self.frameMsg.setEnabled(False)
+        self.btnMsgYes.clicked.connect(self.onMsgBoxYesClicked)
+        self.btnMsgNo.clicked.connect(self.onMsgBoxNoClicked)
 
     def buildTagsTree(self, currTagID):
         '''
