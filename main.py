@@ -57,10 +57,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
         self.db = DB(self.config.getDBPath(), self.log)
         self.labelTaggerError.setHidden(True)
-        try: self.tagsTree = self.db.getTagsTree()
-        except:
-            self.tagsTree = []
-            self.disableTaggerPanel()
+        self.tagsTree = []
         self.lastTagIDs = []
         self.lastRating = 0
         self.logUi = LogUi(self)
@@ -262,6 +259,7 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         self.log(1, '---New File-----------------------------------')
         self.log(3, '---New File -----------------------------------')
+        self.checkDBConnectivity()
         if not videoFilePath:
             self.log(1, 'Loading job from queue ...')
             self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
@@ -296,8 +294,6 @@ class MainUi(QtWidgets.QMainWindow):
         if self.videoProps:
             self.playerControl.play(videoFilePath)
             self.setPlayerControlsState(True)
-        # Other
-        self.checkDBConnectivity()
 
     def loadFilterCrop(self, job):
         state = job.getFilterCropState()
@@ -362,8 +358,6 @@ class MainUi(QtWidgets.QMainWindow):
             return False
         self.log(1, 'Session saved as new job in queue.')
         self.saveCurrentTagsAndRating()
-        self.resetRating()
-        self.resetTagsTree()
 
     def addCurrentJobToQueue(self):
         '''Adds the current job session as new job to the jobs queue'''
@@ -773,7 +767,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.setFilterBtnStates()
 
     def onBtnTagRateHistorySaveClicked(self):
-        self.setHistoryMode(False)
+        if self.saveCurrentTagsAndRating() != -1: # Keep History Mode active if we wait for user to response to MsgBox due to missing rating or tags
+            self.setHistoryMode(False)
 
     def onListWidgetLastTagsItemClicked(self, item):
         tagID = item.data(100)
@@ -785,7 +780,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setBtnRating(self.lastRating)
 
     def onBtnTagsClearClicked(self):
-        self.resetTagsTree()
+        self.clearTagsTree()
 
     def onBtnLastRatingClicked(self):
         self.setBtnRating(self.lastRating)
@@ -796,6 +791,10 @@ class MainUi(QtWidgets.QMainWindow):
     def onMsgBoxNoClicked(self):
         self.hideMsgBox()
 
+    def onMsgBoxNoTagsOrRatingYes(self):
+        self.hideMsgBox()
+        self.saveCurrentTagsAndRating(True)
+        self.setHistoryMode(False)
 
     # Other Event handlers
 
@@ -890,11 +889,17 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         self.msgLabel.setText(str(msg))
 
+        try:
+            self.btnMsgYes.clicked.disconnect()
+            self.btnMsgNo.clicked.disconnect()
+        except Exception: pass
         if not okCallback: self.btnMsgYes.clicked.connect(self.onMsgBoxYesClicked)
         else: self.btnMsgYes.clicked.connect(okCallback)
         if not noCallBack: self.btnMsgNo.clicked.connect(self.onMsgBoxNoClicked)
         else: self.btnMsgNo.clicked.connect(noCallBack)
 
+        if choice:
+            self.log(1, 'Wait for user MsgBox response ...')
         if not choice:
             self.widgetMsgBtns.setVisible(False)
             self.widgetMsgBtns.setEnabled(False)
@@ -924,8 +929,6 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         self.frameMsg.setVisible(False)
         self.frameMsg.setEnabled(False)
-        self.btnMsgYes.clicked.connect(self.onMsgBoxYesClicked)
-        self.btnMsgNo.clicked.connect(self.onMsgBoxNoClicked)
 
     def buildTagsTree(self, currTagID):
         '''
@@ -955,7 +958,7 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param forSource: Get the tags and ratings for the source filename if True, else get them from the target filename.
         '''
-        if not self.isTaggingEnabled: return False
+        if not self.isTaggerEnabled: return False
         job = self.jobs.getCurrentJob()
         try:
             if forSource: folderID = self.db.getFolderID(job.getSrcDirName())
@@ -963,7 +966,12 @@ class MainUi(QtWidgets.QMainWindow):
             if not folderID: return False
             if forSource: imageID = self.db.getImageID(folderID, job.getSrcFileNameLong())
             else: imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
-            if not imageID: return False
+            if not imageID:
+                if forSource: return False
+                imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
+                if not imageID:
+                    self.log(1, 'Error: Cannot create ImageID for file.')
+                    return False
             rating = self.db.getRating(imageID)
             if rating: self.setBtnRating(rating)
             else: self.setBtnRating(0)
@@ -975,19 +983,32 @@ class MainUi(QtWidgets.QMainWindow):
             return False
         return True
 
-    def saveCurrentTagsAndRating(self):
+    def saveCurrentTagsAndRating(self, skipChecks=False):
         '''
         Saves the current tags and rating for the target file to the database
+
+        :param skipChecks: If False and warning button is checked and there is no rating or tags selected, the user will be asked if he really want to save.
+        :param return: False if something went wrong. -1 if MsgBox is active due to missing rating or tags. True if successfully saved.
         '''
-        if not self.isTaggingEnabled(): return False
-        self.log(1, 'Save Tags and Rating to DB ...')
+        if not self.isTaggerEnabled(): return False
+        if skipChecks: self.log(1, 'Resuming saving Tags and Rating to DB ...')
+        else: self.log(1, 'Save Tags and Rating to DB ...')
         job = self.jobs.getCurrentJob()
         tagIDs = self.getSelectedTagIDsFromTagsTree()
         rating = self.getRatingFromBtns()
-        if not tagIDs and not rating:
-            # TODO: Make warning
-            self.log(1, 'No tags and no rating set.')
-            return True
+
+        # TODO: Always skip checks in history mode
+        if not skipChecks and self.isTaggerWarningActive():
+            if not tagIDs and not rating:
+                 self.showMsgBox('No rating and no tags are set. Are you sure to proceed?', 'yesno', self.onMsgBoxNoTagsOrRatingYes)
+                 return -1
+            elif not tagIDs:
+                self.showMsgBox('No rating is set. Are you sure to proceed?', 'yesno', self.onMsgBoxNoTagsOrRatingYes)
+                return -1
+            elif not rating:
+                self.showMsgBox('No tags are set. Are you sure to proceed?', 'yesno', self.onMsgBoxNoTagsOrRatingYes)
+                return -1
+
         try:
             folderID = self.db.getFolderID(job.getTgtDirName())
             if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
@@ -1004,25 +1025,26 @@ class MainUi(QtWidgets.QMainWindow):
             self.disableTaggerPanel()
             return False
 
-        if rating:
-            self.log(1, 'Save rating to database ...')
-            try: self.db.setRating(imageID, folderID, rating)
-            except:
-                self.log(1, 'Error: No database connection possible', 1)
-                self.disableTaggerPanel()
-                return False
-            self.log(1, 'Rating saved: %s' % rating)
-        if tagIDs:
-            self.log(1, 'Save tags to database ...')
-            try: self.db.setTags(imageID, tagIDs)
-            except:
-                self.log(1, 'Error: No database connection possible', 1)
-                self.disableTaggerPanel()
-                return False
-            self.log(1, 'Tags saved: %s' % tagIDs)
+        self.log(1, 'Save rating to database ...')
+        try: self.db.setRating(imageID, folderID, rating)
+        except:
+            self.log(1, 'Error: No database connection possible', 1)
+            self.disableTaggerPanel()
+            return False
+        self.log(1, 'Rating saved: %s' % rating)
+
+        self.log(1, 'Save tags to database ...')
+        try: self.db.setTags(imageID, tagIDs)
+        except:
+            self.log(1, 'Error: No database connection possible', 1)
+            self.disableTaggerPanel()
+            return False
+        self.log(1, 'Tags saved: %s' % tagIDs)
 
         self.insertTagsInLastTagsList(tagIDs)
         self.setLastRating(rating)
+        self.clearRating()
+        self.clearTagsTree()
 
         return True
 
@@ -1062,7 +1084,8 @@ class MainUi(QtWidgets.QMainWindow):
         :param tagIDs: Array of tag IDs. Empty array clears all tags.
         :param clearTags: If True, all tags get deselected before the new tags get selected.
         '''
-        if clearSelection:
+        if clearSelection or not tagIDs:
+            self.log(1, 'Clear tags ...')
             for i in range(self.listWidgetTagsTree.count()):
                 self.listWidgetTagsTree.item(i).setSelected(False)
         selected = []
@@ -1071,7 +1094,7 @@ class MainUi(QtWidgets.QMainWindow):
                 if tag['tagID'] == tagID:
                     tag['item'].setSelected(True)
                     selected.append(tag['item'].text().replace(self.tagsTreeSpaceChar, ''))
-        self.log(1, 'Selecting tags: %s' % ', '.join(selected))
+        if tagIDs: self.log(1, 'Selecting tags: %s' % ', '.join(selected))
 
     def insertTagsInLastTagsList(self, tagIDs, clearTags=True):
         '''
@@ -1105,15 +1128,21 @@ class MainUi(QtWidgets.QMainWindow):
 
     def disableTaggerPanel(self):
         '''Disables the Tagger panel. For use when no database connection is possible.'''
-        if not self.dockTagger.isEnabled(): return
-        self.resetTagsTree()
-        self.resetRating()
-        self.labelTaggerError.setHidden(False)
+        if not self.isTaggerEnabled(): return
+        self.showMsgBox('Tagger got disabled as there was no succesful database connection possible.')
         self.dockTagger.setEnabled(False)
+        self.emptyTagsTree()
+        self.clearRating()
+        self.labelTaggerError.setHidden(False)
+        self.setHistoryMode(False)
 
     def enableTaggerPanel(self):
         '''Enables the Tagger panel. For use when database connection is possible.'''
-        if self.dockTagger.isEnabled(): return
+        if self.isTaggerEnabled(): return
+        if not self.tagsTree:
+            try: self.tagsTree = self.db.getTagsTree()
+            except: return False
+            self.buildTagsTree(-1)
         self.labelTaggerError.setHidden(True)
         self.dockTagger.setEnabled(True)
 
@@ -1122,13 +1151,19 @@ class MainUi(QtWidgets.QMainWindow):
         if self.db.testConnection(): self.enableTaggerPanel()
         else: self.disableTaggerPanel()
 
-    def isTaggingEnabled(self):
+    def isTaggerEnabled(self):
         '''
         Checks if tagging and rating is enabled.
 
         :return: True if tagging and rating is enabled, False if not.
         '''
         return self.dockTagger.isEnabled()
+
+    def isTaggerWarningActive(self):
+        '''
+        Checks if the Tagger warning button is checked which warns if no rating or no tags are selected
+        '''
+        return self.btnTagRateWarning.isChecked()
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
@@ -1155,24 +1190,27 @@ class MainUi(QtWidgets.QMainWindow):
             self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
 
-    def resetSections(self):
+    def clearSections(self):
         self.sectionTimeStart = self.timeFormat
         self.sectionTimeEnd = self.videoProps['duration']
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
 
-    def resetTagsTree(self):
+    def emptyTagsTree(self):
+        '''Deletes all items from the tagsTree'''
+        self.tagsTree = []
+        self.listWidgetTagsTree.clear()
+
+    def clearTagsTree(self):
         '''Resets the tag tree'''
-        self.log(1, 'Reset tags ...')
         self.selectTagsInTagsTree([])
 
-    def resetLastTagsList(self):
+    def clearLastTagsList(self):
         '''Resets the last tags list view'''
         self.insertTagsInLastTagsList([])
 
-    def resetRating(self):
+    def clearRating(self):
         '''Sets the rating back to zero'''
-        self.log(1, 'Reset rating ...')
         self.setBtnRating(0)
 
     def queueAddRow(self, id, filename, state):
@@ -1213,21 +1251,23 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param state: True or False
         '''
-        self.historyMode = state
-        self.setBtnExportSaveState()
-        if state:
+        if state and self.isTaggerEnabled():
             self.log(1, 'Activate Tags and Rating History Mode.')
+            self.historyMode = True
             self.widgetTagRateHistoryCtrl.setVisible(True)
             self.widgetTagRateEditCtrl.setVisible(False)
             self.btnExportSave.setToolTip('Cannot save while Tags & Rating is in History Mode. Save current Tags & Rating first.')
-        else:
+        elif not state and self.isTaggerEnabled():
             self.log(1, 'Disable Tags and Rating History Mode.')
+            self.historyMode = False
             self.widgetTagRateHistoryCtrl.setVisible(False)
             self.widgetTagRateEditCtrl.setVisible(True)
             self.btnExportSave.setToolTip(self.toolTipBtnExportSave)
-            self.saveCurrentTagsAndRating()
-            self.resetTagsTree()
-            self.resetRating()
+        else:
+            self.widgetTagRateHistoryCtrl.setVisible(False)
+            self.widgetTagRateEditCtrl.setVisible(True)
+            self.historyMode = False
+        self.setBtnExportSaveState()
 
     # Set the states of the section buttons
     def setSectionBtnStates(self):
@@ -1468,7 +1508,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setFilterBtnStates()
 
     def loadSections(self, job):
-        self.resetSections()
+        self.clearSections()
         sections = job.getSections()
         if sections:
             for section in sections:

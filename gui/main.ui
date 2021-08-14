@@ -1460,6 +1460,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockTagger">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="windowTitle">
     <string>Tag &amp;&amp; Rate</string>
    </property>
@@ -2166,6 +2169,9 @@ QRadioButton::unchecked:hover {
              <string>Warn</string>
             </property>
             <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
              <bool>true</bool>
             </property>
            </widget>
