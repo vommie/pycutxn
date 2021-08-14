@@ -1461,9 +1461,22 @@ class MainUi(QtWidgets.QMainWindow):
         if msgType == 1:
             line = '<font color="red">%s</color>' % line
         line = '%s<br>' % line
-        if id == 1: self.logApp.insertHtml(line)
-        elif id == 2: self.logFFmpeg.insertHtml(line)
-        elif id == 3: self.logDB.insertHtml(line)
+        textEdit = self.logApp
+        if id == 2: textEdit = self.logFFmpeg
+        elif id == 3: textEdit = self.logDB
+        textEdit.insertHtml(line)
+        self.scrollWidgetToEnd(textEdit)
+
+    def scrollWidgetToEnd(self, element, forceScrolling=False):
+        '''
+        Scrolls a widget to the end.
+
+        :param forceScrolling: If True, the widget gets scrolled down even if it has focus.
+        '''
+        scroll = True
+        if not forceScrolling:
+            if element.hasFocus(): scroll = False
+        if scroll: element.verticalScrollBar().setValue(element.verticalScrollBar().maximum())
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:
