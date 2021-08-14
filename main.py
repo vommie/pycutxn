@@ -1004,12 +1004,11 @@ class MainUi(QtWidgets.QMainWindow):
         Selects a list of tag IDs on the tags tree. Clears all tags which are not in the list.
 
         :param tagIDs: Array of tag IDs. Empty array clears all tags.
-        _param clearTags: If True, all tags get cleared before the new tags get selected.
+        :param clearTags: If True, all tags get cleared before the new tags get selected.
         '''
         if clearTags:
             for i in range(self.listWidgetTagsTree.count()):
                 self.listWidgetTagsTree.item(i).setSelected(False)
-        # Set tags
         selected = []
         for tagID in tagIDs:
             for tag in self.tagsTree:
@@ -1018,12 +1017,18 @@ class MainUi(QtWidgets.QMainWindow):
                     selected.append(tag['item'].text().replace(self.tagsTreeSpaceChar, ''))
         self.log(1, 'Selecting tags: %s' % ', '.join(selected))
 
-    def insertTagsInLastTagsList(self, tagIDs):
+    def insertTagsInLastTagsList(self, tagIDs, clearTags=True):
         '''
         Insert tags into the last tags listview
 
         :param tagIDs: Array of tag IDs. Empty array clears all tags.
+        :param clearTags: If True, all tags get cleared before the new tags inserted.
         '''
+        # if clearTags:
+        #     for i in range(self.listWidgetLastTags.count()):
+        #         item = self.listWidgetLastTags.takeItem(i)
+        if clearTags: self.listWidgetLastTags.clear()
+
         self.lastTagIDs = tagIDs
         for tagID in tagIDs:
             for tag in self.tagsTree:
