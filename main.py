@@ -1024,9 +1024,6 @@ class MainUi(QtWidgets.QMainWindow):
         :param tagIDs: Array of tag IDs. Empty array clears all tags.
         :param clearTags: If True, all tags get cleared before the new tags inserted.
         '''
-        # if clearTags:
-        #     for i in range(self.listWidgetLastTags.count()):
-        #         item = self.listWidgetLastTags.takeItem(i)
         if clearTags: self.listWidgetLastTags.clear()
 
         self.lastTagIDs = tagIDs
