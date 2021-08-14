@@ -999,14 +999,14 @@ class MainUi(QtWidgets.QMainWindow):
         if self.radioButton_rate5.isChecked(): return 5
         return rating
 
-    def selectTagsInTagsTree(self, tagIDs, clearTags=True):
+    def selectTagsInTagsTree(self, tagIDs, clearSelection=True):
         '''
         Selects a list of tag IDs on the tags tree. Clears all tags which are not in the list.
 
         :param tagIDs: Array of tag IDs. Empty array clears all tags.
-        :param clearTags: If True, all tags get cleared before the new tags get selected.
+        :param clearTags: If True, all tags get deselected before the new tags get selected.
         '''
-        if clearTags:
+        if clearSelection:
             for i in range(self.listWidgetTagsTree.count()):
                 self.listWidgetTagsTree.item(i).setSelected(False)
         selected = []
