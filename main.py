@@ -345,10 +345,16 @@ class MainUi(QtWidgets.QMainWindow):
         if state: self.btnFilterDeshake.setChecked(True)
         else: self.btnFilterDeshake.setChecked(False)
 
-    def saveSession(self):
-        '''Saves the current job session as new job and into the database'''
+    def saveSession(self, skipTaggerCheck=False):
+        '''
+        Saves the current job session as new job and into the database
+
+        :param skipTaggerCheck: If False, session will not get saved if no tags or ratings are set. If True, those checks will get skipped.
+        '''
         if(self.historyMode): return False
         self.log(1, 'Saving current session ...')
+        if self.saveCurrentTagsAndRating(skipTaggerCheck) == -1:
+            return
         currentJob = self.jobs.getCurrentJob()
         if not currentJob.getSections():
             currentJob.addSection(self.timeFormat, self.videoProps['duration'])
@@ -357,7 +363,6 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, 'Error: Cannot add session to job queue.')
             return False
         self.log(1, 'Session saved as new job in queue.')
-        self.saveCurrentTagsAndRating()
 
     def addCurrentJobToQueue(self):
         '''Adds the current job session as new job to the jobs queue'''
@@ -794,7 +799,10 @@ class MainUi(QtWidgets.QMainWindow):
     def onMsgBoxNoTagsOrRatingYes(self):
         self.hideMsgBox()
         self.saveCurrentTagsAndRating(True)
-        self.setHistoryMode(False)
+        if self.historyMode:
+            self.setHistoryMode(False)
+        else:
+            self.saveSession(True)
 
     # Other Event handlers
 
@@ -922,6 +930,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnMsgNo.setVisible(True)
         self.frameMsg.setVisible(True)
         self.frameMsg.setEnabled(True)
+        self.setBtnExportSaveState()
 
     def hideMsgBox(self):
         '''
@@ -929,6 +938,16 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         self.frameMsg.setVisible(False)
         self.frameMsg.setEnabled(False)
+        self.setBtnExportSaveState()
+
+    def msgBoxVisible(self):
+        '''
+        Checks if the message box is currently visible.
+
+        :return: True if message box is visible.
+        '''
+        return self.frameMsg.isVisible()
+
 
     def buildTagsTree(self, currTagID):
         '''
@@ -997,7 +1016,6 @@ class MainUi(QtWidgets.QMainWindow):
         tagIDs = self.getSelectedTagIDsFromTagsTree()
         rating = self.getRatingFromBtns()
 
-        # TODO: Always skip checks in history mode
         if not skipChecks and self.isTaggerWarningActive():
             if not tagIDs and not rating:
                  self.showMsgBox('No rating and no tags are set. Are you sure to proceed?', 'yesno', self.onMsgBoxNoTagsOrRatingYes)
@@ -1309,7 +1327,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnQueueDown.setEnabled(False)
 
     def setBtnExportSaveState(self):
-        if len(self.cmbTgtDirs.currentText()) > 0 and len(self.lineEditTgtFileName.text()) > 0 and not self.historyMode:
+        if len(self.cmbTgtDirs.currentText()) > 0 and len(self.lineEditTgtFileName.text()) > 0 and not self.historyMode and not self.msgBoxVisible():
             if not self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(True)
         else:
             if self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(False)
