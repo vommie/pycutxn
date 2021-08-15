@@ -38,14 +38,20 @@ class Config:
     def getDBPath(self):
         return self.settings.value('app/dbPath', False, type=str)
 
+    def getTaggerIsActive(self):
+        return self.settings.value('tagger/isActive', True, type=bool)
+
+    def getTaggerIsWarningActive(self):
+        return self.settings.value('tagger/isWarningActive', True, type=bool)
+
     def setPlayerVolume(self, volume):
         self.settings.setValue('player/volume', volume)
 
     def setPlayerVolumeStep(self, volumeStep):
         self.settings.setValue('player/volumeStep', volumeStep)
 
-    def setPlayerIsMuted(self, isMuted):
-        self.settings.setValue('player/isMuted', isMuted)
+    def setPlayerIsMuted(self, state):
+        self.settings.setValue('player/isMuted', state)
 
     def setPlayerSliderFactor(self, factor):
         self.settings.setValue('player/sliderFactor', factor)
@@ -67,3 +73,9 @@ class Config:
 
     def setDBPath(self, path):
         self.settings.setValue('app/dbPath', path)
+
+    def setTaggerIsActive(self, state):
+        self.settings.setValue('tagger/isActive', state)
+
+    def setTaggerIsWarningActive(self, state):
+        self.settings.setValue('tagger/isWarningActive', state)

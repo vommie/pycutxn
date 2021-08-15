@@ -151,8 +151,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.tagsTreeItemPrefix =  ''
         self.tagsTreeSpaceChar = ' '
         self.buildTagsTree(-1)
-        # Rag & Rate
+        # Tagger
         self.setHistoryMode(False)
+        self.btnTaggerActive.setChecked(self.config.getTaggerIsActive())
+        self.btnTaggerWarning.setChecked(self.config.getTaggerIsWarningActive())
 
     def initGuiEvents(self):
         # Player control
@@ -231,7 +233,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
         self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
         self.btnTagsClear.clicked.connect(self.onBtnTagsClearClicked)
-        self.btnLastRating.clicked.connect(self.onBtnLastRatingClicked)
+        self.btnTaggerActive.clicked.connect(self.onBtnTaggerActiveClicked)
+        self.btnTaggerWarning.clicked.connect(self.onBtnTaggerWarningClicked)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -788,6 +791,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnLastRatingClicked(self):
         self.setBtnRating(self.lastRating)
+
+    def onBtnTaggerActiveClicked(self):
+        self.config.setTaggerIsActive(not self.config.getTaggerIsActive())
+
+    def onBtnTaggerWarningClicked(self):
+        self.config.setTaggerIsWarningActive(not self.config.getTaggerIsWarningActive())
 
     def onMsgBoxYesClicked(self):
         self.hideMsgBox()

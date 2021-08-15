@@ -2127,7 +2127,7 @@ QRadioButton::unchecked:hover {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnTagAvtive">
+           <widget class="QPushButton" name="btnTaggerActive">
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -2152,7 +2152,7 @@ QRadioButton::unchecked:hover {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnTagRateWarning">
+           <widget class="QPushButton" name="btnTaggerWarning">
             <property name="maximumSize">
              <size>
               <width>16777215</width>
