@@ -30,6 +30,7 @@ class Job():
             'sections': [],
             'filters': {
                 'crop': {},
+                'deinterlace': False,
                 'resize': {},
                 'rotate': False,
                 'deshake': False
@@ -168,6 +169,13 @@ class Job():
         except:
             return False
 
+    def getFilterDeinterlaceState(self):
+        try:
+            self._props['filters']['deinterlace']
+            return self._props['filters']['deinterlace'].get('active')
+        except:
+            return False
+
     def getFilterResizeState(self):
         try:
             self._props['filters']['resize']
@@ -208,7 +216,7 @@ class Job():
             self._props['filterPositions']
             return self._props.get('filterPositions')
         except:
-            return { '0': 'crop', '1': 'resize', '2': 'rotate', '3': 'deshake' }
+            return { '0': 'crop', '1': 'deinterlace', '2': 'resize', '3': 'rotate', '4': 'deshake' }
 
     # Props Setters
 
@@ -279,6 +287,11 @@ class Job():
 
     def setFilterCropL(self, px):
         self._props['filters']['crop'].update({'l': px})
+        self.propValueChanged()
+
+    def setFilterDeinterlaceState(self, state):
+        if not self._props['filters']['deinterlace']: self._props['filters']['deinterlace'] = {}
+        self._props['filters']['deinterlace'].update({'active': state})
         self.propValueChanged()
 
     def setFilterResizeState(self, state):

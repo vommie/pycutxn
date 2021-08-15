@@ -77,6 +77,11 @@ class MainUi(QtWidgets.QMainWindow):
                 'btnUp': self.btnFilterCropUp,
                 'btnDown': self.btnFilterCropDown
             },
+            'deinterlace': {
+                'layout': self.layoutFilterDeinterlace,
+                'btnUp': self.btnFilterDeinterlaceUp,
+                'btnDown': self.btnFilterDeinterlaceDown
+            },
             'resize': {
                 'layout': self.layoutFilterResize,
                 'btnUp': self.btnFilterResizeUp,
@@ -191,6 +196,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterCropR.valueChanged.connect(self.onBoxFilterCropRChanged)
         self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
         self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
+        self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
+        self.btnFilterDeinterlace.toggled.connect(self.onBtnFilterDeinterlaceClicked)
         self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
         self.btnFilterResize.toggled.connect(self.onBtnFilterResizeClicked)
         self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
@@ -203,6 +210,8 @@ class MainUi(QtWidgets.QMainWindow):
         # Filters Up/Down Buttons
         self.btnFilterCropDown.clicked.connect(self.onBtnFilterCropDownClicked)
         self.btnFilterCropUp.clicked.connect(self.onBtnFilterCropUpClicked)
+        self.btnFilterDeinterlaceDown.clicked.connect(self.onBtnFilterDeinterlaceDownClicked)
+        self.btnFilterDeinterlaceUp.clicked.connect(self.onBtnFilterDeinterlaceUpClicked)
         self.btnFilterResizeDown.clicked.connect(self.onBtnFilterResizeDownClicked)
         self.btnFilterResizeUp.clicked.connect(self.onBtnFilterResizeUpClicked)
         self.btnFilterRotateDown.clicked.connect(self.onBtnFilterRotateDownClicked)
@@ -282,6 +291,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'Video properties: %s' % self.videoProps)
         # Set properties
         self.loadFilterCrop(job)
+        self.loadFilterDeinterlace(job)
         self.loadFilterRotate(job)
         self.loadFilterResize(job)
         self.loadFilterDeshake(job)
@@ -316,6 +326,12 @@ class MainUi(QtWidgets.QMainWindow):
             value = job.getFilterCropL()
             if value: self.boxFilterCropL.setValue(value)
             else: self.boxFilterCropL.setValue(0)
+
+    def loadFilterDeinterlace(self, job):
+        state = job.getFilterDeinterlaceState()
+        if not state: self.resetDeinterlaceFilter()
+        if state:
+            self.btnFilterDeinterlace.setChecked(True)
 
     def loadFilterRotate(self, job):
         rotation = job.getFilterRotate()
@@ -603,6 +619,10 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         job.setFilterCropL(px)
 
+    def onBtnFilterDeinterlaceClicked(self):
+        job = self.jobs.getCurrentJob()
+        job.setFilterDeinterlaceState(self.btnFilterDeinterlace.isChecked())
+
     def onBtnFilterResizeClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterResizeState(self.btnFilterResize.isChecked())
@@ -740,6 +760,16 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnFilterCropUpClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterCrop)
+        self.moveRowInFiltersGrid(index, False)
+        self.setFilterBtnStates()
+
+    def onBtnFilterDeinterlaceDownClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterDeinterlace)
+        self.moveRowInFiltersGrid(index, True)
+        self.setFilterBtnStates()
+
+    def onBtnFilterDeinterlaceUpClicked(self):
+        index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterDeinterlace)
         self.moveRowInFiltersGrid(index, False)
         self.setFilterBtnStates()
 
@@ -1189,7 +1219,7 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         Checks if the Tagger warning button is checked which warns if no rating or no tags are selected
         '''
-        return self.btnTagRateWarning.isChecked()
+        return self.btnTaggerWarning.isChecked()
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
@@ -1269,6 +1299,9 @@ class MainUi(QtWidgets.QMainWindow):
 
     def resetDeshakeFilter(self):
         self.btnFilterDeshake.setChecked(False)
+
+    def resetDeinterlaceFilter(self):
+        self.btnFilterDeinterlace.setChecked(False)
 
     def setHistoryMode(self, state):
         '''
@@ -1465,7 +1498,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.runNextWaitJob()
 
     def moveRowInFiltersGrid(self, index, moveDown):
-        rowCount = self.gridLayoutFilters.rowCount()
+        rowCount = self.gridLayoutFilters.count()
         if moveDown and index == rowCount-1: return False
         elif not moveDown and index == 0: return False
         items = self.getFilterPositionItems()
@@ -1494,7 +1527,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def setFilterBtnStates(self):
         filterPositions = {}
-        rowCount = self.gridLayoutFilters.rowCount()
+        rowCount = self.gridLayoutFilters.count()
         for key in self.filterAtts:
             atts = self.filterAtts[key]
             index = self.getIndexOfLayoutInFiltersGrid(atts['layout'])
@@ -1508,7 +1541,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def getFilterPositionItems(self):
         items = []
-        rowCount = self.gridLayoutFilters.rowCount()
+        rowCount = self.gridLayoutFilters.count()
         for i in range(rowCount):
             item = self.gridLayoutFilters.takeAt(0)
             item.setSizeConstraint(QLayout.SetMinAndMaxSize)
