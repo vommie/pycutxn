@@ -66,18 +66,24 @@
            <widget class="QPushButton" name="btnMsgYes">
             <property name="minimumSize">
              <size>
-              <width>120</width>
+              <width>60</width>
               <height>0</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>200</width>
-              <height>16777215</height>
+              <width>60</width>
+              <height>32</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <family>DroidSansMono Nerd Font Mono</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
             <property name="text">
-             <string>Yes</string>
+             <string></string>
             </property>
            </widget>
           </item>
@@ -85,18 +91,24 @@
            <widget class="QPushButton" name="btnMsgNo">
             <property name="minimumSize">
              <size>
-              <width>120</width>
+              <width>60</width>
               <height>0</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>200</width>
-              <height>16777215</height>
+              <width>60</width>
+              <height>32</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <family>DroidSansMono Nerd Font Mono</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
             <property name="text">
-             <string>No</string>
+             <string></string>
             </property>
            </widget>
           </item>
@@ -189,19 +201,21 @@
           <widget class="QPushButton" name="btnPause">
            <property name="maximumSize">
             <size>
-             <width>100</width>
+             <width>40</width>
              <height>24</height>
             </size>
            </property>
-           <property name="icon">
-            <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/ic_play_arrow_24px.svg</normaloff>:/icons/ic_play_arrow_24px.svg</iconset>
+           <property name="font">
+            <font>
+             <family>DroidSansMono Nerd Font Mono</family>
+             <pointsize>14</pointsize>
+            </font>
            </property>
-           <property name="iconSize">
-            <size>
-             <width>18</width>
-             <height>18</height>
-            </size>
+           <property name="toolTip">
+            <string>Play/Pause</string>
+           </property>
+           <property name="text">
+            <string>契</string>
            </property>
           </widget>
          </item>
@@ -209,9 +223,15 @@
           <widget class="QPushButton" name="btnFrameStepBack">
            <property name="maximumSize">
             <size>
-             <width>100</width>
+             <width>40</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>DroidSansMono Nerd Font Mono</family>
+             <pointsize>14</pointsize>
+            </font>
            </property>
            <property name="focusPolicy">
             <enum>Qt::TabFocus</enum>
@@ -219,15 +239,8 @@
            <property name="toolTip">
             <string>1 frame backwards</string>
            </property>
-           <property name="icon">
-            <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/ic_keyboard_arrow_left_24px.svg</normaloff>:/icons/ic_keyboard_arrow_left_24px.svg</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>18</width>
-             <height>18</height>
-            </size>
+           <property name="text">
+            <string></string>
            </property>
           </widget>
          </item>
@@ -235,9 +248,15 @@
           <widget class="QPushButton" name="btnFrameStep">
            <property name="maximumSize">
             <size>
-             <width>100</width>
+             <width>40</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>DroidSansMono Nerd Font Mono</family>
+             <pointsize>14</pointsize>
+            </font>
            </property>
            <property name="focusPolicy">
             <enum>Qt::TabFocus</enum>
@@ -245,15 +264,8 @@
            <property name="toolTip">
             <string>1 frame forward</string>
            </property>
-           <property name="icon">
-            <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/ic_keyboard_arrow_right_24px.svg</normaloff>:/icons/ic_keyboard_arrow_right_24px.svg</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>18</width>
-             <height>18</height>
-            </size>
+           <property name="text">
+            <string></string>
            </property>
           </widget>
          </item>
@@ -268,9 +280,15 @@
           <widget class="QPushButton" name="btnSectionStart">
            <property name="maximumSize">
             <size>
-             <width>100</width>
+             <width>40</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>DroidSansMono Nerd Font Mono</family>
+             <pointsize>14</pointsize>
+            </font>
            </property>
            <property name="focusPolicy">
             <enum>Qt::TabFocus</enum>
@@ -278,9 +296,8 @@
            <property name="toolTip">
             <string>Section start</string>
            </property>
-           <property name="icon">
-            <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/left-alignment.svg</normaloff>:/icons/left-alignment.svg</iconset>
+           <property name="text">
+            <string>ﲑ</string>
            </property>
            <property name="iconSize">
             <size>
@@ -294,9 +311,15 @@
           <widget class="QPushButton" name="btnSectionEnd">
            <property name="maximumSize">
             <size>
-             <width>100</width>
+             <width>40</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>DroidSansMono Nerd Font Mono</family>
+             <pointsize>14</pointsize>
+            </font>
            </property>
            <property name="focusPolicy">
             <enum>Qt::TabFocus</enum>
@@ -304,9 +327,8 @@
            <property name="toolTip">
             <string>Section end</string>
            </property>
-           <property name="icon">
-            <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/right-alignment.svg</normaloff>:/icons/right-alignment.svg</iconset>
+           <property name="text">
+            <string>ﲒ</string>
            </property>
            <property name="iconSize">
             <size>
@@ -327,9 +349,15 @@
           <widget class="QPushButton" name="btnSectionAdd1">
            <property name="maximumSize">
             <size>
-             <width>100</width>
+             <width>40</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>DroidSansMono Nerd Font Mono</family>
+             <pointsize>14</pointsize>
+            </font>
            </property>
            <property name="focusPolicy">
             <enum>Qt::TabFocus</enum>
@@ -337,15 +365,8 @@
            <property name="toolTip">
             <string>Add section to sections list</string>
            </property>
-           <property name="icon">
-            <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/ic_add_24px.svg</normaloff>:/icons/ic_add_24px.svg</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>18</width>
-             <height>18</height>
-            </size>
+           <property name="text">
+            <string></string>
            </property>
           </widget>
          </item>
@@ -366,19 +387,24 @@
           <widget class="QPushButton" name="btnMute">
            <property name="maximumSize">
             <size>
-             <width>24</width>
+             <width>40</width>
              <height>24</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>DroidSansMono Nerd Font Mono</family>
+             <pointsize>16</pointsize>
+            </font>
            </property>
            <property name="focusPolicy">
             <enum>Qt::TabFocus</enum>
            </property>
            <property name="toolTip">
-            <string>Mute</string>
+            <string>Mute/Unmute</string>
            </property>
-           <property name="icon">
-            <iconset resource="../res/res.qrc">
-             <normaloff>:/icons/ic_volume_off_24px.svg</normaloff>:/icons/ic_volume_off_24px.svg</iconset>
+           <property name="text">
+            <string>婢</string>
            </property>
           </widget>
          </item>
@@ -611,17 +637,7 @@
              <string>Save current session as job</string>
             </property>
             <property name="text">
-             <string>Save</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../res/res.qrc">
-              <normaloff>:/icons/ic_save_24px.svg</normaloff>:/icons/ic_save_24px.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>18</width>
-              <height>18</height>
-             </size>
+             <string> Save</string>
             </property>
            </widget>
           </item>
@@ -674,11 +690,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡇</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -693,11 +715,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡅</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -715,7 +743,7 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>56</width>
+                  <width>70</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -727,6 +755,9 @@
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Activate crop filter</string>
                 </property>
                 <property name="text">
                  <string>Crop</string>
@@ -756,6 +787,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>Top</string>
+                </property>
                 <property name="maximum">
                  <number>99999</number>
                 </property>
@@ -780,6 +814,9 @@
                   <width>16777215</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>Right</string>
                 </property>
                 <property name="maximum">
                  <number>99999</number>
@@ -806,6 +843,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>Bottom</string>
+                </property>
                 <property name="maximum">
                  <number>99999</number>
                 </property>
@@ -831,6 +871,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>Left</string>
+                </property>
                 <property name="maximum">
                  <number>99999</number>
                 </property>
@@ -855,11 +898,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡇</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -871,11 +920,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡅</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -899,6 +954,9 @@
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Activate deinterlace filter</string>
                 </property>
                 <property name="text">
                  <string>Deinterlace</string>
@@ -925,8 +983,11 @@
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
+                <property name="toolTip">
+                 <string>Select deinterlacer</string>
+                </property>
                 <property name="currentText">
-                 <string>yadif</string>
+                 <string>bwdif</string>
                 </property>
                 <item>
                  <property name="text">
@@ -977,11 +1038,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡇</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -993,11 +1060,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡅</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -1015,7 +1088,7 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>56</width>
+                  <width>70</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -1027,6 +1100,9 @@
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Activate resize filter</string>
                 </property>
                 <property name="text">
                  <string>Resize</string>
@@ -1056,6 +1132,9 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>Width</string>
+                </property>
                 <property name="maximum">
                  <number>9999</number>
                 </property>
@@ -1080,6 +1159,9 @@
                   <width>16777215</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>Height</string>
                 </property>
                 <property name="maximum">
                  <number>9999</number>
@@ -1108,6 +1190,9 @@
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Calculate 16:9 ratio based on height. Ignores cropping values if higher in priority.</string>
                 </property>
                 <property name="layoutDirection">
                  <enum>Qt::RightToLeft</enum>
@@ -1140,6 +1225,9 @@
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
+                <property name="toolTip">
+                 <string>Calculate 4:3 ratio based on height. Ignores cropping values if higher in priority.</string>
+                </property>
                 <property name="layoutDirection">
                  <enum>Qt::RightToLeft</enum>
                 </property>
@@ -1170,11 +1258,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡇</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -1186,11 +1280,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡅</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -1214,6 +1314,9 @@
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Activate Deshake filter</string>
                 </property>
                 <property name="text">
                  <string>Deshake</string>
@@ -1245,11 +1348,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡇</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -1261,11 +1370,17 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string>🡅</string>
+                 <string></string>
                 </property>
                </widget>
               </item>
@@ -1293,21 +1408,20 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
+                <property name="toolTip">
+                 <string>Rotate left</string>
+                </property>
                 <property name="text">
-                 <string>Left</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../res/res.qrc">
-                  <normaloff>:/icons/ic_rotate_left_24px.svg</normaloff>:/icons/ic_rotate_left_24px.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>18</width>
-                  <height>18</height>
-                 </size>
+                 <string></string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
@@ -1334,21 +1448,20 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
+                <property name="toolTip">
+                 <string>Rotate right</string>
+                </property>
                 <property name="text">
-                 <string>Right</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../res/res.qrc">
-                  <normaloff>:/icons/ic_rotate_right_24px.svg</normaloff>:/icons/ic_rotate_right_24px.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>18</width>
-                  <height>18</height>
-                 </size>
+                 <string></string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
@@ -1375,21 +1488,20 @@
                   <height>24</height>
                  </size>
                 </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::TabFocus</enum>
                 </property>
+                <property name="toolTip">
+                 <string>Rotate 180° (flip vertical)</string>
+                </property>
                 <property name="text">
-                 <string>180°</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../res/res.qrc">
-                  <normaloff>:/icons/flip_horizontally.svg</normaloff>:/icons/flip_horizontally.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>18</width>
-                  <height>18</height>
-                 </size>
+                 <string>北</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
@@ -1491,7 +1603,7 @@
              </size>
             </property>
             <property name="icon">
-             <iconset resource="../res/res.qrc">
+             <iconset>
               <normaloff>:/icons/ic_add_24px.svg</normaloff>:/icons/ic_add_24px.svg</iconset>
             </property>
             <property name="iconSize">
@@ -1520,7 +1632,7 @@
              </size>
             </property>
             <property name="icon">
-             <iconset resource="../res/res.qrc">
+             <iconset>
               <normaloff>:/icons/ic_expand_less_24px.svg</normaloff>:/icons/ic_expand_less_24px.svg</iconset>
             </property>
             <property name="iconSize">
@@ -1549,7 +1661,7 @@
              </size>
             </property>
             <property name="icon">
-             <iconset resource="../res/res.qrc">
+             <iconset>
               <normaloff>:/icons/ic_expand_more_24px.svg</normaloff>:/icons/ic_expand_more_24px.svg</iconset>
             </property>
             <property name="iconSize">
@@ -1578,7 +1690,7 @@
              </size>
             </property>
             <property name="icon">
-             <iconset resource="../res/res.qrc">
+             <iconset>
               <normaloff>:/icons/ic_clear_24px.svg</normaloff>:/icons/ic_clear_24px.svg</iconset>
             </property>
             <property name="iconSize">
@@ -2076,6 +2188,11 @@ QRadioButton::unchecked:hover {
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans Mono</family>
+        </font>
+       </property>
        <property name="focusPolicy">
         <enum>Qt::NoFocus</enum>
        </property>
@@ -2115,6 +2232,15 @@ QRadioButton::unchecked:hover {
          <layout class="QHBoxLayout" name="layoutTagRateHistoryActions">
           <item>
            <widget class="QLineEdit" name="lineEditTagRateHistoryFile">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Filename the tags and rating get updated to</string>
+            </property>
             <property name="readOnly">
              <bool>true</bool>
             </property>
@@ -2125,8 +2251,17 @@ QRadioButton::unchecked:hover {
           </item>
           <item>
            <widget class="QPushButton" name="btnTagRateHistorySave">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Save tags and rating to file</string>
+            </property>
             <property name="text">
-             <string>Save</string>
+             <string> Save</string>
             </property>
            </widget>
           </item>
@@ -2232,6 +2367,12 @@ QRadioButton::unchecked:hover {
               <height>24</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <family>DroidSansMono Nerd Font Mono</family>
+              <pointsize>18</pointsize>
+             </font>
+            </property>
             <property name="focusPolicy">
              <enum>Qt::TabFocus</enum>
             </property>
@@ -2239,11 +2380,7 @@ QRadioButton::unchecked:hover {
              <string>Set tags and rating of previously saved session</string>
             </property>
             <property name="text">
-             <string>Set last</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../res/res.qrc">
-              <normaloff>:/icons/ic_restore_24px.svg</normaloff>:/icons/ic_restore_24px.svg</iconset>
+             <string>勒</string>
             </property>
            </widget>
           </item>
@@ -2255,18 +2392,20 @@ QRadioButton::unchecked:hover {
               <height>24</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <family>DroidSansMono Nerd Font Mono</family>
+              <pointsize>18</pointsize>
+             </font>
+            </property>
             <property name="focusPolicy">
              <enum>Qt::TabFocus</enum>
             </property>
             <property name="toolTip">
-             <string>Resets all tags and rating</string>
+             <string>Clears all tags and rating</string>
             </property>
             <property name="text">
-             <string>Reset</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../res/res.qrc">
-              <normaloff>:/icons/ic_clear_24px.svg</normaloff>:/icons/ic_clear_24px.svg</iconset>
+             <string></string>
             </property>
            </widget>
           </item>
@@ -2428,9 +2567,15 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>80</width>
+           <width>40</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>12</pointsize>
+          </font>
          </property>
          <property name="focusPolicy">
           <enum>Qt::TabFocus</enum>
@@ -2439,17 +2584,7 @@ QRadioButton::unchecked:hover {
           <string>Pause job processing</string>
          </property>
          <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../res/res.qrc">
-           <normaloff>:/icons/ic_pause_24px.svg</normaloff>:/icons/ic_pause_24px.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>18</width>
-           <height>18</height>
-          </size>
+          <string></string>
          </property>
          <property name="checkable">
           <bool>true</bool>
@@ -2469,9 +2604,15 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>80</width>
+           <width>40</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>18</pointsize>
+          </font>
          </property>
          <property name="focusPolicy">
           <enum>Qt::TabFocus</enum>
@@ -2479,15 +2620,8 @@ QRadioButton::unchecked:hover {
          <property name="toolTip">
           <string>Abort processing job</string>
          </property>
-         <property name="icon">
-          <iconset resource="../res/res.qrc">
-           <normaloff>:/icons/ic_clear_24px.svg</normaloff>:/icons/ic_clear_24px.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>18</width>
-           <height>18</height>
-          </size>
+         <property name="text">
+          <string>ﰸ</string>
          </property>
         </widget>
        </item>
@@ -2511,9 +2645,15 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>80</width>
+           <width>40</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>20</pointsize>
+          </font>
          </property>
          <property name="focusPolicy">
           <enum>Qt::TabFocus</enum>
@@ -2521,15 +2661,8 @@ QRadioButton::unchecked:hover {
          <property name="toolTip">
           <string>Load job as current session</string>
          </property>
-         <property name="icon">
-          <iconset resource="../res/res.qrc">
-           <normaloff>:/icons/ic_rotate_right_24px.svg</normaloff>:/icons/ic_rotate_right_24px.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>18</width>
-           <height>18</height>
-          </size>
+         <property name="text">
+          <string>勒</string>
          </property>
         </widget>
        </item>
@@ -2546,9 +2679,15 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>80</width>
+           <width>40</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>14</pointsize>
+          </font>
          </property>
          <property name="focusPolicy">
           <enum>Qt::TabFocus</enum>
@@ -2557,17 +2696,7 @@ QRadioButton::unchecked:hover {
           <string>Move job up</string>
          </property>
          <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../res/res.qrc">
-           <normaloff>:/icons/ic_expand_less_24px.svg</normaloff>:/icons/ic_expand_less_24px.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>18</width>
-           <height>18</height>
-          </size>
+          <string></string>
          </property>
         </widget>
        </item>
@@ -2584,9 +2713,15 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>80</width>
+           <width>40</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>14</pointsize>
+          </font>
          </property>
          <property name="focusPolicy">
           <enum>Qt::TabFocus</enum>
@@ -2595,17 +2730,7 @@ QRadioButton::unchecked:hover {
           <string>Move job down</string>
          </property>
          <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../res/res.qrc">
-           <normaloff>:/icons/ic_expand_more_24px.svg</normaloff>:/icons/ic_expand_more_24px.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>18</width>
-           <height>18</height>
-          </size>
+          <string></string>
          </property>
         </widget>
        </item>
@@ -2622,9 +2747,15 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>80</width>
+           <width>40</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>14</pointsize>
+          </font>
          </property>
          <property name="focusPolicy">
           <enum>Qt::TabFocus</enum>
@@ -2633,17 +2764,7 @@ QRadioButton::unchecked:hover {
           <string>Delete job</string>
          </property>
          <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../res/res.qrc">
-           <normaloff>:/icons/ic_clear_24px.svg</normaloff>:/icons/ic_clear_24px.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>18</width>
-           <height>18</height>
-          </size>
+          <string></string>
          </property>
         </widget>
        </item>
@@ -2682,11 +2803,6 @@ QRadioButton::unchecked:hover {
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="font">
-        <font>
-         <family>Noto Sans Mono</family>
-        </font>
-       </property>
        <property name="tabShape">
         <enum>QTabWidget::Triangular</enum>
        </property>
@@ -2703,6 +2819,11 @@ QRadioButton::unchecked:hover {
         <layout class="QVBoxLayout" name="verticalLayout_11">
          <item>
           <widget class="QTextEdit" name="logApp">
+           <property name="font">
+            <font>
+             <family>Noto Mono</family>
+            </font>
+           </property>
            <property name="lineWrapMode">
             <enum>QTextEdit::NoWrap</enum>
            </property>
@@ -2723,6 +2844,11 @@ QRadioButton::unchecked:hover {
         <layout class="QVBoxLayout" name="verticalLayout_12">
          <item>
           <widget class="QTextEdit" name="logFFmpeg">
+           <property name="font">
+            <font>
+             <family>Noto Mono</family>
+            </font>
+           </property>
            <property name="lineWrapMode">
             <enum>QTextEdit::NoWrap</enum>
            </property>
@@ -2743,6 +2869,11 @@ QRadioButton::unchecked:hover {
         <layout class="QVBoxLayout" name="verticalLayout_13">
          <item>
           <widget class="QTextEdit" name="logDB">
+           <property name="font">
+            <font>
+             <family>Noto Mono</family>
+            </font>
+           </property>
            <property name="lineWrapMode">
             <enum>QTextEdit::NoWrap</enum>
            </property>
@@ -2768,7 +2899,7 @@ QRadioButton::unchecked:hover {
   </action>
   <action name="actionPlayFile">
    <property name="icon">
-    <iconset resource="../res/res.qrc">
+    <iconset>
      <normaloff>:/icons/ic_play_arrow_24px.svg</normaloff>:/icons/ic_play_arrow_24px.svg</iconset>
    </property>
    <property name="text">
@@ -2777,7 +2908,7 @@ QRadioButton::unchecked:hover {
   </action>
   <action name="actionOpenFolder">
    <property name="icon">
-    <iconset resource="../res/res.qrc">
+    <iconset>
      <normaloff>:/icons/ic_folder_24px.svg</normaloff>:/icons/ic_folder_24px.svg</iconset>
    </property>
    <property name="text">
@@ -2786,7 +2917,7 @@ QRadioButton::unchecked:hover {
   </action>
   <action name="actionShowError">
    <property name="icon">
-    <iconset resource="../res/res.qrc">
+    <iconset>
      <normaloff>:/icons/ic_receipt_24px.svg</normaloff>:/icons/ic_receipt_24px.svg</iconset>
    </property>
    <property name="text">
@@ -2795,7 +2926,7 @@ QRadioButton::unchecked:hover {
   </action>
   <action name="actionShowLog">
    <property name="icon">
-    <iconset resource="../res/res.qrc">
+    <iconset>
      <normaloff>:/icons/ic_receipt_24px.svg</normaloff>:/icons/ic_receipt_24px.svg</iconset>
    </property>
    <property name="text">
@@ -2804,7 +2935,7 @@ QRadioButton::unchecked:hover {
   </action>
   <action name="actionStatePostpone">
    <property name="icon">
-    <iconset resource="../res/res.qrc">
+    <iconset>
      <normaloff>:/icons/ic_restore_24px.svg</normaloff>:/icons/ic_restore_24px.svg</iconset>
    </property>
    <property name="text">
@@ -2813,7 +2944,7 @@ QRadioButton::unchecked:hover {
   </action>
   <action name="actionStateReset">
    <property name="icon">
-    <iconset resource="../res/res.qrc">
+    <iconset>
      <normaloff>:/icons/ic_reply_24px.svg</normaloff>:/icons/ic_reply_24px.svg</iconset>
    </property>
    <property name="text">
@@ -2822,7 +2953,7 @@ QRadioButton::unchecked:hover {
   </action>
   <action name="actionStateResume">
    <property name="icon">
-    <iconset resource="../res/res.qrc">
+    <iconset>
      <normaloff>:/icons/ic_forward_24px.svg</normaloff>:/icons/ic_forward_24px.svg</iconset>
    </property>
    <property name="text">

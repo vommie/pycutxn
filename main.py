@@ -20,7 +20,7 @@ from classes.Jobs import Jobs
 from classes.FFmpegThread import FFmpegThread
 from classes.DB import DB
 
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QFont, QFontDatabase
@@ -30,6 +30,7 @@ import ffmpeg
 
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
+        _id = QtGui.QFontDatabase.addApplicationFont('res/font_droid_sans_mono_nerd.otf') # Init Nerd Fronts Font for Icons
         super(MainUi, self).__init__()
         uic.loadUi('./gui/main.ui', self)
         self.initMembers()
@@ -40,6 +41,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def initMembers(self):
         self.config = Config()
+        self.iconFontName = 'DroidSansMono Nerd Font Mono'
         self.jobsFilePath = 'jobs.json'
         self.jobs = Jobs(self.jobsFilePath)
         self.jobStates = {
@@ -63,10 +65,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
         self.playerTimeCurrent = self.timeFormat
-        self.iconPlay = QIcon(':/icons/ic_play_arrow_24px.svg')
-        self.iconPause = QIcon(':/icons/ic_pause_24px.svg')
-        self.iconIsMuted = QIcon(':/icons/ic_volume_off_24px.svg')
-        self.iconIsNotMuted = QIcon(':/icons/ic_volume_up_24px.svg')
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
         self.resetVideoProps()
@@ -151,7 +149,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
-        self.btnPause.setIcon(self.iconPause)
         # Init categories tree
         self.tagsTreeItemPrefix =  ''
         self.tagsTreeSpaceChar = ' '
@@ -460,18 +457,18 @@ class MainUi(QtWidgets.QMainWindow):
     def setMuteState(self, mute):
         self.playerControl.mute(mute)
         if mute:
-            self.btnMute.setIcon(self.iconIsMuted)
+            self.btnMute.setText('婢')
         else:
-            self.btnMute.setIcon(self.iconIsNotMuted)
+            self.btnMute.setText('墳')
 
     # Player observer event handlers
 
     def onPlayerPause(self, action, state):
         if not self.frameStep:
             if state:
-                self.btnPause.setIcon(self.iconPlay)
+                self.btnPause.setText('契')
             else:
-                self.btnPause.setIcon(self.iconPause)
+                self.btnPause.setText('')
         self.frameStep = False
 
     def onPlayerPercentPos(self, action, pos):
@@ -534,11 +531,11 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFrameStepClicked(self):
         self.frameStep = True
         self.playerControl.frameStep()
-        self.btnPause.setIcon(self.iconPlay)
+        self.btnPause.setText('契')
 
     def onBtnFrameStepBackClicked(self):
         self.playerControl.frameBackStep()
-        self.btnPause.setIcon(self.iconPlay)
+        self.btnPause.setText('契')
 
     def onBtnSectionStartClicked(self):
         self.sectionTimeStart = self.playerTimeCurrent
@@ -938,7 +935,7 @@ class MainUi(QtWidgets.QMainWindow):
         Shows the main message box with user interaction buttons
 
         :param msg: The message to display
-        :param choice: "ok" displays button with "OK" as text. "okcancel" displays two buttons with "OK" and "Cancel" as text. "yesno" displays two buttons with "Yes" and "No" as text. False displays no buttons at all.
+        :param choice: "ok" displays button with "OK" as text. "yesno" displays two buttons with "Yes" and "No" as text. False displays no buttons at all.
         :param okCallback: Provide a callback function for the "yes"-button. If False, default callback function will be used.
         :param noCallBack: Provide a callback function for the "no"-button. If False, default callback function will be used.
         '''
@@ -958,21 +955,18 @@ class MainUi(QtWidgets.QMainWindow):
         if not choice:
             self.widgetMsgBtns.setVisible(False)
             self.widgetMsgBtns.setEnabled(False)
-        elif choice == "ok":
+        elif choice == 'ok':
             self.widgetMsgBtns.setEnabled(True)
-            self.btnMsgYes.setText("OK")
+            self.btnMsgYes.setText('OK')
+            self.btnMsgYes.setFont(QApplication.font())
             self.btnMsgYes.setVisible(True)
             self.btnMsgNo.setVisible(False)
-        elif choice == "okcancel":
+        elif choice == 'yesno':
             self.widgetMsgBtns.setEnabled(True)
-            self.btnMsgYes.setText("OK")
-            self.btnMsgNo.setText("Cancel")
-            self.btnMsgYes.setVisible(True)
-            self.btnMsgNo.setVisible(True)
-        elif choice == "yesno":
-            self.widgetMsgBtns.setEnabled(True)
-            self.btnMsgYes.setText("Yes")
-            self.btnMsgNo.setText("No")
+            self.btnMsgYes.setText('')
+            self.btnMsgNo.setText('')
+            self.btnMsgYes.setFont(QFont(self.iconFontName, 16))
+            self.btnMsgNo.setFont(QFont(self.iconFontName, 16))
             self.btnMsgYes.setVisible(True)
             self.btnMsgNo.setVisible(True)
         self.frameMsg.setVisible(True)
@@ -1491,14 +1485,14 @@ class MainUi(QtWidgets.QMainWindow):
 
     def toggleQueuePause(self):
         if self.btnQueuePause.isChecked():
-            self.btnQueuePause.setIcon(self.iconPlay)
+            self.btnQueuePause.setText('契')
             self.config.setQueueIsPaused(True)
             if self.ffmpegProcess:
                 os.kill(self.ffmpegProcess.pid, signal.SIGSTOP)
                 job = self.getNextRenderingJob()
                 self.updateQueueJobState(job.getID(), 5)
         else:
-            self.btnQueuePause.setIcon(self.iconPause)
+            self.btnQueuePause.setText('')
             self.config.setQueueIsPaused(False)
             if self.ffmpegProcess:
                 os.kill(self.ffmpegProcess.pid, signal.SIGCONT)
