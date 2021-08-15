@@ -64,23 +64,26 @@ class FFmpegThread(QThread):
                             elif render_pass == 2:
                                 video = ( video .filter('vidstabtransform', input='/home/vommie/videos/pycut/deshake.trf', crop='black', optzoom=0, zoom=0, smoothing=10,interpol='bicubic') )
                                 video = ( video .filter('unsharp', 5,5,0.8,3,3,0.4) )
+                        elif filter == 'deinterlace' and job.getFilterDeinterlaceState():
+                            deinterlacer = job.getFilterDeinterlaceDeinterlacer()
+                            video = ( video .filter(deinterlacer))
                         elif filter == 'resize' and job.getFilterResizeState():
                             width = job.getFilterResizeWidth()
                             height = job.getFilterResizeHeight()
                             if width and not height:
-                                video = ( video .filter('scale', width, -1) )
+                                video = (video .filter('scale', width, -1))
                             elif height and not width:
-                                video = ( video .filter('scale', -1,height) )
+                                video = ( video .filter('scale', -1, height))
                             elif width and height:
-                                video = ( video .filter('scale', width, height) )
-                                video = ( video .filter('setsar', 1, 1) )
+                                video = (video .filter('scale', width, height))
+                                video = (video .filter('setsar', 1, 1))
                         elif filter == 'rotate':
                             rotate = job.getFilterRotate()
                             if rotate:
                                 if rotate == 90: rotate = 1
                                 elif rotate == -90: rotate = 2
-                                if rotate == 1 or rotate == 2: video = ( video .filter('transpose', rotate) )
-                                else: video = ( video .filter('transpose', 2) .filter('transpose', 2) )
+                                if rotate == 1 or rotate == 2: video = (video .filter('transpose', rotate))
+                                else: video = (video .filter('transpose', 2) .filter('transpose', 2))
                         elif filter == 'crop' and job.getFilterCropState():
                             t = job.getFilterCropT()
                             r = job.getFilterCropR()

@@ -1686,5 +1686,6 @@ class Slider(QtWidgets.QSlider):
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
 # window.newFile('/home/vommie/dev/personal/pycut/test_color.mp4')
-window.newFile('/home/vommie/dev/personal/pycut/test_shake.mp4')
+# window.newFile('/home/vommie/dev/personal/pycut/test_shake.mp4')
+window.newFile('/home/vommie/dev/personal/pycut/test_interlace.avi')
 app.exec_()
