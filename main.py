@@ -54,8 +54,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegKilled = False
         # Init member variables
         self.dirsUi = DirsUi(self)
-        self.config.setDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
-        self.db = DB(self.config.getDBPath(), self.log)
+        self.config.setTaggerDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
+        self.db = DB(self.config.getTaggerDBPath(), self.log)
         self.labelTaggerError.setHidden(True)
         self.tagsTree = []
         self.lastTagIDs = []

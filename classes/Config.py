@@ -35,8 +35,8 @@ class Config:
     def getAppState(self):
         return self.settings.value('app/state')
 
-    def getDBPath(self):
-        return self.settings.value('app/dbPath', False, type=str)
+    def getTaggerDBPath(self):
+        return self.settings.value('tagger/dbPath', False, type=str)
 
     def getTaggerIsActive(self):
         return self.settings.value('tagger/isActive', True, type=bool)
@@ -71,8 +71,8 @@ class Config:
     def setAppState(self, state):
         self.settings.setValue('app/state', state)
 
-    def setDBPath(self, path):
-        self.settings.setValue('app/dbPath', path)
+    def setTaggerDBPath(self, path):
+        self.settings.setValue('tagger/dbPath', path)
 
     def setTaggerIsActive(self, state):
         self.settings.setValue('tagger/isActive', state)
