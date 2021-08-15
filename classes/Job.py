@@ -24,7 +24,7 @@ class Job():
             'tgtFile': {
                 'dirName': False,
                 'fileName': False,
-                'fileExt': False,
+                'fileExt': '.mkv',
                 'count': 0,
             },
             'sections': [],
@@ -49,7 +49,6 @@ class Job():
         self.setSrcFileExt(paths.get('fileExt'))
         self.setTgtDirName(paths.get('dirName'))
         self.setTgtFileName(paths.get('fileName'))
-        self.setTgtFileExt(paths.get('fileExt'))
 
     # Props observers
 
