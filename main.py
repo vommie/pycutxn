@@ -198,6 +198,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
         self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
         self.btnFilterDeinterlace.toggled.connect(self.onBtnFilterDeinterlaceClicked)
+        self.comboBoxFilterDeinterlaceDeinterlacer.currentTextChanged.connect(self.onComboBoxFilterDeinterlaceDeinterlacerChanged)
         self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
         self.btnFilterResize.toggled.connect(self.onBtnFilterResizeClicked)
         self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
@@ -332,6 +333,9 @@ class MainUi(QtWidgets.QMainWindow):
         if not state: self.resetDeinterlaceFilter()
         if state:
             self.btnFilterDeinterlace.setChecked(True)
+        deinterlacer = job.getFilterDeinterlaceDeinterlacer()
+        self.comboBoxFilterDeinterlaceDeinterlacer.setCurrentText(deinterlacer)
+
 
     def loadFilterRotate(self, job):
         rotation = job.getFilterRotate()
@@ -622,6 +626,11 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFilterDeinterlaceClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterDeinterlaceState(self.btnFilterDeinterlace.isChecked())
+
+    def onComboBoxFilterDeinterlaceDeinterlacerChanged(self, text):
+        job = self.jobs.getCurrentJob()
+        job.setFilterDeinterlaceDeinterlacer(text)
+        self.config.setFiltersDeinterlacer(text)
 
     def onBtnFilterResizeClicked(self):
         job = self.jobs.getCurrentJob()
@@ -1302,6 +1311,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def resetDeinterlaceFilter(self):
         self.btnFilterDeinterlace.setChecked(False)
+        self.comboBoxFilterDeinterlaceDeinterlacer.setCurrentText(self.config.getFiltersDeinterlacer())
 
     def setHistoryMode(self, state):
         '''

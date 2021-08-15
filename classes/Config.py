@@ -44,6 +44,9 @@ class Config:
     def getTaggerIsWarningActive(self):
         return self.settings.value('tagger/isWarningActive', True, type=bool)
 
+    def getFiltersDeinterlacer(self):
+        return self.settings.value('filters/deinterlacer', 'yadif', type=str)
+
     def setPlayerVolume(self, volume):
         self.settings.setValue('player/volume', volume)
 
@@ -79,3 +82,6 @@ class Config:
 
     def setTaggerIsWarningActive(self, state):
         self.settings.setValue('tagger/isWarningActive', state)
+
+    def setFiltersDeinterlacer(self, deinterlacer):
+        self.settings.setValue('filters/deinterlacer', deinterlacer)
