@@ -1782,6 +1782,7 @@ QRadioButton::indicator {
 
 QRadioButton::checked {
 	background-color: rgb(221, 221, 221);
+	color: rgb(0, 0, 0);
 }
 
 QRadioButton::indicator::unchecked {
@@ -1810,6 +1811,7 @@ QRadioButton::indicator:checked:pressed {
 
 QRadioButton::unchecked:hover {
 	background-color: rgb(251, 251, 251);
+	color: rgb(0, 0, 0);
 }</string>
          </property>
          <property name="text">
@@ -1854,6 +1856,7 @@ QRadioButton::indicator {
 
 QRadioButton::checked {
 	background-color: rgb(238, 170, 170);
+	color: rgb(0, 0, 0);
 }
 
 QRadioButton::indicator::unchecked {
@@ -1882,6 +1885,7 @@ QRadioButton::indicator:checked:pressed {
 
 QRadioButton::unchecked:hover {
 	background-color: rgb(255, 190, 190);
+	color: rgb(0, 0, 0);
 }</string>
          </property>
          <property name="text">
@@ -1923,6 +1927,7 @@ QRadioButton::indicator {
 
 QRadioButton::checked {
 	background-color: rgb(255, 204, 136);
+	color: rgb(0, 0, 0);
 }
 
 QRadioButton::indicator::unchecked {
@@ -1951,6 +1956,7 @@ QRadioButton::indicator:checked:pressed {
 
 QRadioButton::unchecked:hover {
 	background-color: rgb(255, 224, 156);
+	color: rgb(0, 0, 0);
 }</string>
          </property>
          <property name="text">
@@ -1992,6 +1998,7 @@ QRadioButton::indicator {
 
 QRadioButton::checked {
 	background-color: rgb(136, 238, 136);
+	color: rgb(0, 0, 0);
 }
 
 QRadioButton::indicator::unchecked {
@@ -2020,6 +2027,7 @@ QRadioButton::indicator:checked:pressed {
 
 QRadioButton::unchecked:hover {
 	background-color: rgb(156, 255, 156);
+	color: rgb(0, 0, 0);
 }</string>
          </property>
          <property name="text">
@@ -2061,6 +2069,7 @@ QRadioButton::indicator {
 
 QRadioButton::checked {
 	background-color: rgb(102, 136, 238);
+	color: rgb(0, 0, 0);
 }
 
 QRadioButton::indicator::unchecked {
@@ -2089,6 +2098,7 @@ QRadioButton::indicator:checked:pressed {
 
 QRadioButton::unchecked:hover {
 	background-color: rgb(122, 156, 255);
+	color: rgb(0, 0, 0);
 }</string>
          </property>
          <property name="text">
@@ -2130,6 +2140,7 @@ QRadioButton::indicator {
 
 QRadioButton::checked {
 	background-color: rgb(204, 136, 238);
+	color: rgb(0, 0, 0);
 }
 
 QRadioButton::indicator::unchecked {
@@ -2158,6 +2169,7 @@ QRadioButton::indicator:checked:pressed {
 
 QRadioButton::unchecked:hover {
 	background-color: rgb(224, 156, 255);
+	color: rgb(0, 0, 0);
 }</string>
          </property>
          <property name="text">
