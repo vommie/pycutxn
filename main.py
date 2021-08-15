@@ -360,7 +360,7 @@ class MainUi(QtWidgets.QMainWindow):
             currentJob.addSection(self.timeFormat, self.videoProps['duration'])
         job = self.addCurrentJobToQueue()
         if not job:
-            self.log(1, 'Error: Cannot add session to job queue.')
+            self.log(1, 'Error: Cannot add session to job queue.', 1)
             return False
         self.log(1, 'Session saved as new job in queue.')
 
@@ -381,7 +381,6 @@ class MainUi(QtWidgets.QMainWindow):
         if self.ffmpegProcess or self.btnQueuePause.isChecked():
             return False
         job = self.getNextWaitingJob()
-        self.log(1, 'Job: %s' % job)
         if job and self.checkJobForRenderbility(job):
             self.FFmpegThread = FFmpegThread(job)
             self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
@@ -989,7 +988,7 @@ class MainUi(QtWidgets.QMainWindow):
                 if forSource: return False
                 imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
                 if not imageID:
-                    self.log(1, 'Error: Cannot create ImageID for file.')
+                    self.log(1, 'Error: Cannot create ImageID for file.', 1)
                     return False
             rating = self.db.getRating(imageID)
             if rating: self.setBtnRating(rating)
