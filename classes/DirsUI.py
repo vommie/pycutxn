@@ -2,9 +2,9 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import *
 from .Functions import Functions
 
-class DirsUi(QtWidgets.QDialog):
+class DirsUI(QtWidgets.QDialog):
     def __init__(self, parent=None):
-        super(DirsUi, self).__init__(parent)
+        super(DirsUI, self).__init__(parent)
         uic.loadUi('./gui/dirs.ui', self)
 
         self.parent = parent

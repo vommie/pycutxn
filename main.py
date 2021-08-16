@@ -12,7 +12,8 @@ import copy
 from libs.mpv import *
 
 from classes.PlayerControl import PlayerControl
-from classes.DirsUi import DirsUi
+from classes.DirsUI import DirsUI
+from classes.TagsFilterUI import TagsFilterUI
 from classes.LogUi import LogUi
 from classes.Functions import Functions
 from classes.Config import Config
@@ -55,7 +56,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegProcess = False
         self.ffmpegKilled = False
         # Init member variables
-        self.dirsUi = DirsUi(self)
+        self.dirsUI = DirsUI(self)
+        self.tagsFilterUI = TagsFilterUI(self)
         self.config.setTaggerDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
         self.db = DB(self.config.getTaggerDBPath(), self.log)
         self.labelTaggerError.setHidden(True)
@@ -234,7 +236,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
         self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
         self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
-        # Tag & Rate
+        # Tagger
         self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
         self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
         self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
@@ -242,6 +244,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnTagsClear.clicked.connect(self.onBtnTagsClearClicked)
         self.btnTaggerActive.clicked.connect(self.onBtnTaggerActiveClicked)
         self.btnTaggerWarning.clicked.connect(self.onBtnTaggerWarningClicked)
+        self.btnTaggerFilter.clicked.connect(self.onBtnTaggerFilterClicked)
 
     def initPlayer(self):
         self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
@@ -593,7 +596,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.saveSession()
 
     def onBtnExportDirsClicked(self):
-        self.dirsUi.show()
+        self.dirsUI.show()
+
+    def onBtnTaggerFilterClicked(self):
+        self.tagsFilterUI.show()
 
     def onCmbTgtDirsCurrTextChanged(self, text):
         self.setCurrTgtDir()
@@ -1172,6 +1178,12 @@ class MainUi(QtWidgets.QMainWindow):
                     item.setData(100, tag['tagID'])
                     self.listWidgetLastTags.addItem(item)
 
+    def updateTagsFilter(self, tagIDs):
+        '''
+        Update the filtered tags in the tags tree
+        '''
+        self.log(1, 'Filter TagIDs: %s' % tagIDs)
+
     def setLastRating(self, rating):
         self.lastRating = rating
         self.btnLastRating.setText(str(rating))
@@ -1420,8 +1432,10 @@ class MainUi(QtWidgets.QMainWindow):
             id = False
         return id
 
-    # Updates the directories combo element
     def updateDirs(self, dirs):
+        '''
+        Updates the target directory combo box
+        '''
         self.dirs = dirs
         self.config.setDirs(dirs)
         currentText = self.cmbTgtDirs.currentText()
@@ -1432,8 +1446,10 @@ class MainUi(QtWidgets.QMainWindow):
             if self.dirs[i][1] == currentText:
                 self.cmbTgtDirs.setCurrentText(currentText)
 
-    # Updates the state of a job in the queue by the job ID
     def updateQueueJobState(self, id, state):
+        '''
+        Updates the state of a job in the queue by the job ID
+        '''
         rowCount = self.tableQueue.rowCount()
         for iRow in range(rowCount):
             idItem = self.tableQueue.item(iRow, 0)
@@ -1442,7 +1458,6 @@ class MainUi(QtWidgets.QMainWindow):
                 stateItem.setText(self.getJobStateString(state))
                 break
 
-    # Swap jobs
     def swapJobs(self, move):
         self.jobsSwapping = True
         # Get both jobs to swap

@@ -49,6 +49,9 @@ class Config:
     def getTaggerIsWarningActive(self):
         return self.settings.value('tagger/isWarningActive', True, type=bool)
 
+    def getTaggerFilterTagIDs(self):
+        return self.settings.value('tagger/filterTagIDs', [], type=list)
+
     def getFiltersDeinterlacer(self):
         return self.settings.value('filters/deinterlacer', 'yadif', type=str)
 
@@ -89,6 +92,9 @@ class Config:
 
     def setTaggerIsWarningActive(self, state):
         self.settings.setValue('tagger/isWarningActive', state)
+
+    def setTaggerFilterTagIDs(self, tagIDs):
+        self.settings.setValue('tagger/filterTagIDs', tagIDs)
 
     def setFiltersDeinterlacer(self, deinterlacer):
         self.settings.setValue('filters/deinterlacer', deinterlacer)
