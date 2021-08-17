@@ -121,6 +121,7 @@ class MainUi(QtWidgets.QMainWindow):
         if self.config.getQueueIsPaused():
             self.btnQueuePause.setChecked(True)
             self.toggleQueuePause()
+        self.btnTgtFileAutoIncrement.setChecked(self.config.getAppIncrementFilename())
         # Queue Jobs
         for id, job in self.jobs.jobs.items():
             try:
@@ -186,6 +187,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
         self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
+        self.btnTgtFileAutoIncrement.clicked.connect(self.onBtnTgtFileAutoIncrement)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
         self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
         # Filters
@@ -285,6 +287,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.jobs.newCurrentJob(videoFilePath)
             job = self.jobs.getCurrentJob()
             self.setCurrTgtDir()
+            if self.btnTgtFileAutoIncrement.isChecked(): self.setTargetFileCount(1)
+            else: self.setTargetFileCount(0)
         if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
         self.log(1, 'Source path: "%s".' % videoFilePath)
         # Get Video Props
@@ -298,7 +302,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadFilterDeshake(job)
         self.loadFilterPositions(job)
         self.loadSections(job)
-        self.loadTargetFileCount(job)
         self.loadTargetFileName(job)
         self.loadTargetFileCount(job)
         self.playerTimeCurrent = self.timeFormat
@@ -385,6 +388,7 @@ class MainUi(QtWidgets.QMainWindow):
         if not job:
             self.log(1, 'Error: Cannot add session to job queue.', 1)
             return False
+        if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
         self.log(1, 'Session saved as new job in queue.')
 
     def addCurrentJobToQueue(self):
@@ -594,6 +598,10 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnExportSave(self):
         self.saveSession()
+
+    def onBtnTgtFileAutoIncrement(self):
+        self.config.setAppIncrementFilename(self.btnTgtFileAutoIncrement.isChecked())
+        if self.boxTgtFileCount.value() == 0: self.changeTargetFileCount(1)
 
     def onBtnExportDirsClicked(self):
         self.dirsUI.show()
@@ -1009,6 +1017,7 @@ class MainUi(QtWidgets.QMainWindow):
         for i, tag in enumerate(self.tagsTree):
             if tag['parentID'] == currTagID:
                 item = QListWidgetItem('%s%s' % (self.tagsTreeItemPrefix, tag['label']))
+                item.setToolTip('TagID: %s' % tag['tagID'])
                 fontWeight = -1
                 if tag['parentID'] == -1: fontWeight = QFont.Bold
                 item.setFont(QFont('DejaVu Sans Mono', -1, weight=fontWeight))
@@ -1605,6 +1614,12 @@ class MainUi(QtWidgets.QMainWindow):
             self.boxTgtFileCount.setValue(job.getTgtFileCount())
         else:
             self.boxTgtFileCount.setValue(0)
+
+    def changeTargetFileCount(self, value: int):
+        self.boxTgtFileCount.setValue(self.boxTgtFileCount.value()+value)
+
+    def setTargetFileCount(self, value: int):
+        self.boxTgtFileCount.setValue(value)
 
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()

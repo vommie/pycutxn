@@ -19,6 +19,9 @@
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QTableWidget" name="tableTagsFilter">
+     <property name="toolTip">
+      <string>Insert TagIDs of Tags here, to filter them and their children in the Tags Tree. TagIDs are displayed in the ToolTip of a Tag Tree item.</string>
+     </property>
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
      </property>

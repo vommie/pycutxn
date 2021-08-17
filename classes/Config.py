@@ -22,6 +22,9 @@ class Config:
     def getAppState(self):
         return self.settings.value('app/state')
 
+    def getAppIncrementFilename(self):
+        return self.settings.value('app/incrementFilename', True, type=bool)
+
     def getAppJobsPath(self):
         return 'jobs.json'
 
@@ -68,6 +71,9 @@ class Config:
 
     def setAppState(self, state):
         self.settings.setValue('app/state', state)
+
+    def setAppIncrementFilename(self, state):
+        self.settings.setValue('app/incrementFilename', state)
 
     def setPlayerVolume(self, volume):
         self.settings.setValue('player/volume', volume)
