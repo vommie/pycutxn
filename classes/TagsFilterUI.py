@@ -78,5 +78,5 @@ class TagsFilterUI(QtWidgets.QDialog):
         for iRow in range(rowCount):
             tagID = self.tableTagsFilter.item(iRow, 0).text()
             tagID = self.validateTagID(tagID)
-            if tagID: tagIDs.append(int(tagID))
+            if tagID and int(tagID) not in tagIDs: tagIDs.append(int(tagID))
         return tagIDs
