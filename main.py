@@ -24,7 +24,7 @@ from classes.DB import DB
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon, QFont, QFontDatabase
+from PyQt5.QtGui import QFont, QFontDatabase
 import res  # pyrcc5 -o res.py res/res.qrc
 
 import ffmpeg
