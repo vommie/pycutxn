@@ -984,6 +984,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.tagsTreeItemPrefix = '%s%s' % (self.tagsTreeSpaceChar, self.tagsTreeItemPrefix)
         for i, tag in enumerate(self.tagsTree):
             if tag['parentID'] == currTagID:
+                if 'filter' in tag and tag['filter']: continue
                 item = QListWidgetItem('%s%s' % (self.tagsTreeItemPrefix, tag['label']))
                 item.setToolTip('TagID: %s' % tag['tagID'])
                 fontWeight = -1
@@ -1168,6 +1169,9 @@ class MainUi(QtWidgets.QMainWindow):
         Update the filtered tags in the tags tree
         '''
         self.log(1, 'Filter TagIDs: %s' % tagIDs)
+        self.tagsTree = self.setFilterStateForTagsTree(self.tagsTree)
+        self.listWidgetTagsTree.clear()
+        self.buildTagsTree(-1)
 
     def setLastRating(self, rating):
         self.lastRating = rating
@@ -1196,11 +1200,26 @@ class MainUi(QtWidgets.QMainWindow):
         '''Enables the Tagger panel. For use when database connection is possible.'''
         if self.isTaggerEnabled(): return
         if not self.tagsTree:
-            try: self.tagsTree = self.db.getTagsTree()
+            try: tagsTree = self.db.getTagsTree()
             except: return False
+            self.tagsTree = self.setFilterStateForTagsTree(tagsTree)
             self.buildTagsTree(-1)
         self.labelTaggerError.setHidden(True)
         self.dockTagger.setEnabled(True)
+
+    def setFilterStateForTagsTree(self, tagsTree):
+        '''
+        Loops the tags tree array and sets "filter"=True if the for the TagID a filter entry is set
+
+        :param tagsTree: The tagsTree array with tags as objects
+        :return: TagsTree array with objects having "filter"=True if they should get filtered
+        '''
+        filterTagIDs = self.config.getTaggerFilterTagIDs()
+        for i in range(len(tagsTree)):
+            tag = tagsTree[i]
+            if tag['tagID'] in filterTagIDs: tagsTree[i]['filter'] = True
+            else: tagsTree[i]['filter'] = False
+        return tagsTree
 
     def checkDBConnectivity(self):
         '''Checks if the database is available and sets Tagger panel status based on the result'''
