@@ -106,7 +106,6 @@ class MainUi(QtWidgets.QMainWindow):
         if state: self.restoreState(state)
         # Other
         self.toolTipBtnExportSave = self.btnExportSave.toolTip()
-        self.hideMsgBox()
         # GUI elements options
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
@@ -383,7 +382,9 @@ class MainUi(QtWidgets.QMainWindow):
             currentJob.addSection(self.timeFormat, self.videoProps['duration'])
         job = self.addCurrentJobToQueue()
         if not job:
-            self.log(1, 'Error: Cannot add session to job queue.', 1)
+            msg = 'Error: Cannot add session to job queue.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, btns="ok", icon="critical")
             return False
         if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
         self.log(1, 'Session saved as new job in queue.')
@@ -419,11 +420,13 @@ class MainUi(QtWidgets.QMainWindow):
             msg = 'Error: Input and Output Path are the same.'
             self.log(1, msg, 1)
             self.onFFmpegExit([job, -100, msg, msg])
+            self.showMsgBox(msg, btns="ok", icon="critical")
             return False
         if len(job.getSections()) == 0:
             msg = 'Error: No sections to render.'
             self.log(1, msg, 1)
             self.onFFmpegExit([job, -101, msg, msg])
+            self.showMsgBox(msg, btns="ok", icon="critical")
             return False
         return True
 
@@ -969,23 +972,6 @@ class MainUi(QtWidgets.QMainWindow):
         elif(result == QMessageBox.Close): return False
         return False
 
-    def hideMsgBox(self):
-        '''
-        Hides the main message box
-        '''
-        self.frameMsg.setVisible(False)
-        self.frameMsg.setEnabled(False)
-        self.setBtnExportSaveState()
-
-    def msgBoxVisible(self):
-        '''
-        Checks if the message box is currently visible.
-
-        :return: True if message box is visible.
-        '''
-        return self.frameMsg.isVisible()
-
-
     def buildTagsTree(self, currTagID):
         '''
         Fills the TagsTree widget with tags of the member variable "tagsTree".
@@ -1027,7 +1013,9 @@ class MainUi(QtWidgets.QMainWindow):
                 if forSource: return False
                 imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
                 if not imageID:
-                    self.log(1, 'Error: Cannot create ImageID for file.', 1)
+                    msg = 'Error: Cannot create ImageID for file.'
+                    self.log(1, msg, 1)
+                    self.showMsgBox(msg, btns="ok", icon="critical")
                     return False
             rating = self.db.getRating(imageID)
             if rating: self.setBtnRating(rating)
@@ -1037,6 +1025,7 @@ class MainUi(QtWidgets.QMainWindow):
         except Exception as e:
             self.log(1, 'Error: %s' % e, 1)
             self.disableTaggerPanel()
+            self.showMsgBox('Error on setting Tags and Rating to the Tagger Panel.', btns="ok", icon="critical", detailText=str(e))
             return False
         return True
 
@@ -1064,22 +1053,30 @@ class MainUi(QtWidgets.QMainWindow):
             folderID = self.db.getFolderID(job.getTgtDirName())
             if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
             if not folderID:
-                self.log(1, 'Got no folderID. Cannot save tags and rating.', 1)
+                msg = 'Error: Got no folderID. Cannot save tags and rating.'
+                self.log(1, msg, 1)
+                self.showMsgBox(msg, btns='ok', icon='warning')
                 return False
             imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
             if not imageID: imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
             if not imageID:
-                self.log(1, 'Got no imageID. Cannot save tags and rating.', 1)
+                msg = 'Error: Got no imageID. Cannot save tags and rating.'
+                self.log(1, msg, 1)
+                self.showMsgBox(msg, btns='ok', icon='warning')
                 return False
         except Exception as e:
-            self.log(1, 'Error: %s' % e, 1)
+            msg = 'Error when saving Tags and Rating to database'
+            self.log(1, '%s: %s' % (msg, e), 1)
+            self.showMsgBox('%s.' % msg, btns='ok', icon='warning', detailText=str(e))
             self.disableTaggerPanel()
             return False
 
         self.log(1, 'Save rating to database ...')
         try: self.db.setRating(imageID, folderID, rating)
         except:
-            self.log(1, 'Error: No database connection possible', 1)
+            msg = 'Error: No database connection possible'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, btns='ok', icon="warning")
             self.disableTaggerPanel()
             return False
         self.log(1, 'Rating saved: %s' % rating)
@@ -1087,7 +1084,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'Save tags to database ...')
         try: self.db.setTags(imageID, tagIDs)
         except:
-            self.log(1, 'Error: No database connection possible', 1)
+            msg = 'Error: No database connection possible'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, btns='ok', icon="warning")
             self.disableTaggerPanel()
             return False
         self.log(1, 'Tags saved: %s' % tagIDs)
@@ -1370,7 +1369,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnQueueDown.setEnabled(False)
 
     def setBtnExportSaveState(self):
-        if len(self.cmbTgtDirs.currentText()) > 0 and len(self.lineEditTgtFileName.text()) > 0 and not self.historyMode and not self.msgBoxVisible():
+        if len(self.cmbTgtDirs.currentText()) > 0 and len(self.lineEditTgtFileName.text()) > 0 and not self.historyMode:
             if not self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(True)
         else:
             if self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(False)
@@ -1563,7 +1562,9 @@ class MainUi(QtWidgets.QMainWindow):
                 name = item.objectName()
                 atts = self.filterAtts.get(filter)
                 if not atts:
-                    # Todo: Error if filter is not defined
+                    msg = 'Filter is not implemented: "%s"' % name
+                    self.log(1, msg, 1)
+                    self.showMsgBox(msg, btns="ok", icon="warning")
                     return
                 layout = atts.get('layout')
                 searchName = layout.objectName()
@@ -1609,7 +1610,9 @@ class MainUi(QtWidgets.QMainWindow):
         if not index == -1:
             self.cmbTgtDirs.setCurrentIndex(index)
             return True
-        self.log(1, 'Error: Cannot set target path to "%s"' % path, 1)
+        msg = 'Error: Cannot set target path to "%s"' % path
+        self.log(1, msg, 1)
+        self.showMsgBox(msg, btns="ok", icon="warning")
         return False
 
     def resetVideoProps(self):

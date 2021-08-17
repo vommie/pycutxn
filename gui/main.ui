@@ -19,119 +19,6 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QFrame" name="frameMsg">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_6">
-       <item>
-        <widget class="QLabel" name="msgLabel">
-         <property name="text">
-          <string>Message</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QWidget" name="widgetMsgBtns" native="true">
-         <layout class="QHBoxLayout" name="layoutMsgBtns">
-          <item>
-           <spacer name="spacerMsgLeft">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnMsgYes">
-            <property name="minimumSize">
-             <size>
-              <width>60</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>60</width>
-              <height>32</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>DroidSansMono Nerd Font Mono</family>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string></string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnMsgNo">
-            <property name="minimumSize">
-             <size>
-              <width>60</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>60</width>
-              <height>32</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>DroidSansMono Nerd Font Mono</family>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string></string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="spacerMsgRight">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item>
      <widget class="QWidget" name="renderFrame" native="true">
       <property name="autoFillBackground">
        <bool>true</bool>
@@ -2402,11 +2289,14 @@ QRadioButton::unchecked:hover {
         </item>
         <item>
          <layout class="QHBoxLayout" name="layoutTagActions">
+          <property name="spacing">
+           <number>6</number>
+          </property>
           <item>
            <widget class="QPushButton" name="btnTagsLast">
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>40</width>
               <height>24</height>
              </size>
             </property>
@@ -2431,7 +2321,7 @@ QRadioButton::unchecked:hover {
            <widget class="QPushButton" name="btnTagsClear">
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>40</width>
               <height>24</height>
              </size>
             </property>
@@ -2453,17 +2343,26 @@ QRadioButton::unchecked:hover {
            </widget>
           </item>
           <item>
-           <widget class="Line" name="line">
+           <spacer name="horizontalSpacer">
             <property name="orientation">
-             <enum>Qt::Vertical</enum>
+             <enum>Qt::Horizontal</enum>
             </property>
-           </widget>
+            <property name="sizeType">
+             <enum>QSizePolicy::MinimumExpanding</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>4</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
           <item>
            <widget class="QPushButton" name="btnTaggerActive">
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>60</width>
               <height>24</height>
              </size>
             </property>
@@ -2488,7 +2387,7 @@ QRadioButton::unchecked:hover {
            <widget class="QPushButton" name="btnTaggerWarning">
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>60</width>
               <height>24</height>
              </size>
             </property>
@@ -2513,7 +2412,7 @@ QRadioButton::unchecked:hover {
            <widget class="QPushButton" name="btnTaggerFilter">
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>40</width>
               <height>24</height>
              </size>
             </property>
