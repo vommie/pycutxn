@@ -371,16 +371,13 @@ class MainUi(QtWidgets.QMainWindow):
         if state: self.btnFilterDeshake.setChecked(True)
         else: self.btnFilterDeshake.setChecked(False)
 
-    def saveSession(self, skipTaggerCheck=False):
+    def saveSession(self):
         '''
         Saves the current job session as new job and into the database
-
-        :param skipTaggerCheck: If False, session will not get saved if no tags or ratings are set. If True, those checks will get skipped.
         '''
         if(self.historyMode): return False
         self.log(1, 'Saving current session ...')
-        if self.saveCurrentTagsAndRating(skipTaggerCheck) == -1:
-            return
+        if not self.saveCurrentTagsAndRating(): return
         currentJob = self.jobs.getCurrentJob()
         if not currentJob.getSections():
             currentJob.addSection(self.timeFormat, self.videoProps['duration'])
@@ -824,8 +821,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setFilterBtnStates()
 
     def onBtnTagRateHistorySaveClicked(self):
-        if self.saveCurrentTagsAndRating() != -1: # Keep History Mode active if we wait for user to response to MsgBox due to missing rating or tags
-            self.setHistoryMode(False)
+        if self.saveCurrentTagsAndRating(): self.setHistoryMode(False)
 
     def onListWidgetLastTagsItemClicked(self, item):
         tagID = item.data(100)
@@ -847,20 +843,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnTaggerWarningClicked(self):
         self.config.setTaggerIsWarningActive(not self.config.getTaggerIsWarningActive())
-
-    def onMsgBoxYesClicked(self):
-        self.hideMsgBox()
-
-    def onMsgBoxNoClicked(self):
-        self.hideMsgBox()
-
-    def onMsgBoxNoTagsOrRatingYes(self):
-        self.hideMsgBox()
-        self.saveCurrentTagsAndRating(True)
-        if self.historyMode:
-            self.setHistoryMode(False)
-        else:
-            self.saveSession(True)
 
     # Other Event handlers
 
@@ -944,48 +926,48 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI Control
 
-    def showMsgBox(self, msg, choice="ok", okCallback=False, noCallBack=False):
+    def onMsgBoxBtn(self, btn):
+        print(btn)
+
+    def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCut Message'):
         '''
-        Shows the main message box with user interaction buttons
+        Shows a QMessageBox dialog.
 
         :param msg: The message to display
-        :param choice: "ok" displays button with "OK" as text. "yesno" displays two buttons with "Yes" and "No" as text. False displays no buttons at all.
-        :param okCallback: Provide a callback function for the "yes"-button. If False, default callback function will be used.
-        :param noCallBack: Provide a callback function for the "no"-button. If False, default callback function will be used.
+        :param btns: Choices. Default = "ok". Options: "okcancel", "save", "savecancel", "yesno", "retry", "retryabort", "close"
+        :param icon: Icon. Default "info". Options: "info", "question", "warning", "critical". Set to False for no icon.
+        :param infoText: Info text which gets displayed below the main message
+        :param detailText: Detail text which gets displayed if the user clicks on a "details" button
+        :param title: Title of the message box.
         '''
-        self.msgLabel.setText(str(msg))
-
-        try:
-            self.btnMsgYes.clicked.disconnect()
-            self.btnMsgNo.clicked.disconnect()
-        except Exception: pass
-        if not okCallback: self.btnMsgYes.clicked.connect(self.onMsgBoxYesClicked)
-        else: self.btnMsgYes.clicked.connect(okCallback)
-        if not noCallBack: self.btnMsgNo.clicked.connect(self.onMsgBoxNoClicked)
-        else: self.btnMsgNo.clicked.connect(noCallBack)
-
-        if choice:
-            self.log(1, 'Wait for user MsgBox response ...')
-        if not choice:
-            self.widgetMsgBtns.setVisible(False)
-            self.widgetMsgBtns.setEnabled(False)
-        elif choice == 'ok':
-            self.widgetMsgBtns.setEnabled(True)
-            self.btnMsgYes.setText('OK')
-            self.btnMsgYes.setFont(QApplication.font())
-            self.btnMsgYes.setVisible(True)
-            self.btnMsgNo.setVisible(False)
-        elif choice == 'yesno':
-            self.widgetMsgBtns.setEnabled(True)
-            self.btnMsgYes.setText('')
-            self.btnMsgNo.setText('')
-            self.btnMsgYes.setFont(QFont(self.iconFontName, 16))
-            self.btnMsgNo.setFont(QFont(self.iconFontName, 16))
-            self.btnMsgYes.setVisible(True)
-            self.btnMsgNo.setVisible(True)
-        self.frameMsg.setVisible(True)
-        self.frameMsg.setEnabled(True)
-        self.setBtnExportSaveState()
+        msgBox = QMessageBox()
+        if icon == "info":  msgBox.setIcon(QMessageBox.Information)
+        elif icon == "question":  msgBox.setIcon(QMessageBox.Question)
+        elif icon == "warning":  msgBox.setIcon(QMessageBox.Warning)
+        elif icon == "critical":  msgBox.setIcon(QMessageBox.Critical)
+        msgBox.setText(msg)
+        if infoText != '': msgBox.setInformativeText(infoText)
+        msgBox.setWindowTitle(title)
+        if detailText != '': msgBox.setDetailedText(detailText)
+        if btns == 'okcancel': msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        elif btns == 'save': msgBox.setStandardButtons(QMessageBox.Save)
+        elif btns == 'savecancel': msgBox.setStandardButtons(QMessageBox.Save | QMessageBox.Cancel)
+        elif btns == 'yesno': msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        elif btns == 'retry': msgBox.setStandardButtons(QMessageBox.Retry)
+        elif btns == 'retryabort': msgBox.setStandardButtons(QMessageBox.Retry | QMessageBox.Abort)
+        elif btns == 'close': msgBox.setStandardButtons(QMessageBox.Close)
+        else: msgBox.setStandardButtons(QMessageBox.Ok)
+        msgBox.buttonClicked.connect(self.onMsgBoxBtn)
+        result = msgBox.exec_()
+        if(result == QMessageBox.Ok): return True
+        elif(result == QMessageBox.Cancel): return False
+        elif(result == QMessageBox.Yes): return True
+        elif(result == QMessageBox.No): return False
+        elif(result == QMessageBox.Save): return True
+        elif(result == QMessageBox.Retry): return True
+        elif(result == QMessageBox.Abort): return False
+        elif(result == QMessageBox.Close): return False
+        return False
 
     def hideMsgBox(self):
         '''
@@ -1058,30 +1040,25 @@ class MainUi(QtWidgets.QMainWindow):
             return False
         return True
 
-    def saveCurrentTagsAndRating(self, skipChecks=False):
+    def saveCurrentTagsAndRating(self):
         '''
         Saves the current tags and rating for the target file to the database
 
-        :param skipChecks: If False and warning button is checked and there is no rating or tags selected, the user will be asked if he really want to save.
         :param return: False if something went wrong. -1 if MsgBox is active due to missing rating or tags. True if successfully saved.
         '''
         if not self.isTaggerEnabled(): return False
-        if skipChecks: self.log(1, 'Resuming saving Tags and Rating to DB ...')
-        else: self.log(1, 'Save Tags and Rating to DB ...')
+        self.log(1, 'Save Tags and Rating to DB ...')
         job = self.jobs.getCurrentJob()
         tagIDs = self.getSelectedTagIDsFromTagsTree()
         rating = self.getRatingFromBtns()
 
-        if not skipChecks and self.isTaggerWarningActive():
+        if self.isTaggerWarningActive():
             if not tagIDs and not rating:
-                 self.showMsgBox('No rating and no tags are set. Are you sure to proceed?', 'yesno', self.onMsgBoxNoTagsOrRatingYes)
-                 return -1
+                if not self.showMsgBox('No rating and no tags are set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
             elif not tagIDs:
-                self.showMsgBox('No rating is set. Are you sure to proceed?', 'yesno', self.onMsgBoxNoTagsOrRatingYes)
-                return -1
+                if not self.showMsgBox('No rating is set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
             elif not rating:
-                self.showMsgBox('No tags are set. Are you sure to proceed?', 'yesno', self.onMsgBoxNoTagsOrRatingYes)
-                return -1
+                if not self.showMsgBox('No tags are set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
 
         try:
             folderID = self.db.getFolderID(job.getTgtDirName())
@@ -1209,7 +1186,7 @@ class MainUi(QtWidgets.QMainWindow):
     def disableTaggerPanel(self):
         '''Disables the Tagger panel. For use when no database connection is possible.'''
         if not self.isTaggerEnabled(): return
-        self.showMsgBox('Tagger got disabled as there was no succesful database connection possible.')
+        self.showMsgBox('Tagger got disabled as there was no succesful database connection possible.', btns="ok", icon="warning")
         self.dockTagger.setEnabled(False)
         self.emptyTagsTree()
         self.clearRating()
