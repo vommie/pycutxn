@@ -40,6 +40,9 @@ class Config:
     def getAppIncrementFilename(self):
         return self.settings.value('app/incrementFilename', True, type=bool)
 
+    def getDialogLogGeometry(self):
+        return self.settings.value('dialogLog/geometry')
+
     def getAppJobsPath(self):
         return 'jobs.json'
 
@@ -89,6 +92,9 @@ class Config:
 
     def setAppIncrementFilename(self, state):
         self.settings.setValue('app/incrementFilename', state)
+
+    def setDialogLogGeometry(self, geometry):
+        self.settings.setValue('dialogLog/geometry', geometry)
 
     def setPlayerVolume(self, volume):
         self.settings.setValue('player/volume', volume)
