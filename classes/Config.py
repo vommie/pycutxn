@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QSettings
+import os
 
 class Config:
 
@@ -8,7 +9,21 @@ class Config:
     def __init__(self):
         self.settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
 
-    # Getters
+    # Info Getters
+
+    def getConfigFilePath(self):
+        return self.settings.fileName()
+
+    def getConfigPath(self):
+        filePath = self.settings.fileName()
+        path = os.path.normpath(filePath)
+        dirName, baseName = os.path.split(path)
+        return dirName
+
+    def getConfigDeshakePath(self):
+        return '%s/deshake' % self.getConfigPath()
+
+    # Config File Getters
 
     def getTargetDirs(self):
         return self.settings.value('app/targetDirs', [], type=list)
@@ -58,7 +73,7 @@ class Config:
     def getFiltersDeinterlacer(self):
         return self.settings.value('filters/deinterlacer', 'yadif', type=str)
 
-    # Setters
+    # Config File Setters
 
     def setDirs(self, dirs):
         self.settings.setValue('app/targetDirs', dirs)

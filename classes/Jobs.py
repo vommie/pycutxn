@@ -3,6 +3,7 @@ from .Job import Job
 import json
 import os
 import copy
+import os
 
 class Jobs:
 
@@ -66,6 +67,7 @@ class Jobs:
         self.saveJobs()
 
     def removeJob(self, id):
+        self.deleteDeshakeFile(id)
         self.jobs.pop(id)
         self.saveJobs()
 
@@ -126,3 +128,10 @@ class Jobs:
             position += 1
             job.bindToProps(self.onJobPropsUpdated)
             self.updateJob(job.getID(), job)
+
+    def deleteDeshakeFile(self, id):
+        '''Deletes the deshake file from the config dir for a job'''
+        job = self.getJob(id)
+        deshakeFile = job.getFilterDeshakeFile()
+        if not deshakeFile or not os.path.isfile(deshakeFile): return
+        os.remove(deshakeFile)

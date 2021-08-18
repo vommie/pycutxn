@@ -33,7 +33,7 @@ class Job():
                 'deinterlace': {},
                 'resize': {},
                 'rotate': False,
-                'deshake': False
+                'deshake': {}
             },
             'state': 0,
             'error': {
@@ -206,7 +206,14 @@ class Job():
     def getFilterDeshakeState(self):
         try:
             self._props['filters']
-            return self._props['filters'].get('deshake')
+            return self._props['filters']['deshake'].get('active')
+        except:
+            return False
+
+    def getFilterDeshakeFile(self):
+        try:
+            self._props['filters']
+            return self._props['filters']['deshake'].get('file')
         except:
             return False
 
@@ -318,7 +325,11 @@ class Job():
         self.propValueChanged()
 
     def setFilterDeshakeState(self, state):
-        self._props['filters'].update({'deshake': state})
+        self._props['filters']['deshake'].update({'active': state})
+        self.propValueChanged()
+
+    def setFilterDeshakeFile(self, file):
+        self._props['filters']['deshake'].update({'file': file})
         self.propValueChanged()
 
     def setFilterRotate(self, deg):

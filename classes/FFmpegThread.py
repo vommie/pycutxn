@@ -2,6 +2,7 @@ from .Job import Job
 from .Functions import Functions
 
 import ffmpeg
+import os
 from PyQt5.QtCore import pyqtSignal, QThread
 
 # TODO:
@@ -13,8 +14,9 @@ class FFmpegThread(QThread):
     ffmpegProcess = pyqtSignal('PyQt_PyObject')
     ffmpegExit = pyqtSignal('PyQt_PyObject')
 
-    def __init__(self, job):
+    def __init__(self, job, configPath):
         self.job = job
+        self.configPath = configPath
         QThread.__init__(self)
 
     def __del__(self):
@@ -22,6 +24,7 @@ class FFmpegThread(QThread):
 
     def run(self):
         job = self.job
+        deshakeFile = False
         srcPath = job.getSrcFilePathLong()
         tgtPath = job.getTgtFilePathLong()
         # Probe file
@@ -59,10 +62,13 @@ class FFmpegThread(QThread):
                         filter = filterPositions.get(position)
                         print('Applying filter nr. %s: %s' % (position, filter))
                         if filter == 'deshake' and deshake_state:
+                            print(self.configPath)
+                            if not os.path.isdir(self.configPath): os.makedirs(self.configPath)
+                            deshakeFile = '%s/job_%s.trf' % (self.configPath, job.getID())
                             if render_pass == 1:
-                                video = ( video .filter('vidstabdetect', stepsize=32, shakiness=10, accuracy=10, result='/home/vommie/videos/pycut/deshake.trf') )
+                                video = ( video .filter('vidstabdetect', stepsize=32, shakiness=10, accuracy=10, result=deshakeFile) )
                             elif render_pass == 2:
-                                video = ( video .filter('vidstabtransform', input='/home/vommie/videos/pycut/deshake.trf', crop='black', optzoom=0, zoom=0, smoothing=10,interpol='bicubic') )
+                                video = ( video .filter('vidstabtransform', input=deshakeFile, crop='black', optzoom=0, zoom=0, smoothing=10,interpol='bicubic') )
                                 video = ( video .filter('unsharp', 5,5,0.8,3,3,0.4) )
                         elif filter == 'deinterlace' and job.getFilterDeinterlaceState():
                             deinterlacer = job.getFilterDeinterlaceDeinterlacer()
@@ -126,4 +132,5 @@ class FFmpegThread(QThread):
                 except Exception as e:
                     code = 1
                     err = str(e)
-        self.ffmpegExit.emit([job, code, out, err])
+        # self.ffmpegExit.emit([job, code, out, err])
+        self.ffmpegExit.emit([job, code, out, err, deshakeFile])

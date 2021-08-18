@@ -8,6 +8,7 @@ import os
 import signal
 import re
 import copy
+import shutil
 
 from libs.mpv import *
 
@@ -122,25 +123,27 @@ class MainUi(QtWidgets.QMainWindow):
             self.toggleQueuePause()
         self.btnTgtFileAutoIncrement.setChecked(self.config.getAppIncrementFilename())
         # Queue Jobs
-        for id, job in self.jobs.jobs.items():
-            try:
-                int(id) # Skip 'default' job
-                state = job.getState()
-                if state == 4:
-                    job.setErrorID(-105)
-                    job.setErrorMsg('Job had state "Rendering" when the program started.')
-                    job.setState(3)
-                    state = 3
-                elif state == 5:
-                    job.setErrorId(-124)
-                    job.setErrorMsg('Job had state "Paused" when the program started.')
-                    job.setState(3)
-                    state = 3
-                self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-                if state == 0 and not self.btnQueuePause.isChecked():
-                    self.runNextWaitJob()
-            except:
-                pass
+        if len(self.jobs.jobs.items()) > 1:
+            for id, job in self.jobs.jobs.items():
+                try:
+                    int(id) # Skip 'default' job
+                    state = job.getState()
+                    if state == 4:
+                        job.setErrorID(-105)
+                        job.setErrorMsg('Job had state "Rendering" when the program started.')
+                        job.setState(3)
+                        state = 3
+                    elif state == 5:
+                        job.setErrorId(-124)
+                        job.setErrorMsg('Job had state "Paused" when the program started.')
+                        job.setState(3)
+                        state = 3
+                    self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
+                    if state == 0 and not self.btnQueuePause.isChecked():
+                        self.runNextWaitJob()
+                except: pass
+        else:
+            self.deleteDeshakeDir()
         self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
@@ -407,7 +410,7 @@ class MainUi(QtWidgets.QMainWindow):
             return False
         job = self.getNextWaitingJob()
         if job and self.checkJobForRenderbility(job):
-            self.FFmpegThread = FFmpegThread(job)
+            self.FFmpegThread = FFmpegThread(job, self.config.getConfigDeshakePath())
             self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
             self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
             self.FFmpegThread.ffmpegProcess.connect(self.onFFmpegProgress)
@@ -419,13 +422,13 @@ class MainUi(QtWidgets.QMainWindow):
         if Functions.isSameString(job.getSrcFilePathLong(), job.getTgtFilePathLong()):
             msg = 'Error: Input and Output Path are the same.'
             self.log(1, msg, 1)
-            self.onFFmpegExit([job, -100, msg, msg])
+            self.onFFmpegExit([job, -100, msg, msg, False])
             self.showMsgBox(msg, btns="ok", icon="critical")
             return False
         if len(job.getSections()) == 0:
             msg = 'Error: No sections to render.'
             self.log(1, msg, 1)
-            self.onFFmpegExit([job, -101, msg, msg])
+            self.onFFmpegExit([job, -101, msg, msg, False])
             self.showMsgBox(msg, btns="ok", icon="critical")
             return False
         return True
@@ -882,7 +885,8 @@ class MainUi(QtWidgets.QMainWindow):
     def onFFmpegExit(self, atts):
         self.log(1, 'FFmpeg exited.')
         self.ffmpegProcess = False
-        job, code, output, error = atts
+        job, code, output, error, deshakeFile = atts
+        job.setFilterDeshakeFile(deshakeFile)
         if self.progressBarRender.isEnabled():
             self.progressBarRender.setValue(0)
             self.progressBarRender.setEnabled(False)
@@ -1398,8 +1402,9 @@ class MainUi(QtWidgets.QMainWindow):
         jobID, iRow = self.queueGetJobIDFromRow()
         self.tableQueue.removeRow(iRow)
         self.jobs.removeJob(jobID)
-        if(iRow > 0):
-            self.tableQueue.setCurrentCell(iRow-1, 0)
+        if(iRow > 0): self.tableQueue.setCurrentCell(iRow-1, 0)
+        elif(iRow == 0):
+            if len(self.jobs.jobs.items()) == 1: self.deleteDeshakeDir()
         self.setQueueBtnStates()
 
     def queueGetJobIDFromRow(self, iRow = False):
@@ -1637,6 +1642,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     def resetVideoProps(self):
         self.videoProps = {}
+
+    def deleteDeshakeDir(self):
+        '''Deletes the deshake directory in the config path'''
+        path = self.config.getConfigDeshakePath()
+        if path and os.path.isdir(path):
+            shutil.rmtree(path)
 
     def log(self, id, line, msgType=0, timestamp=True):
         '''
