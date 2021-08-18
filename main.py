@@ -239,7 +239,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.actionStateResume.triggered.connect(self.onQueueCtxActioStateResume)
         self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
         self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
-        self.actionShowError.triggered.connect(self.onQueueCtxActionShowError)
         # Tagger
         self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
         self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
@@ -711,7 +710,7 @@ class MainUi(QtWidgets.QMainWindow):
         elif state == 1:
             self.queuePlayFile()
         elif state == 3:
-            self.queueShowError()
+            self.queueShowLog()
 
     def onBtnQueueDeleteClicked(self):
         self.queueDeleteSelectedRow()
@@ -750,8 +749,6 @@ class MainUi(QtWidgets.QMainWindow):
             menu.addSeparator()
             if state != 0:
                 menu.addAction(self.actionShowLog)
-            if state == 3:
-                menu.addAction(self.actionShowError)
         point = self.tableQueue.mapToGlobal(point)
         menu.popup(point)
 
@@ -772,9 +769,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onQueueCtxActionShowLog(self):
         self.queueShowLog()
-
-    def onQueueCtxActionShowError(self):
-        self.queueShowError()
 
     def onBtnFilterCropDownClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterCrop)
@@ -886,6 +880,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'FFmpeg exited.')
         self.ffmpegProcess = False
         job, code, output, error, deshakeFile = atts
+        errorMsg = ''
+        if error: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(error))
+        if error and output: errorMsg = '%s\n\n' % errorMsg
+        if output: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(output))
         job.setFilterDeshakeFile(deshakeFile)
         if self.progressBarRender.isEnabled():
             self.progressBarRender.setValue(0)
@@ -894,20 +892,17 @@ class MainUi(QtWidgets.QMainWindow):
         if code == 0:
             state = 1
         else:
-            if not self.ffmpegKilled:
-                job.setErrorID(code)
-                job.setErrorMsg(str(error))
+            if not self.ffmpegKilled: job.setErrorID(code)
             else:
                 self.ffmpegKilled = False
                 job.setErrorID(-332)
-                job.setErrorMsg('ffmpeg killed while rendering by the user.')
+                errorMsg = 'ffmpeg killed while rendering by the user.\n\n%s' % errorMsg
             state = 3
+        if errorMsg != '':
+            job.setErrorMsg(errorMsg)
         job.setState(state)
         if self.btnQueueKill.isEnabled():
             self.btnQueueKill.setEnabled(False)
-        # todo append output and error to job, display it if clicked on queue item
-        # if output: self.log(2, str(output))
-        # if error: self.log(2, str(error))
         # Update queue table with job state
         id = job.getID()
         self.updateQueueJobState(id, state)
@@ -1497,14 +1492,10 @@ class MainUi(QtWidgets.QMainWindow):
         subprocess.call([opener, dir])
 
     def queueShowLog(self):
-        self.logUi.show()
-
-    def queueShowError(self):
         jobID = self.queueGetJobIDFromRow()[0]
         job = self.jobs.getJob(jobID)
-        errorID = job.getErrorID()
         errorMsg = job.getErrorMsg()
-        self.logUi.setTitle('Error %s' % errorID)
+        self.logUi.setTitle('Log for Job %s' % jobID)
         self.logUi.setLogText(errorMsg.replace('\\n', '\n'))
         self.logUi.show()
 

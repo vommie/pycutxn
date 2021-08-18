@@ -132,5 +132,4 @@ class FFmpegThread(QThread):
                 except Exception as e:
                     code = 1
                     err = str(e)
-        # self.ffmpegExit.emit([job, code, out, err])
         self.ffmpegExit.emit([job, code, out, err, deshakeFile])
