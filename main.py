@@ -1168,7 +1168,8 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         Update the filtered tags in the tags tree
         '''
-        self.log(1, 'Filter TagIDs: %s' % tagIDs)
+        if tagIDs: self.log(1, 'Filter TagIDs: %s' % tagIDs)
+        else: self.log(1, 'No TagIDs to filter')
         self.tagsTree = self.setFilterStateForTagsTree(self.tagsTree)
         self.listWidgetTagsTree.clear()
         self.buildTagsTree(-1)
