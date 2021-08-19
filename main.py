@@ -115,12 +115,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.toolTipBtnExportSave = self.btnExportSave.toolTip()
         # GUI elements options
         header = self.tableSections.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setMaximumSectionSize(10)
         header = self.tableQueue.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
         # Set GUI from config
         self.updateDirs(self.config.getTargetDirs())
         self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())

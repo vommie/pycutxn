@@ -1473,14 +1473,17 @@
           <property name="verticalScrollMode">
            <enum>QAbstractItemView::ScrollPerPixel</enum>
           </property>
+          <attribute name="horizontalHeaderMinimumSectionSize">
+           <number>30</number>
+          </attribute>
           <column>
            <property name="text">
-            <string>From</string>
+            <string>Start</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>To</string>
+            <string>End</string>
            </property>
           </column>
          </widget>
@@ -2470,6 +2473,9 @@ QRadioButton::unchecked:hover {
        <property name="verticalScrollMode">
         <enum>QAbstractItemView::ScrollPerPixel</enum>
        </property>
+       <attribute name="horizontalHeaderMinimumSectionSize">
+        <number>10</number>
+       </attribute>
        <attribute name="verticalHeaderVisible">
         <bool>false</bool>
        </attribute>
