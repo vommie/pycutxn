@@ -850,6 +850,19 @@ class MainUi(QtWidgets.QMainWindow):
     @pyqtSlot('PyQt_PyObject')
     def onFFmpegProgress(self, atts):
         line, job, totalSeconds = atts
+        # Line can be an array with this values:
+        # ['frame', '260']
+        # ['fps', '67.89']
+        # ['stream_0_0_q', '-1.0']
+        # ['bitrate', '1550.2kbits/s']
+        # ['total_size', '1679097']
+        # ['out_time_us', '8665000']
+        # ['out_time_ms', '8665000']
+        # ['out_time', '00:00:08.665000']
+        # ['dup_frames', '0']
+        # ['drop_frames', '0']
+        # ['speed', '2.26x']
+        # ['progress', 'end']
         if self.jobsSwapping:
             return
         if not isinstance(line, list):
