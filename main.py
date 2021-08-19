@@ -45,7 +45,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.config = Config()
         self.iconFontName = 'DroidSansMono Nerd Font Mono'
         self.jobsFilePath = self.config.getJobsFilePath()
-        self.jobs = Jobs(self.jobsFilePath, self)
+        try:
+            self.jobs = Jobs(self.jobsFilePath)
+        except Exception as e:
+            msg = 'Error: Cannot initialize jobs.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, detailText=str(e), icon='critical')
         self.jobStates = {
             0: 'Waiting',
             1: 'Finished',
@@ -378,30 +383,29 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         if(self.historyMode): return False
         self.log(1, 'Saving current session ...')
-        if not self.saveCurrentTagsAndRating(): return
         currentJob = self.jobs.getCurrentJob()
         if not currentJob.getSections():
             currentJob.addSection(self.timeFormat, self.videoProps['duration'])
         job = self.addCurrentJobToQueue()
-        if not job:
-            msg = 'Error: Cannot add session to job queue.'
-            self.log(1, msg, 1)
-            self.showMsgBox(msg, btns="ok", icon="critical")
-            return False
+        if not job: return False
+        if not self.saveCurrentTagsAndRating(): return
         if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
         self.log(1, 'Session saved as new job in queue.')
 
     def addCurrentJobToQueue(self):
         '''Adds the current job session as new job to the jobs queue'''
+        job = False
         try:
             id, job = self.jobs.saveCurrentJob()
             state = job.getState()
             iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
             job.setPosition(iRow)
             self.runNextWaitJob()
-            return job
-        except:
-            return False
+        except Exception as e:
+            msg = 'Error: Cannot add session to job queue.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, detailText=str(e), icon='critical')
+        return job
 
     def runNextWaitJob(self):
         self.log(1, 'Running next job ...')
@@ -1036,9 +1040,10 @@ class MainUi(QtWidgets.QMainWindow):
             tagIDs = self.db.getTagIDs(imageID)
             self.selectTagsInTagsTree(tagIDs)
         except Exception as e:
-            self.log(1, 'Error: %s' % e, 1)
             self.disableTaggerPanel()
-            self.showMsgBox('Error on setting Tags and Rating to the Tagger Panel.', btns="ok", icon="critical", detailText=str(e))
+            msg = 'Error on setting Tags and Rating to the Tagger Panel.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, btns="ok", icon="warning", detailText=str(e))
             return False
         return True
 
@@ -1408,8 +1413,14 @@ class MainUi(QtWidgets.QMainWindow):
 
     def queueDeleteSelectedRow(self):
         jobID, iRow = self.queueGetJobIDFromRow()
+        try:
+            self.jobs.removeJob(jobID)
+        except Exception as e:
+            msg = 'Error: Cannot remove Job.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, btns="ok", icon="warning", detailText=str(e))
+            return False
         self.tableQueue.removeRow(iRow)
-        self.jobs.removeJob(jobID)
         if(iRow > 0): self.tableQueue.setCurrentCell(iRow-1, 0)
         elif(iRow == 0):
             if len(self.jobs.jobs.items()) == 1: self.deleteDeshakeDir()

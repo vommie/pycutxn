@@ -10,28 +10,26 @@ class Jobs:
 
     # Initialization
 
-    def __init__(self, jobsFilePath, parent):
+    def __init__(self, jobsFilePath):
         self.jobsFilePath = jobsFilePath
         self.jobsFileBakPath = '%s.bak' % jobsFilePath
-        self.parent = parent
         self.jobs = {}
         self.currentJob = False
-        if not self.initJobs():
-            msg = 'Error: Cannot initialize Jobs.'
-            self.parent.log(1, msg, 1)
-            self.parent.showMsgBox(msg, icon="critical", detailText=str(e))
+        self.initJobs()
 
     def initJobs(self):
-        if not os.path.exists(self.jobsFilePath):
-            return self.saveJobs()
-        else:
-            with open(self.jobsFilePath) as jsonFile:
-                try:
-                    jobsProps = json.load(jsonFile)
-                    self.jobsPropsToJobs(jobsProps)
-                    return True
-                except:
-                    return self.saveJobs()
+        try:
+            if not os.path.exists(self.jobsFilePath):
+                self.saveJobs()
+            else:
+                with open(self.jobsFilePath) as jsonFile:
+                    try:
+                        jobsProps = json.load(jsonFile)
+                        self.jobsPropsToJobs(jobsProps)
+                    except:
+                        self.saveJobs()
+        except Exception as e:
+            raise Exception('Cannot initialize Jobs. Message:\n%s' % e)
 
     # Current job
 
@@ -47,22 +45,28 @@ class Jobs:
         self.jobs.update({'default': job})
 
     def onJobPropsUpdated(self, id, props):
-        job = self.getJob(id)
-        self.updateJob(id, job)
+        try:
+            job = self.getJob(id)
+            self.updateJob(id, job)
+        except Exception as e:
+            raise Exception(e)
 
     def getCurrentJob(self):
         return self.getJob('default')
 
     def saveCurrentJob(self):
-        defaultJob = self.getCurrentJob()
-        id = self.generateID()
-        job = copy.deepcopy(defaultJob)
-        job.setID(id)
-        job.clearPropObservers()
-        job.setState(0)
-        job.bindToProps(self.onJobPropsUpdated)
-        self.updateJob(id, job)
-        return id, job
+        try:
+            defaultJob = self.getCurrentJob()
+            id = self.generateID()
+            job = copy.deepcopy(defaultJob)
+            job.setID(id)
+            job.clearPropObservers()
+            job.setState(0)
+            job.bindToProps(self.onJobPropsUpdated)
+            self.updateJob(id, job)
+            return id, job
+        except Exception as e:
+            raise Exception(e)
 
     # Jobs management
 
@@ -70,13 +74,19 @@ class Jobs:
         return self.jobs.get(id)
 
     def updateJob(self, id, job):
-        self.jobs.update({id: job})
-        return self.saveJobs()
+        try:
+            self.jobs.update({id: job})
+            self.saveJobs()
+        except Exception as e:
+            raise Exception('Cannot update Job. Message:\n%s' % e)
 
     def removeJob(self, id):
-        self.deleteDeshakeFile(id)
-        self.jobs.pop(id)
-        return self.saveJobs()
+        try:
+            self.deleteDeshakeFile(id)
+            self.jobs.pop(id)
+            return self.saveJobs()
+        except Exception as e:
+            raise Exception('Cannot remove Job. Message:\n%s' % e)
 
     def saveJobs(self):
         '''Saves the jobs to the jobs.json file
@@ -91,14 +101,10 @@ class Jobs:
                     jobsProps.update({id: job.getProps()})
                 json.dump(jobsProps, outfile, indent=1)
         except Exception as e:
-            if os.path.isfile(self.jobsFileBakPath): os.remove(self.jobsFileBakPath)#
-            msg = 'Error: Cannot save jobs to file. This will lead to an inconsistency between jobs in the current session in the GUI and the saved jobs.'
-            self.parent.log(1, msg, 1)
-            self.parent.showMsgBox(msg, icon="critical", detailText=str(e))
-            return False
+            if os.path.isfile(self.jobsFileBakPath): os.remove(self.jobsFileBakPath)
+            raise Exception('Error: Cannot save jobs to file. This will lead to an inconsistency between jobs in the current session in the GUI and the saved jobs. Message:\n%s' % e)
         finally:
             move(self.jobsFileBakPath, self.jobsFilePath)
-            return True
 
     # Other functions
 
@@ -113,10 +119,13 @@ class Jobs:
 
     def jobsPropsToJobs(self, jobsProps):
         # Create the default job
-        defJob = Job('default', props=jobsProps.get('default'))
-        jobsProps.pop('default', None)
-        defJob.bindToProps(self.onJobPropsUpdated)
-        self.updateJob('default', defJob)
+        try:
+            defJob = Job('default', props=jobsProps.get('default'))
+            jobsProps.pop('default', None)
+            defJob.bindToProps(self.onJobPropsUpdated)
+            self.updateJob('default', defJob)
+        except Exception as e:
+            raise Exception(e)
         # Create jobs and check their position for duplicates
         jobs = {}
         jobsDups = {}
@@ -138,18 +147,21 @@ class Jobs:
                 jobs.update({position: job})
         # Sort positions (remove gaps and append duplicates)
         position = 0
-        for key in sorted(jobs.keys()):
-            job = jobs[key]
-            job.setPosition(position)
-            position += 1
-            job.bindToProps(self.onJobPropsUpdated)
-            self.updateJob(job.getID(), job)
-        for key in sorted(jobsDups.keys()):
-            job = jobsDups[key]
-            job.setPosition(position)
-            position += 1
-            job.bindToProps(self.onJobPropsUpdated)
-            self.updateJob(job.getID(), job)
+        try:
+            for key in sorted(jobs.keys()):
+                job = jobs[key]
+                job.setPosition(position)
+                position += 1
+                job.bindToProps(self.onJobPropsUpdated)
+                self.updateJob(job.getID(), job)
+            for key in sorted(jobsDups.keys()):
+                job = jobsDups[key]
+                job.setPosition(position)
+                position += 1
+                job.bindToProps(self.onJobPropsUpdated)
+                self.updateJob(job.getID(), job)
+        except Exception as e:
+            raise Exception(e)
 
     def deleteDeshakeFile(self, id):
         '''Deletes the deshake file from the config dir for a job'''

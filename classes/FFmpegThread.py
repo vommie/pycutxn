@@ -122,6 +122,8 @@ class FFmpegThread(QThread):
                     self.ffmpegStart.emit([job, totalSeconds, process])
                     # Handle stdout (progress information), by passing it to callback functions
                     for line in process.stdout:
+                        # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+                        # print(line)
                         line = line.decode('ascii').rstrip()
                         line = line.split('=')
                         self.ffmpegProcess.emit([line, job, totalSeconds])
