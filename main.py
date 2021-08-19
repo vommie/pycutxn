@@ -207,7 +207,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.scSeekMedium.activated.connect(self.onPlayerSeekMedium)
         self.scSeekSmallBack.activated.connect(self.onPlayerSeekSmallBack)
         self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
-        self.renderFrame.wheelEvent = self.onPlayerMouseWheel
+        self.renderFrame.wheelEvent = self.renderFrameWheelEvent
         # Player Progress
         self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
         self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
@@ -745,7 +745,7 @@ class MainUi(QtWidgets.QMainWindow):
         volume = self.sliderVolume.value()
         self.playerControl.volume(volume)
 
-    def onPlayerMouseWheel(self, event):
+    def renderFrameWheelEvent(self, event):
         volume = self.sliderVolume.value()
         if event.angleDelta().y() > 0:
             self.setVolumeSlider(+5)
