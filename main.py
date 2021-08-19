@@ -154,8 +154,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
         # Add custom slider to control the player time position
-        self.sliderPlayer = Slider(Qt.Horizontal)
-        self.framePlayerProgress.insertWidget(0, self.sliderPlayer)
         self.sliderPlayerIsPressed = False
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
