@@ -63,5 +63,5 @@ class PlayerControl():
     def frameBackStep(self):
         self.player.frame_back_step()
 
-    def seek(self, amount, reference="relative"):
-        self.player.seek(amount, reference)
+    def seek(self, amount, reference='relative', precision='exact'):
+        self.player.seek(amount, reference, precision)

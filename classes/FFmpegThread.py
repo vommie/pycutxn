@@ -62,7 +62,6 @@ class FFmpegThread(QThread):
                         filter = filterPositions.get(position)
                         print('Applying filter nr. %s: %s' % (position, filter))
                         if filter == 'deshake' and deshake_state:
-                            print(self.configPath)
                             if not os.path.isdir(self.configPath): os.makedirs(self.configPath)
                             deshakeFile = '%s/job_%s.trf' % (self.configPath, job.getID())
                             if render_pass == 1:
@@ -122,8 +121,6 @@ class FFmpegThread(QThread):
                     self.ffmpegStart.emit([job, totalSeconds, process])
                     # Handle stdout (progress information), by passing it to callback functions
                     for line in process.stdout:
-                        # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-                        # print(line)
                         line = line.decode('ascii').rstrip()
                         line = line.split('=')
                         self.ffmpegProcess.emit([line, job, totalSeconds])

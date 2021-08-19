@@ -23,9 +23,9 @@ from classes.FFmpegThread import FFmpegThread
 from classes.DB import DB
 
 from PyQt5 import QtWidgets, uic, QtGui
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
+from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence
 import res  # pyrcc5 -o res.py res/res.qrc
 
 import ffmpeg
@@ -37,6 +37,7 @@ class MainUi(QtWidgets.QMainWindow):
         uic.loadUi('./gui/main.ui', self)
         self.initMembers()
         self.initGui()
+        self.initShortcuts()
         self.initGuiEvents()
         self.initPlayer()
         self.show()
@@ -168,17 +169,44 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnTaggerActive.setChecked(self.config.getTaggerIsActive())
         self.btnTaggerWarning.setChecked(self.config.getTaggerIsWarningActive())
 
+    def initShortcuts(self):
+        self.scPause = QShortcut(QKeySequence(Qt.Key_Space), self)
+        self.scFrameStep = QShortcut(QKeySequence(Qt.Key_PageDown), self)
+        self.scFrameStepBack = QShortcut(QKeySequence(Qt.Key_PageUp), self)
+        self.scMute = QShortcut(QKeySequence(Qt.Key_M), self)
+        self.scSeekSmall = QShortcut(QKeySequence(Qt.Key_Right), self)
+        self.scSeekMedium = QShortcut(QKeySequence(Qt.SHIFT + Qt.Key_Right), self)
+        self.scSeekSmallBack = QShortcut(QKeySequence(Qt.Key_Left), self)
+        self.scSeekMediumBack = QShortcut(QKeySequence(Qt.SHIFT + Qt.Key_Left), self)
+        self.scSectionStart = QShortcut(QKeySequence(Qt.Key_Home), self)
+        self.scSectionEnd = QShortcut(QKeySequence(Qt.Key_End), self)
+        self.scSectionAdd1 = QShortcut(QKeySequence(Qt.Key_Plus), self)
+        self.scSectionAdd2 = QShortcut(QKeySequence(Qt.Key_ScrollLock), self)
+        self.scExportSave = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
+
     def initGuiEvents(self):
         # Player control
         self.btnPause.clicked.connect(self.onBtnPauseClicked)
+        self.scPause.activated.connect(self.onBtnPauseClicked)
         self.btnFrameStep.clicked.connect(self.onBtnFrameStepClicked)
+        self.scFrameStep.activated.connect(self.onBtnFrameStepClicked)
         self.btnFrameStepBack.clicked.connect(self.onBtnFrameStepBackClicked)
+        self.scFrameStepBack.activated.connect(self.onBtnFrameStepBackClicked)
         self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
-        self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
+        self.scSectionStart.activated.connect(self.onBtnSectionStartClicked)
         self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
+        self.scSectionAdd1.activated.connect(self.onBtnSectionAddClicked)
+        self.scSectionAdd2.activated.connect(self.onBtnSectionAddClicked)
+        self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
+        self.scSectionEnd.activated.connect(self.onBtnSectionEndClicked)
         self.btnMute.clicked.connect(self.onBtnMuteClicked)
-        self.sliderVolume.sliderMoved.connect(self.onSliderVolumeMoved)
-        self.sliderVolume.sliderReleased.connect(self.onSliderVolumeReleased)
+        self.scMute.activated.connect(self.onBtnMuteClicked)
+        self.sliderVolume.valueChanged.connect(self.onSliderVolumeChange)
+        self.scSeekSmall.activated.connect(self.onPlayerSeekSmall)
+        self.scSeekMedium.activated.connect(self.onPlayerSeekMedium)
+        self.scSeekSmallBack.activated.connect(self.onPlayerSeekSmallBack)
+        self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
+        self.renderFrame.wheelEvent = self.onPlayerMouseWheel
         # Player Progress
         self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
         self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
@@ -194,6 +222,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
         self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
+        self.scExportSave.activated.connect(self.onBtnExportSave)
         self.btnTgtFileAutoIncrement.clicked.connect(self.onBtnTgtFileAutoIncrement)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
         self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
@@ -383,6 +412,9 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         if(self.historyMode): return False
         self.log(1, 'Saving current session ...')
+        if not self.warnWhenNoTagsOrRating():
+            self.log(1, 'Saving aborted by user.')
+            return False
         currentJob = self.jobs.getCurrentJob()
         if not currentJob.getSections():
             currentJob.addSection(self.timeFormat, self.videoProps['duration'])
@@ -510,7 +542,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.duration = duration
 
     def onPlayerVolume(self, action, volume):
-        self.sliderVolume.setValue(int(volume))
+        self.setVolumeSlider(int(volume), False)
 
     # GUI control event handlers
 
@@ -540,6 +572,18 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnPauseClicked(self):
         self.playerControl.pause()
+
+    def onPlayerSeekSmall(self):
+        self.playerControl.seek(2.0)
+
+    def onPlayerSeekMedium(self):
+        self.playerControl.seek(10.0)
+
+    def onPlayerSeekSmallBack(self):
+        self.playerControl.seek(-2.0)
+
+    def onPlayerSeekMediumBack(self):
+        self.playerControl.seek(-10.0)
 
     def onBtnFrameStepClicked(self):
         self.frameStep = True
@@ -582,7 +626,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onTableSectionItemDblClicked(self, item):
         timeStr = item.text()
-        self.playerControl.seek(timeStr, 'absolute+exact')
+        self.playerControl.seek(timeStr, 'absolute')
 
     def onSliderPlayerMoved(self, value):
         self.sliderPlayerIsPressed = True
@@ -696,13 +740,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.config.setPlayerIsMuted(not self.config.getPlayerIsMuted())
         self.setMuteState(self.config.getPlayerIsMuted())
 
-    def onSliderVolumeMoved(self):
-        self.setMuteState(False)
-        self.playerControl.volume(self.sliderVolume.value())
+    def onSliderVolumeChange(self):
+        volume = self.sliderVolume.value()
+        self.playerControl.volume(volume)
 
-    def onSliderVolumeReleased(self):
-        self.setMuteState(False)
-        self.playerControl.volume(self.sliderVolume.value())
+    def onPlayerMouseWheel(self, event):
+        volume = self.sliderVolume.value()
+        if event.angleDelta().y() > 0:
+            self.setVolumeSlider(+5)
+        elif event.angleDelta().y() < 0:
+            self.setVolumeSlider(-5)
 
     def onTableQueueCurrCellChanged(self, row, col):
         self.setQueueBtnStates()
@@ -945,9 +992,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI Control
 
-    def onMsgBoxBtn(self, btn):
-        print(btn)
-
     def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCut Message'):
         '''
         Shows a QMessageBox dialog.
@@ -976,7 +1020,6 @@ class MainUi(QtWidgets.QMainWindow):
         elif btns == 'retryabort': msgBox.setStandardButtons(QMessageBox.Retry | QMessageBox.Abort)
         elif btns == 'close': msgBox.setStandardButtons(QMessageBox.Close)
         else: msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.buttonClicked.connect(self.onMsgBoxBtn)
         result = msgBox.exec_()
         if(result == QMessageBox.Ok): return True
         elif(result == QMessageBox.Cancel): return False
@@ -1047,26 +1090,36 @@ class MainUi(QtWidgets.QMainWindow):
             return False
         return True
 
-    def saveCurrentTagsAndRating(self):
+    def warnWhenNoTagsOrRating(self):
         '''
-        Saves the current tags and rating for the target file to the database
+        Displays a warning if no tags or no rating is set.
 
-        :param return: False if something went wrong. -1 if MsgBox is active due to missing rating or tags. True if successfully saved.
+        :return: True if both are set or if user wants to proceed, false if not
         '''
-        if not self.isTaggerEnabled(): return False
-        self.log(1, 'Save Tags and Rating to DB ...')
-        job = self.jobs.getCurrentJob()
-        tagIDs = self.getSelectedTagIDsFromTagsTree()
-        rating = self.getRatingFromBtns()
-
         if self.isTaggerWarningActive():
+            tagIDs = self.getSelectedTagIDsFromTagsTree()
+            rating = self.getRatingFromBtns()
             if not tagIDs and not rating:
                 if not self.showMsgBox('No rating and no tags are set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
             elif not tagIDs:
                 if not self.showMsgBox('No rating is set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
             elif not rating:
                 if not self.showMsgBox('No tags are set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
+        return True
 
+    def saveCurrentTagsAndRating(self):
+        '''
+        Saves the current tags and rating for the target file to the database.
+        Call this function when 'warnWhenNoTagsOrRating' returns true.
+
+        :param return: False if something went wrong. True if successfully saved.
+        '''
+        if not self.isTaggerEnabled(): return False
+        self.log(1, 'Save Tags and Rating to DB ...')
+        job = self.jobs.getCurrentJob()
+
+        tagIDs = self.getSelectedTagIDsFromTagsTree()
+        rating = self.getRatingFromBtns()
         try:
             folderID = self.db.getFolderID(job.getTgtDirName())
             if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
@@ -1261,7 +1314,7 @@ class MainUi(QtWidgets.QMainWindow):
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
         percentage = value / self.config.getPlayerSliderFactor()
-        self.playerControl.seek(percentage, 'absolute-percent+exact')
+        self.playerControl.seek(percentage, 'absolute-percent')
 
     def setBtnSectionAddState(self):
         if self.sectionTimeStart and self.sectionTimeEnd:
@@ -1340,6 +1393,20 @@ class MainUi(QtWidgets.QMainWindow):
     def resetDeinterlaceFilter(self):
         self.btnFilterDeinterlace.setChecked(False)
         self.comboBoxFilterDeinterlaceDeinterlacer.setCurrentText(self.config.getFiltersDeinterlacer())
+
+    def setVolumeSlider(self, value : int, relative=True):
+        '''
+        Set the volume slider value.
+
+        :param value: The value the slider gets changed to
+        :param relative: If True, the value gets added or subscracted from current volume. Else, the volume gets set to the value.
+        '''
+        volume = self.sliderVolume.value()
+        if relative: volume = volume + value
+        else: volume = value
+        if volume > 100: volume = 100
+        elif volume < 0: volume = 0
+        self.sliderVolume.setValue(volume)
 
     def setHistoryMode(self, state):
         '''
