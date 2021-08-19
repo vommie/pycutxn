@@ -4,27 +4,34 @@ import json
 import os
 import copy
 import os
+from shutil import copyfile, move
 
 class Jobs:
 
     # Initialization
 
-    def __init__(self, jobsFilePath):
+    def __init__(self, jobsFilePath, parent):
         self.jobsFilePath = jobsFilePath
+        self.jobsFileBakPath = '%s.bak' % jobsFilePath
+        self.parent = parent
         self.jobs = {}
         self.currentJob = False
-        self.initJobs()
+        if not self.initJobs():
+            msg = 'Error: Cannot initialize Jobs.'
+            self.parent.log(1, msg, 1)
+            self.parent.showMsgBox(msg, icon="critical", detailText=str(e))
 
     def initJobs(self):
         if not os.path.exists(self.jobsFilePath):
-            self.saveJobs()
+            return self.saveJobs()
         else:
             with open(self.jobsFilePath) as jsonFile:
                 try:
                     jobsProps = json.load(jsonFile)
                     self.jobsPropsToJobs(jobsProps)
+                    return True
                 except:
-                    self.saveJobs()
+                    return self.saveJobs()
 
     # Current job
 
@@ -64,19 +71,34 @@ class Jobs:
 
     def updateJob(self, id, job):
         self.jobs.update({id: job})
-        self.saveJobs()
+        return self.saveJobs()
 
     def removeJob(self, id):
         self.deleteDeshakeFile(id)
         self.jobs.pop(id)
-        self.saveJobs()
+        return self.saveJobs()
 
     def saveJobs(self):
-        with open(self.jobsFilePath, 'w') as outfile:
-            jobsProps = {}
-            for id, job in self.jobs.items():
-                jobsProps.update({id: job.getProps()})
-            json.dump(jobsProps, outfile, indent=1)
+        '''Saves the jobs to the jobs.json file
+
+        :return: True on success, False if something went wrong
+        '''
+        copyfile(self.jobsFilePath, self.jobsFileBakPath)
+        try:
+            with open(self.jobsFileBakPath, 'w') as outfile:
+                jobsProps = {}
+                for id, job in self.jobs.items():
+                    jobsProps.update({id: job.getProps()})
+                json.dump(jobsProps, outfile, indent=1)
+        except Exception as e:
+            if os.path.isfile(self.jobsFileBakPath): os.remove(self.jobsFileBakPath)#
+            msg = 'Error: Cannot save jobs to file. This will lead to an inconsistency between jobs in the current session in the GUI and the saved jobs.'
+            self.parent.log(1, msg, 1)
+            self.parent.showMsgBox(msg, icon="critical", detailText=str(e))
+            return False
+        finally:
+            move(self.jobsFileBakPath, self.jobsFilePath)
+            return True
 
     # Other functions
 

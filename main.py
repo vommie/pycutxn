@@ -44,8 +44,8 @@ class MainUi(QtWidgets.QMainWindow):
     def initMembers(self):
         self.config = Config()
         self.iconFontName = 'DroidSansMono Nerd Font Mono'
-        self.jobsFilePath = 'jobs.json'
-        self.jobs = Jobs(self.jobsFilePath)
+        self.jobsFilePath = self.config.getJobsFilePath()
+        self.jobs = Jobs(self.jobsFilePath, self)
         self.jobStates = {
             0: 'Waiting',
             1: 'Finished',

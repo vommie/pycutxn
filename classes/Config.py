@@ -8,20 +8,32 @@ class Config:
 
     def __init__(self):
         self.settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
-
+        self.configFilePath = self.getConfigFilePath()
+        self.configPath = self.getConfigPath()
     # Info Getters
 
     def getConfigFilePath(self):
-        return self.settings.fileName()
+        try:
+            if self.configFilePath: return self.configFilePath
+        except: pass
+        self.configFilePath = self.settings.fileName()
+        return self.configFilePath
 
     def getConfigPath(self):
-        filePath = self.settings.fileName()
+        try:
+            if self.configPath: return self.configPath
+        except: pass
+        filePath = self.getConfigFilePath()
         path = os.path.normpath(filePath)
         dirName, baseName = os.path.split(path)
-        return dirName
+        self.configPath = dirName
+        return self.configPath
 
     def getConfigDeshakePath(self):
         return '%s/deshake' % self.getConfigPath()
+
+    def getJobsFilePath(self):
+        return '%s/jobs.json' % self.getConfigPath()
 
     # Config File Getters
 
