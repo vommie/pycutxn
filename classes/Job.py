@@ -36,10 +36,7 @@ class Job():
                 'deshake': {}
             },
             'state': 0,
-            'error': {
-                'id': False,
-                'message': False
-            }
+            'log': False
         }
 
     def initPaths(self, filePath):
@@ -116,11 +113,8 @@ class Job():
     def getID(self):
         return self.id
 
-    def getErrorID(self):
-        return self._props['error'].get('id')
-
-    def getErrorMsg(self):
-        return self._props['error'].get('message')
+    def getLog(self):
+        return self._props['log']
 
     def getPosition(self):
         return self._props.get('position')
@@ -273,8 +267,8 @@ class Job():
         self._props['error'].update({'id': id})
         self.propValueChanged()
 
-    def setErrorMsg(self, msg):
-        self._props['error'].update({'message': msg})
+    def setLog(self, log):
+        self._props['log'] = log
         self.propValueChanged()
 
     def setPosition(self, position):

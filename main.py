@@ -136,13 +136,11 @@ class MainUi(QtWidgets.QMainWindow):
                     int(id) # Skip 'default' job
                     state = job.getState()
                     if state == 4:
-                        job.setErrorID(-105)
-                        job.setErrorMsg('Job had state "Rendering" when the program started.')
+                        job.setLog('Job had state "Rendering" when the program started.')
                         job.setState(3)
                         state = 3
                     elif state == 5:
-                        job.setErrorId(-124)
-                        job.setErrorMsg('Job had state "Paused" when the program started.')
+                        job.setLog('Job had state "Paused" when the program started.')
                         job.setState(3)
                         state = 3
                     self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
@@ -418,7 +416,10 @@ class MainUi(QtWidgets.QMainWindow):
             return False
         currentJob = self.jobs.getCurrentJob()
         if not currentJob.getSections():
-            currentJob.addSection(self.timeFormat, self.videoProps['duration'])
+            self.sectionTimeStart = self.timeFormat
+            self.sectionTimeEnd = self.videoProps['duration']
+            currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
+            self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
         job = self.addCurrentJobToQueue()
         if not job: return False
         if not self.saveCurrentTagsAndRating(): return
@@ -960,11 +961,10 @@ class MainUi(QtWidgets.QMainWindow):
             if not self.ffmpegKilled: job.setErrorID(code)
             else:
                 self.ffmpegKilled = False
-                job.setErrorID(-332)
                 errorMsg = 'ffmpeg killed while rendering by the user.\n\n%s' % errorMsg
             state = 3
         if errorMsg != '':
-            job.setErrorMsg(errorMsg)
+            job.setLog(errorMsg)
         job.setState(state)
         if self.btnQueueKill.isEnabled():
             self.btnQueueKill.setEnabled(False)
@@ -1586,9 +1586,10 @@ class MainUi(QtWidgets.QMainWindow):
     def queueShowLog(self):
         jobID = self.queueGetJobIDFromRow()[0]
         job = self.jobs.getJob(jobID)
-        errorMsg = job.getErrorMsg()
+        log = job.getLog()
+        # Todo: handle if no log is set
         self.logUi.setTitle('Log for Job %s' % jobID)
-        self.logUi.setLogText(errorMsg.replace('\\n', '\n'))
+        self.logUi.setLogText(log.replace('\\n', '\n'))
         self.logUi.show()
 
     def toggleQueuePause(self):

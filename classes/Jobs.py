@@ -36,8 +36,9 @@ class Jobs:
     def newCurrentJob(self, videoFilePath=False, job=False):
         if videoFilePath and not job:
             job = Job('default', srcFilePath=videoFilePath)
-        elif not videoFilePath and job:
+        elif not videoFilePath and job: # Load job as new current session
             job = copy.deepcopy(job)
+            job.setLog(False)
         else:
             print('Critical Error: Cannot create new job as parameters have conflict or are all not set.')
             exit(1)
