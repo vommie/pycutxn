@@ -9,6 +9,7 @@ import signal
 import re
 import copy
 import shutil
+import hashlib
 
 from libs.mpv import *
 
@@ -16,6 +17,7 @@ from classes.PlayerControl import PlayerControl
 from classes.DirsUI import DirsUI
 from classes.TagsFilterUI import TagsFilterUI
 from classes.LogUi import LogUi
+from classes.KnownUI import KnownUI
 from classes.Functions import Functions
 from classes.Config import Config
 from classes.Jobs import Jobs
@@ -64,6 +66,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegKilled = False
         # Init member variables
         self.dirsUI = DirsUI(self)
+        self.knownUI = KnownUI(self)
         self.tagsFilterUI = TagsFilterUI(self)
         self.config.setTaggerDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
         self.db = DB(self.config.getTaggerDBPath(), self.log)
@@ -321,6 +324,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.setCurrTgtDir()
             if self.btnTgtFileAutoIncrement.isChecked(): self.setTargetFileCount(1)
             else: self.setTargetFileCount(0)
+            self.showWarningForKnownFile()
+
         if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
         self.log(1, 'Source path: "%s".' % videoFilePath)
         # Get Video Props
@@ -1070,7 +1075,7 @@ class MainUi(QtWidgets.QMainWindow):
             else: imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
             if not imageID:
                 if forSource: return False
-                imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
+                imageID = self.db.insertImage(folderID, job.getTgtFileNameLong(), job.getHashID())
                 if not imageID:
                     msg = 'Error: Cannot create ImageID for file.'
                     self.log(1, msg, 1)
@@ -1121,14 +1126,14 @@ class MainUi(QtWidgets.QMainWindow):
         rating = self.getRatingFromBtns()
         try:
             folderID = self.db.getFolderID(job.getTgtDirName())
-            if not folderID: folderID = self.db.insertNewPath(job.getTgtDirName())
+            if not folderID: folderID = self.db.insertPath(job.getTgtDirName())
             if not folderID:
                 msg = 'Error: Got no folderID. Cannot save tags and rating.'
                 self.log(1, msg, 1)
                 self.showMsgBox(msg, btns='ok', icon='warning')
                 return False
             imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
-            if not imageID: imageID = self.db.insertNewImage(folderID, job.getTgtFileNameLong())
+            if not imageID: imageID = self.db.insertImage(folderID, job.getTgtFileNameLong(), job.getHashID())
             if not imageID:
                 msg = 'Error: Got no imageID. Cannot save tags and rating.'
                 self.log(1, msg, 1)
@@ -1293,7 +1298,9 @@ class MainUi(QtWidgets.QMainWindow):
 
     def checkDBConnectivity(self):
         '''Checks if the database is available and sets Tagger panel status based on the result'''
-        if self.db.testConnection(): self.enableTaggerPanel()
+        if self.db.testConnection():
+            if not self.dockTagger.isEnabled(): self.db.createHashTable()
+            self.enableTaggerPanel()
         else: self.disableTaggerPanel()
 
     def isTaggerEnabled(self):
@@ -1730,6 +1737,78 @@ class MainUi(QtWidgets.QMainWindow):
         path = self.config.getConfigDeshakePath()
         if path and os.path.isdir(path):
             shutil.rmtree(path)
+
+    def showWarningForKnownFile(self):
+        '''Shows a dialog if the currently opened file was already opened in the past'''
+
+        hashID, dateTime = self.isCurrentFileKnown()
+        if hashID and dateTime:
+            self.log(1, 'Current source file was already opened in the past.')
+            knownFiles = self.getFileListFromCurrentHashID()
+            if knownFiles:
+                self.knownUI.setFilesList(knownFiles)
+                self.knownUI.show()
+            else:
+                self.showMsgBox('File was already opened before.', infoText='No target renderings are known.', detailText='Date: %s\nHash ID:%s' % (dateTime, hashID))
+
+    def isCurrentFileKnown(self):
+        '''
+        Checks if the currently source file was already opened in PyCut in the past
+
+        :return: HashID and Date if the file is known, else False, False.
+        '''
+        job = self.jobs.getCurrentJob()
+        hash = self.hashFile(job.getSrcFilePathLong())
+        if not hash:
+            msg = 'Error: The source file cannot be hashed.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, infoText='It is not known if this file was not edited in the past with PyCut.', icon='warning')
+            return False, False
+        try:
+            hashID, dateTime = self.db.getHashData(hash)
+            if not hashID:
+                self.db.insertHash(hash)
+                hashID, dateTime = self.db.getHashData(hash)
+                if not hashID:
+                    msg = 'Error: Got no hashID for a hash inserted to the database.'
+                    self.log(1, msg, 1)
+                    self.showMsgBox(msg, icon='warning')
+                else:
+                    job.setHashID(hashID)
+                return False, False
+            job.setHashID(hashID)
+            return hashID, dateTime
+        except Exception as e:
+            msg = 'Error on checking for hash info in the database.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, btns="ok", icon="warning", detailText=str(e))
+            return False, False
+
+    def getFileListFromCurrentHashID(self):
+        '''
+        Gets files from the database which were saved with the hash of the current file
+
+        :return: Array with file paths. If none are found, empty array.
+        '''
+        job = self.jobs.getCurrentJob()
+        hashID = job.getHashID()
+        if not hashID: return []
+        filePaths = self.db.getFileListByHashID(hashID)
+        if filePaths: return filePaths
+        return []
+
+    def hashFile(self, filePathLong):
+        hash = False
+        if not os.path.isfile(filePathLong): return hash
+        BUF_SIZE = 65536
+        md5 = hashlib.md5()
+        with open(filePathLong, 'rb') as f:
+            while True:
+                data = f.read(BUF_SIZE)
+                if not data: break
+                md5.update(data)
+        hash = md5.hexdigest()
+        return hash
 
     def log(self, id, line, msgType=0, timestamp=True):
         '''

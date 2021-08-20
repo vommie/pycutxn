@@ -36,7 +36,8 @@ class Job():
                 'deshake': {}
             },
             'state': 0,
-            'log': False
+            'log': False,
+            'hashID': False
         }
 
     def initPaths(self, filePath):
@@ -115,6 +116,9 @@ class Job():
 
     def getLog(self):
         return self._props['log']
+
+    def getHashID(self):
+        return self._props['hashID']
 
     def getPosition(self):
         return self._props.get('position')
@@ -269,6 +273,10 @@ class Job():
 
     def setLog(self, log):
         self._props['log'] = log
+        self.propValueChanged()
+
+    def setHashID(self, hashID):
+        self._props['hashID'] = hashID
         self.propValueChanged()
 
     def setPosition(self, position):
