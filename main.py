@@ -322,10 +322,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.jobs.newCurrentJob(videoFilePath)
             job = self.jobs.getCurrentJob()
             self.setCurrTgtDir()
-            if self.btnTgtFileAutoIncrement.isChecked(): self.setTargetFileCount(1)
-            else: self.setTargetFileCount(0)
             self.showWarningForKnownFile()
-
         if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
         self.log(1, 'Source path: "%s".' % videoFilePath)
         # Get Video Props
@@ -1706,7 +1703,8 @@ class MainUi(QtWidgets.QMainWindow):
         if job.getTgtFileCount():
             self.boxTgtFileCount.setValue(job.getTgtFileCount())
         else:
-            self.boxTgtFileCount.setValue(0)
+            if self.btnTgtFileAutoIncrement.isChecked(): self.setTargetFileCount(1)
+            else: self.setTargetFileCount(0)
 
     def changeTargetFileCount(self, value: int):
         self.boxTgtFileCount.setValue(self.boxTgtFileCount.value()+value)
