@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QDialog
 from .Functions import Functions
 import os
 import subprocess
@@ -9,7 +9,9 @@ class KnownUI(QtWidgets.QDialog):
         super(KnownUI, self).__init__(parent)
         uic.loadUi('./gui/known.ui', self)
         self.parent = parent
+
         self.listWidgetFiles.itemDoubleClicked.connect(self.onListWidgeFilesItemDoubleClicked)
+        self.buttonBox.accepted.connect(self.onAccepted)
 
     def addRow(self, file):
         self.listWidgetFiles.addItem(file)
@@ -23,3 +25,9 @@ class KnownUI(QtWidgets.QDialog):
         if os.path.isfile(file):
             opener = Functions.getCurrentSysOpener()
             subprocess.call([opener, file])
+
+    def onAccepted(self):
+        self.listWidgetFiles.clear()
+
+    def closeEvent(self, event):
+        self.listWidgetFiles.clear()
