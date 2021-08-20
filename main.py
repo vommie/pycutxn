@@ -1370,6 +1370,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.tableQueue.insertRow(iRow)
         itemID = QTableWidgetItem(id)
         itemFilename = QTableWidgetItem(filename)
+        itemFilename.setToolTip(filename)
         itemState = QTableWidgetItem(state)
         self.tableQueue.setItem(iRow, 0, itemID)
         self.tableQueue.setItem(iRow, 1, itemFilename)
