@@ -421,20 +421,26 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, 'Saving aborted by user.')
             return False
         currentJob = self.jobs.getCurrentJob()
-        if not currentJob.getSections():
-            self.sectionTimeStart = self.timeFormat
-            self.sectionTimeEnd = self.videoProps['duration']
-            currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
-            self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
         currentJob.setTgtFileExt('.%s' % self.config.getRenderContainer())
         currentJob.setRenderSettingVideoCodec(self.config.getRenderVideoCodec())
         currentJob.setRenderSettingCRF(self.config.getRenderCRF())
         currentJob.setRenderSettingAudioCodec(self.config.getRenderAudioCodec())
         currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
         currentJob.setRenderSettingContainer(self.config.getRenderContainer())
+        if self.isSameRenderSrcTgt(currentJob, False): return False
+        if not currentJob.getSections():
+            self.sectionTimeStart = self.timeFormat
+            if self.videoProps['duration']: self.sectionTimeEnd = self.videoProps['duration']
+            else:
+                msg = 'Error: Unknown duration of the video file input.'
+                self.log(1, msg, 1)
+                self.showMsgBox(msg, infoText='Cannot set section end time automatically. It will be set to a very high number.', icon="warning")
+                self.sectionTimeEnd = '59:59:59.999'
+            currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
+            self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
         job = self.addCurrentJobToQueue()
         if not job: return False
-        if not self.saveCurrentTagsAndRating(): return
+        if not self.saveCurrentTagsAndRating(): return False
         if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
         self.log(1, 'Session saved as new job in queue.')
 
@@ -458,7 +464,8 @@ class MainUi(QtWidgets.QMainWindow):
         if self.ffmpegProcess or self.btnQueuePause.isChecked():
             return False
         job = self.getNextWaitingJob()
-        if job and self.checkJobForRenderbility(job):
+        if job:
+            if self.isSameRenderSrcTgt(job, True) or self.isSectionsMissing(job, True): return False
             self.FFmpegThread = FFmpegThread(job, self.config.getConfigDeshakePath())
             self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
             self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
@@ -466,21 +473,37 @@ class MainUi(QtWidgets.QMainWindow):
             self.FFmpegThread.ffmpegExit.connect(self.onFFmpegExit)
             self.FFmpegThread.start()
             self.log(1, 'FFmpeg thread started.')
+        return True
 
-    def checkJobForRenderbility(self, job):
+    def isSameRenderSrcTgt(self, job, isTask=False):
+        '''
+        Checks if the source and target file are not the same.
+
+        :param job: The job to check
+        :param isTask: If True, there will be no message box in the frontend (use it for the queue)
+        '''
         if Functions.isSameString(job.getSrcFilePathLong(), job.getTgtFilePathLong()):
             msg = 'Error: Input and Output Path are the same.'
             self.log(1, msg, 1)
-            self.onFFmpegExit([job, -100, msg, msg, False])
-            self.showMsgBox(msg, btns="ok", icon="critical")
-            return False
+            self.onFFmpegExit([job, -100, msg, False, False])
+            if not isTask: self.showMsgBox(msg, btns="ok", icon="critical")
+            return True
+        return False
+
+    def isSectionsMissing(self, job, isTask=False):
+        '''
+        Checks if the source and target file are not the same.
+
+        :param job: The job to check
+        :param isTask: If True, there will be no message box in the frontend (use it for the queue)
+        '''
         if len(job.getSections()) == 0:
             msg = 'Error: No sections to render.'
             self.log(1, msg, 1)
-            self.onFFmpegExit([job, -101, msg, msg, False])
-            self.showMsgBox(msg, btns="ok", icon="critical")
-            return False
-        return True
+            self.onFFmpegExit([job, -101, msg, False, False])
+            if not isTask: self.showMsgBox(msg, btns="ok", icon="critical")
+            return True
+        return False
 
     def getNextWaitingJob(self):
         return self.getNextJobByStateID(0)
@@ -1373,7 +1396,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     def clearSections(self):
         self.sectionTimeStart = self.timeFormat
-        self.sectionTimeEnd = self.videoProps['duration']
+        if self.videoProps['duration']: self.sectionTimeEnd = self.videoProps['duration']
+        else:
+            msg = 'Error: Unknown duration of the video file input.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, infoText='Cannot set section end time automatically. It will be set to a very high number.', icon="warning")
+            self.sectionTimeEnd = '59:59:59.999'
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
 

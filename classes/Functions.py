@@ -76,7 +76,15 @@ class Functions:
             if width and height:
                 props.update({'width' : width})
                 props.update({'height' : height})
-            props.update({'duration' : '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(video_stream['duration']))), video_stream['duration'][-6:][:3])}) # ms to h:m:s.ms
+            # TODO: Find a way to get a duration for ALL video formats
+            duration = False
+            if 'duration' in video_stream:
+                duration = video_stream['duration']
+                if duration: props.update({'duration': '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(duration))), duration[-6:][:3])}) # ms to h:m:s.ms
+            elif 'tags' in video_stream and 'DURATION' in video_stream['tags']:
+                duration = video_stream['tags']['DURATION']
+                props.update({'duration': duration})
+            else: props.update({'duration': False})
         except:
             props = {}
         return props

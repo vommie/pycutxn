@@ -132,9 +132,9 @@ class DB:
             imageID = False
         return imageID
 
-    def insertImage(self, folderID, fileName, hashID=None):
+    def insertImage(self, folderID, fileName, hashID=False):
         self.log(3, 'Insert new image: "%s" ...' % fileName)
-        if not hashID: hashID = None
+        if not hashID: hashID = False
         imageID = False
         maxImageID = False
         try:
