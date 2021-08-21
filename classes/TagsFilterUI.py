@@ -72,6 +72,8 @@ class TagsFilterUI(QtWidgets.QDialog):
     def getTagIDs(self):
         '''
         Gets the tagIDs from the table as list with tagIDs as int
+
+        :return: Array with tagIDs as value or empty array
         '''
         tagIDs = []
         rowCount = self.tableTagsFilter.rowCount()

@@ -130,7 +130,7 @@ class MainUi(QtWidgets.QMainWindow):
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
         # Set GUI from config
         self.updateDirs(self.config.getTargetDirs())
-        self.cmbTgtDirs.setCurrentText(self.config.getTgtDirName())
+        self.cmbTgtDirs.setCurrentText(self.config.getAppTgtDirName())
         if self.config.getQueueIsPaused():
             self.btnQueuePause.setChecked(True)
             self.toggleQueuePause()
@@ -676,7 +676,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onCmbTgtDirsCurrTextChanged(self, text):
         self.setCurrTgtDir()
-        self.config.setTgtDirName(text)
+        self.config.setAppTgtDirName(text)
         self.setBtnExportSaveState()
 
     def onBtnFilterCropClicked(self):
@@ -1565,12 +1565,12 @@ class MainUi(QtWidgets.QMainWindow):
             id = False
         return id
 
-    def updateDirs(self, dirs):
+    def updateDirs(self, dirs : list):
         '''
         Updates the target directory combo box
         '''
         self.dirs = dirs
-        self.config.setDirs(dirs)
+        self.config.setAppDirs(dirs)
         currentText = self.cmbTgtDirs.currentText()
         self.cmbTgtDirs.clear()
         for i in range(len(self.dirs)):
