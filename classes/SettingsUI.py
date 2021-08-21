@@ -17,6 +17,10 @@ class SettingsUI(QtWidgets.QDialog):
         self.comboBoxContainer.setCurrentText(self.parent.config.getRenderContainer())
         self.comboBoxAudioCodec.setCurrentText(self.parent.config.getRenderAudioCodec())
         self.spinBoxAudioBitrate.setValue(self.parent.config.getRenderAudioBitrate())
+        # Messages
+        self.checkBoxWarnTgt.setChecked(self.parent.config.getAppWarnFileExistsInTgtDir())
+        self.checkBoxWarnJobQueue.setChecked(self.parent.config.getAppWarnFileExistsInJobs())
+        self.checkBoxWarnHash.setChecked(self.parent.config.getAppWarnFileHashExistsInDB())
 
     def initGuiEvents(self):
         self.buttonBox.accepted.connect(self.onAccepted)
@@ -30,3 +34,7 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setRenderContainer(str(self.comboBoxContainer.currentText()))
         self.parent.config.setRenderAudioCodec(str(self.comboBoxAudioCodec.currentText()))
         self.parent.config.setRenderAudioBitrate(int(self.spinBoxAudioBitrate.value()))
+        # Messages
+        self.parent.config.setAppWarnFileExistsInTgtDir(self.checkBoxWarnTgt.isChecked())
+        self.parent.config.setAppWarnFileExistsInJobs(self.checkBoxWarnJobQueue.isChecked())
+        self.parent.config.setAppWarnFileHashExistsInDB(self.checkBoxWarnHash.isChecked())

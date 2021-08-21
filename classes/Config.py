@@ -52,6 +52,15 @@ class Config:
     def getAppIncrementFilename(self):
         return self.settings.value('app/incrementFilename', True, type=bool)
 
+    def getAppWarnFileExistsInTgtDir(self):
+        return self.settings.value('app/warnFileExistsInTgtDir', True, type=bool)
+
+    def getAppWarnFileExistsInJobs(self):
+        return self.settings.value('app/warnFileExistsInJobs', True, type=bool)
+
+    def getAppWarnFileHashExistsInDB(self):
+        return self.settings.value('app/warnFileHashExistsInDB', True, type=bool)
+
     def getDialogLogGeometry(self):
         return self.settings.value('dialogLog/geometry')
 
@@ -122,6 +131,15 @@ class Config:
 
     def setAppIncrementFilename(self, state : bool):
         self.settings.setValue('app/incrementFilename', state)
+
+    def setAppWarnFileExistsInTgtDir(self, state : bool):
+        self.settings.setValue('app/warnFileExistsInTgtDir', state)
+
+    def setAppWarnFileExistsInJobs(self, state : bool):
+        self.settings.setValue('app/warnFileExistsInJobs', state)
+
+    def setAppWarnFileHashExistsInDB(self, state : bool):
+        self.settings.setValue('app/warnFileHashExistsInDB', state)
 
     def setDialogLogGeometry(self, geometry):
         self.settings.setValue('dialogLog/geometry', geometry)

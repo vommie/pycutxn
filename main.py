@@ -1329,6 +1329,24 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         return self.btnTaggerWarning.isChecked()
 
+    def isTgtFileExistsInTgtDirWarningActive(self):
+        '''
+        Checks if the option to warn if the target file already exists in the target directory is active
+        '''
+        return self.config.getAppWarnFileExistsInTgtDir()
+
+    def isTgtFileExistsInJobsWarningActive(self):
+        '''
+        Checks if the option to warn if the target path and file already exists in the jobs queue is active
+        '''
+        return self.config.getAppWarnFileExistsInJobs()
+
+    def isFileIsKnownWarningIsActive(self):
+        '''
+        Checks if the option to warn if the file hash of the currently opened file is known in the database is active
+        '''
+        return self.config.getAppWarnFileHashExistsInDB()
+
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
         percentage = value / self.config.getPlayerSliderFactor()
@@ -1754,7 +1772,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def showWarningForKnownFile(self):
         '''Shows a dialog if the currently opened file was already opened in the past'''
-
+        if not self.isFileIsKnownWarningIsActive(): return
         hashID, dateTime = self.isCurrentFileKnown()
         if hashID and dateTime:
             self.log(1, 'Current source file was already opened in the past.')

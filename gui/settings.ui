@@ -312,13 +312,6 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBoxWarnTgtParent">
-             <property name="text">
-              <string>Warn if saved file already exists in targets parent folder</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QCheckBox" name="checkBoxWarnJobQueue">
              <property name="text">
               <string>Warn if saved file already exists in previous jobs in queue</string>
