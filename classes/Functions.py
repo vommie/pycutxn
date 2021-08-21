@@ -1,6 +1,7 @@
 import sys
 import ffmpeg
 import time
+
 class Functions:
 
     @staticmethod
@@ -67,24 +68,28 @@ class Functions:
     @staticmethod
     def getVideoProperties(videoFilePath):
         props = {}
-        probe = ffmpeg.probe(videoFilePath)
-        video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
-        print("video stream: %s" % video_stream)
+        videoInfo = ffmpeg.probe(videoFilePath, cmd='ffprobe')
+        videoStream = next((stream for stream in videoInfo['streams'] if stream['codec_type'] == 'video'), None)
+        print("video stream: %s" % videoInfo)
+        format = videoInfo['format']
         try:
-            width = int(video_stream['width'])
-            height = int(video_stream['height'])
+            # Get dimensions
+            width = int(videoStream['width'])
+            height = int(videoStream['height'])
             if width and height:
                 props.update({'width' : width})
                 props.update({'height' : height})
-            # TODO: Find a way to get a duration for ALL video formats
+            # Get duration
             duration = False
-            if 'duration' in video_stream:
-                duration = video_stream['duration']
-                if duration: props.update({'duration': '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(duration))), duration[-6:][:3])}) # ms to h:m:s.ms
-            elif 'tags' in video_stream and 'DURATION' in video_stream['tags']:
-                duration = video_stream['tags']['DURATION']
-                props.update({'duration': duration})
-            else: props.update({'duration': False})
+            if 'duration' in format: duration = format['duration']
+            elif 'duration' in videoStream: duration = videoStream['duration']
+            elif 'tags' in videoStream and 'DURATION' in videoStream['tags']: duration = videoStream['tags']['DURATION']
+            if duration and not ':' in duration:
+                try:
+                    float(duration)
+                    duration = '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(duration))), duration[-6:][:3]) # ms to h:m:s.ms
+                except: pass
+            props.update({'duration': duration})
         except:
             props = {}
         return props
