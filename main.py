@@ -1763,8 +1763,8 @@ class MainUi(QtWidgets.QMainWindow):
         if job.getTgtFileCount():
             self.boxTgtFileCount.setValue(job.getTgtFileCount())
         else:
+            self.setTargetFileCount(0)
             if self.btnTgtFileAutoIncrement.isChecked(): self.setTargetFileCount(1)
-            else: self.setTargetFileCount(0)
 
     def changeTargetFileCount(self, value: int):
         self.boxTgtFileCount.setValue(self.boxTgtFileCount.value()+value)
