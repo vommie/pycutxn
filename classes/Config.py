@@ -101,7 +101,7 @@ class Config:
         return self.settings.value('render/videoCodec', 'libx265', type=str)
 
     def getRenderCRF(self) -> int:
-        return self.settings.value('render/CRF', 21, type=int)
+        return self.settings.value('render/crf', 21, type=int)
 
     def getRenderContainer(self) -> str:
         return self.settings.value('render/container', 'mkv', type=str)
@@ -178,7 +178,7 @@ class Config:
         self.settings.setValue('render/videoCodec', codec)
 
     def setRenderCRF(self, crf : int) -> None:
-        self.settings.setValue('render/CRF', crf)
+        self.settings.setValue('render/crf', crf)
 
     def setRenderContainer(self, container : str) -> None:
         self.settings.setValue('render/container', container)
