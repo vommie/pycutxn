@@ -13,8 +13,12 @@ class PlayerControl():
     def stop(self):
         self.player.stop()
 
-    def pause(self):
+    def togglePause(self):
         self.player.pause = not self.player.pause
+        return self.player.pause
+
+    def pause(self, state : bool):
+        self.player.pause = state
         return self.player.pause
 
     def volumeDown(self):

@@ -12,10 +12,12 @@ import shutil
 import hashlib
 
 from libs.mpv import *
+from libs.mpv import *
 
 from classes.PlayerControl import PlayerControl
 from classes.DirsUI import DirsUI
 from classes.TagsFilterUI import TagsFilterUI
+from classes.SettingsUI import SettingsUI
 from classes.LogUi import LogUi
 from classes.KnownUI import KnownUI
 from classes.Functions import Functions
@@ -68,6 +70,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.dirsUI = DirsUI(self)
         self.knownUI = KnownUI(self)
         self.tagsFilterUI = TagsFilterUI(self)
+        self.settingsUI = SettingsUI(self)
         self.config.setTaggerDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
         self.db = DB(self.config.getTaggerDBPath(), self.log)
         self.labelTaggerError.setHidden(True)
@@ -185,6 +188,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.scExportSave = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
 
     def initGuiEvents(self):
+        # Menu
+        self.actionSettings.triggered.connect(self.onActionSettings)
         # Player control
         self.btnPause.clicked.connect(self.onBtnPauseClicked)
         self.scPause.activated.connect(self.onBtnPauseClicked)
@@ -344,6 +349,8 @@ class MainUi(QtWidgets.QMainWindow):
         # Load video file
         if self.videoProps:
             self.playerControl.play(videoFilePath)
+            if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
+            else:  self.playerControl.pause(False)
             self.setPlayerControlsState(True)
 
     def loadFilterCrop(self, job):
@@ -420,6 +427,12 @@ class MainUi(QtWidgets.QMainWindow):
             self.sectionTimeEnd = self.videoProps['duration']
             currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
             self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
+        currentJob.setTgtFileExt('.%s' % self.config.getRenderContainer())
+        currentJob.setRenderSettingVideoCodec(self.config.getRenderVideoCodec())
+        currentJob.setRenderSettingCRF(self.config.getRenderCRF())
+        currentJob.setRenderSettingAudioCodec(self.config.getRenderAudioCodec())
+        currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
+        currentJob.setRenderSettingContainer(self.config.getRenderContainer())
         job = self.addCurrentJobToQueue()
         if not job: return False
         if not self.saveCurrentTagsAndRating(): return
@@ -573,7 +586,7 @@ class MainUi(QtWidgets.QMainWindow):
             event.ignore()
 
     def onBtnPauseClicked(self):
-        self.playerControl.pause()
+        self.playerControl.togglePause()
 
     def onPlayerSeekSmall(self):
         self.playerControl.seek(2.0)
@@ -897,6 +910,9 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnTaggerWarningClicked(self):
         self.config.setTaggerIsWarningActive(not self.config.getTaggerIsWarningActive())
 
+    def onActionSettings(self):
+        self.settingsUI.show()
+
     # Other Event handlers
 
     # Event handler while ffmpeg is rendering
@@ -958,8 +974,7 @@ class MainUi(QtWidgets.QMainWindow):
         if code == 0:
             state = 1
         else:
-            if not self.ffmpegKilled: job.setErrorID(code)
-            else:
+            if self.ffmpegKilled:
                 self.ffmpegKilled = False
                 errorMsg = 'ffmpeg killed while rendering by the user.\n\n%s' % errorMsg
             state = 3

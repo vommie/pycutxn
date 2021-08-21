@@ -70,6 +70,9 @@ class Config:
     def getPlayerSliderFactor(self):
         return self.settings.value('player/sliderFactor', 100, type=int)
 
+    def getPlayerAutoPlay(self):
+        return self.settings.value('player/autoPlay', True, type=bool)
+
     def getQueueIsPaused(self):
         return self.settings.value('queue/isPaused', False, type=bool)
 
@@ -88,52 +91,85 @@ class Config:
     def getFiltersDeinterlacer(self):
         return self.settings.value('filters/deinterlacer', 'yadif', type=str)
 
+    def getRenderVideoCodec(self):
+        return self.settings.value('render/videoCodec', 'libx265', type=str)
+
+    def getRenderCRF(self):
+        return self.settings.value('render/CRF', 21, type=int)
+
+    def getRenderContainer(self):
+        return self.settings.value('render/container', 'mkv', type=str)
+
+    def getRenderAudioCodec(self):
+        return self.settings.value('render/audioCodec', 'aac', type=str)
+
+    def getRenderAudioBitrate(self):
+        return self.settings.value('render/audioBitrate', 128, type=int)
+
     # Config File Setters
 
-    def setDirs(self, dirs):
+    def setDirs(self, dirs : list):
         self.settings.setValue('app/targetDirs', dirs)
 
-    def setTgtDirName(self, dirName):
+    def setTgtDirName(self, dirName: str):
         self.settings.setValue('app/targetDirName', dirName)
 
     def setAppGeometry(self, geometry):
         self.settings.setValue('app/geometry', geometry)
 
-    def setAppState(self, state):
+    def setAppState(self, state : bool):
         self.settings.setValue('app/state', state)
 
-    def setAppIncrementFilename(self, state):
+    def setAppIncrementFilename(self, state : bool):
         self.settings.setValue('app/incrementFilename', state)
 
     def setDialogLogGeometry(self, geometry):
         self.settings.setValue('dialogLog/geometry', geometry)
 
-    def setPlayerVolume(self, volume):
+    def setPlayerVolume(self, volume : int):
         self.settings.setValue('player/volume', volume)
 
-    def setPlayerVolumeStep(self, volumeStep):
+    def setPlayerVolumeStep(self, volumeStep : int):
         self.settings.setValue('player/volumeStep', volumeStep)
 
-    def setPlayerIsMuted(self, state):
+    def setPlayerIsMuted(self, state : bool):
         self.settings.setValue('player/isMuted', state)
 
-    def setPlayerSliderFactor(self, factor):
+    def setPlayerAutoPlay(self, state : bool):
+        self.settings.setValue('player/autoPlay', state)
+
+    def setPlayerSliderFactor(self, factor : int):
         self.settings.setValue('player/sliderFactor', factor)
 
-    def setQueueIsPaused(self, isPaused):
+    def setQueueIsPaused(self, isPaused : bool):
         self.settings.setValue('queue/isPaused', isPaused)
 
-    def setTaggerDBPath(self, path):
+    def setTaggerDBPath(self, path : str):
         self.settings.setValue('tagger/dbPath', path)
 
-    def setTaggerIsActive(self, state):
+    def setTaggerIsActive(self, state : bool):
         self.settings.setValue('tagger/isActive', state)
 
-    def setTaggerIsWarningActive(self, state):
+    def setTaggerIsWarningActive(self, state : bool):
         self.settings.setValue('tagger/isWarningActive', state)
 
-    def setTaggerFilterTagIDs(self, tagIDs):
+    def setTaggerFilterTagIDs(self, tagIDs : list):
         self.settings.setValue('tagger/filterTagIDs', tagIDs)
 
-    def setFiltersDeinterlacer(self, deinterlacer):
+    def setFiltersDeinterlacer(self, deinterlacer : str):
         self.settings.setValue('filters/deinterlacer', deinterlacer)
+
+    def setRenderVideoCodec(self, codec : str):
+        self.settings.setValue('render/videoCodec', codec)
+
+    def setRenderCRF(self, crf : int):
+        self.settings.setValue('render/CRF', crf)
+
+    def setRenderContainer(self, container : str):
+        self.settings.setValue('render/container', container)
+
+    def setRenderAudioCodec(self, audioCodec : str):
+        self.settings.setValue('render/audioCodec', audioCodec)
+
+    def setRenderAudioBitrate(self, audioBitrate : int):
+        self.settings.setValue('render/audioBitrate', audioBitrate)

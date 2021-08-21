@@ -16,6 +16,8 @@ class Job():
     def initProps(self):
         self._props = {
             'position': 0,
+            'state': 0,
+            'hashID': False,
             'srcFile': {
                 'dirName': False,
                 'fileName': False,
@@ -24,7 +26,7 @@ class Job():
             'tgtFile': {
                 'dirName': False,
                 'fileName': False,
-                'fileExt': '.mkv',
+                'fileExt': False,
                 'count': 0,
             },
             'sections': [],
@@ -35,9 +37,14 @@ class Job():
                 'rotate': False,
                 'deshake': {}
             },
-            'state': 0,
+            'renderSettings': {
+                'videoCodec': False,
+                'crf': False,
+                'audioCodec': False,
+                'audioBitrate': False,
+                'container': False
+            },
             'log': False,
-            'hashID': False
         }
 
     def initPaths(self, filePath):
@@ -229,6 +236,21 @@ class Job():
         except:
             return { '0': 'crop', '1': 'deinterlace', '2': 'resize', '3': 'rotate', '4': 'deshake' }
 
+    def getRenderSettingVideoCodec(self):
+        return self._props['renderSettings'].get('videoCodec')
+
+    def getRenderSettingCRF(self):
+        return self._props['renderSettings'].get('crf')
+
+    def getRenderSettingAudioCodec(self):
+        return self._props['renderSettings'].get('audioCodec')
+
+    def getRenderSettingAudioBitrate(self):
+        return self._props['renderSettings'].get('audioBitrate')
+
+    def getRenderSettingContainer(self):
+        return self._props['renderSettings'].get('container')
+
     # Props Setters
 
     def setProps(self, props):
@@ -256,6 +278,7 @@ class Job():
         self.propValueChanged()
 
     def setTgtFileExt(self, fileExt):
+        if fileExt[0] != '.': fileExt = '.%s' % fileExt
         self._props['tgtFile'].update({'fileExt': fileExt})
         self.propValueChanged()
 
@@ -265,10 +288,6 @@ class Job():
 
     def setState(self, state):
         self._props.update({'state': state})
-        self.propValueChanged()
-
-    def setErrorID(self, id):
-        self._props['error'].update({'id': id})
         self.propValueChanged()
 
     def setLog(self, log):
@@ -341,6 +360,21 @@ class Job():
     def setFilterPositions(self, positions):
         self._props.update({'filterPositions': positions})
         self.propValueChanged()
+
+    def setRenderSettingVideoCodec(self, videoCodec : str):
+        self._props['renderSettings'].update({'videoCodec': videoCodec})
+
+    def setRenderSettingCRF(self, crf : int):
+        self._props['renderSettings'].update({'crf': crf })
+
+    def setRenderSettingAudioCodec(self, audioCodec : str):
+        self._props['renderSettings'].update({'audioCodec': audioCodec})
+
+    def setRenderSettingAudioBitrate(self, audioBitrate : int):
+        self._props['renderSettings'].update({'audioBitrate': audioBitrate})
+
+    def setRenderSettingContainer(self, container : str):
+        self._props['renderSettings'].update({'container': container})
 
     def setID(self, id):
         self.id = id
