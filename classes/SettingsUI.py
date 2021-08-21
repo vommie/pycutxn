@@ -1,16 +1,21 @@
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtWidgets import QFileDialog
+from os.path import isdir, expanduser, isfile
 
 class SettingsUI(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(SettingsUI, self).__init__(parent)
         uic.loadUi('./gui/settings.ui', self)
         self.parent = parent
+        self.tabWidgetSettings.setCurrentIndex(0)
         self.loadConfig()
         self.initGuiEvents()
 
     def loadConfig(self):
         # Player
         self.checkBoxPlayerAutoPlay.setChecked(self.parent.config.getPlayerAutoPlay())
+        # Database
+        self.lineEditDBPath.setText(self.parent.config.getTaggerDBPath())
         # Render
         self.comboBoxVideoCodec.setCurrentText(self.parent.config.getRenderVideoCodec())
         self.spinBoxCRF.setValue(self.parent.config.getRenderCRF())
@@ -24,10 +29,13 @@ class SettingsUI(QtWidgets.QDialog):
 
     def initGuiEvents(self):
         self.buttonBox.accepted.connect(self.onAccepted)
+        self.pushButtonDBPath.clicked.connect(self.onBtnDBPath)
 
     def onAccepted(self):
         # Player
         self.parent.config.setPlayerAutoPlay(self.checkBoxPlayerAutoPlay.isChecked())
+        # Database
+        self.parent.config.setTaggerDBPath(self.lineEditDBPath.text()) # TODO: Reload Tagger when path changes
         # Render
         self.parent.config.setRenderVideoCodec(str(self.comboBoxVideoCodec.currentText()))
         self.parent.config.setRenderCRF(int(self.spinBoxCRF.value()))
@@ -38,3 +46,11 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setAppWarnFileExistsInTgtDir(self.checkBoxWarnTgt.isChecked())
         self.parent.config.setAppWarnFileExistsInJobs(self.checkBoxWarnJobQueue.isChecked())
         self.parent.config.setAppWarnFileHashExistsInDB(self.checkBoxWarnHash.isChecked())
+
+    def onBtnDBPath(self):
+        path = expanduser('~')
+        xnViewDir = '%s/.config/xnviewmp' % path
+        if isdir(xnViewDir): path = xnViewDir
+        fileName = QFileDialog.getOpenFileName(self,'Select XnView Database', path, 'XnView Database (*.db)')
+        if fileName[0] and fileName[0] != '' and isfile(fileName[0]):
+            self.lineEditDBPath.setText(fileName[0])

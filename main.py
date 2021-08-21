@@ -71,7 +71,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.knownUI = KnownUI(self)
         self.tagsFilterUI = TagsFilterUI(self)
         self.settingsUI = SettingsUI(self)
-        self.config.setTaggerDBPath('/home/vommie/.config/xnviewmp/XnView.db') # Todo: Set path per UI
         self.db = DB(self.config.getTaggerDBPath(), self.log)
         self.labelTaggerError.setHidden(True)
         self.tagsTree = []

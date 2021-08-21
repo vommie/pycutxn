@@ -17,9 +17,9 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QTabWidget" name="tabWidgetPlayer">
+      <widget class="QTabWidget" name="tabWidgetSettings">
        <property name="currentIndex">
-        <number>4</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tabGeneral">
         <attribute name="title">
