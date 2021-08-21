@@ -1155,9 +1155,6 @@ class MainUi(QtWidgets.QMainWindow):
         if not self.isTaggerEnabled(): return False
         self.log(1, 'Save Tags and Rating to DB ...')
         job = self.jobs.getCurrentJob()
-
-        tagIDs = self.getSelectedTagIDsFromTagsTree()
-        rating = self.getRatingFromBtns()
         try:
             folderID = self.db.getFolderID(job.getTgtDirName())
             if not folderID: folderID = self.db.insertPath(job.getTgtDirName())
@@ -1167,7 +1164,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.showMsgBox(msg, btns='ok', icon='warning')
                 return False
             imageID = self.db.getImageID(folderID, job.getTgtFileNameLong())
-            if not imageID: imageID = self.db.insertImage(folderID, job.getTgtFileNameLong(), job.getHashID())
+            if not imageID: imageID = self.db.insertImage(folderID, job.getTgtFileNameLong())
             if not imageID:
                 msg = 'Error: Got no imageID. Cannot save tags and rating.'
                 self.log(1, msg, 1)
@@ -1180,31 +1177,29 @@ class MainUi(QtWidgets.QMainWindow):
             self.disableTaggerPanel()
             return False
 
-        self.log(1, 'Save rating to database ...')
-        try: self.db.setRating(imageID, folderID, rating)
+        hashID = job.getHashID()
+        rating = self.getRatingFromBtns()
+        tagIDs = self.getSelectedTagIDsFromTagsTree()
+        try:
+            self.log(1, 'Save hashID to database ...')
+            self.db.setHashID(imageID, folderID, hashID)
+            self.log(1, 'HashID saved: %s' % hashID)
+            self.log(1, 'Save rating to database ...')
+            self.db.setRating(imageID, folderID, rating)
+            self.log(1, 'Rating saved: %s' % rating)
+            self.log(1, 'Save tags to database ...')
+            self.db.setTags(imageID, tagIDs)
+            self.log(1, 'Tags saved: %s' % tagIDs)
         except:
             msg = 'Error: No database connection possible'
             self.log(1, msg, 1)
             self.showMsgBox(msg, btns='ok', icon="warning")
             self.disableTaggerPanel()
             return False
-        self.log(1, 'Rating saved: %s' % rating)
-
-        self.log(1, 'Save tags to database ...')
-        try: self.db.setTags(imageID, tagIDs)
-        except:
-            msg = 'Error: No database connection possible'
-            self.log(1, msg, 1)
-            self.showMsgBox(msg, btns='ok', icon="warning")
-            self.disableTaggerPanel()
-            return False
-        self.log(1, 'Tags saved: %s' % tagIDs)
-
         self.insertTagsInLastTagsList(tagIDs)
         self.setLastRating(rating)
         self.clearRating()
         self.clearTagsTree()
-
         return True
 
     def getSelectedTagIDsFromTagsTree(self):
@@ -1802,7 +1797,7 @@ class MainUi(QtWidgets.QMainWindow):
         if not self.isFileIsKnownWarningIsActive(): return
         hashID, dateTime = self.isCurrentFileKnown()
         if hashID and dateTime:
-            self.log(1, 'Current source file was already opened in the past.')
+            self.log(1, 'Current source file was already opened in the past. (HashID: "%s", Date: %s)' % (hashID, dateTime))
             knownFiles = self.getFileListFromCurrentHashID()
             if knownFiles:
                 self.knownUI.setFilesList(knownFiles)

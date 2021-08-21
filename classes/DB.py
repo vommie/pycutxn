@@ -132,9 +132,8 @@ class DB:
             imageID = False
         return imageID
 
-    def insertImage(self, folderID, fileName, hashID=False):
+    def insertImage(self, folderID, fileName):
         self.log(3, 'Insert new image: "%s" ...' % fileName)
-        if not hashID: hashID = False
         imageID = False
         maxImageID = False
         try:
@@ -150,7 +149,7 @@ class DB:
         if not maxImageID: return False
         imageID = maxImageID + 1
         try:
-            c.execute("insert into Images(ImageID,FolderID,Filename,Size,ModifiedDate,HashID) values('%s','%s','%s',0,0,%s);" % (imageID, folderID, fileName, hashID))
+            c.execute("insert into Images(ImageID,FolderID,Filename,Size,ModifiedDate) values('%s','%s','%s',0,0);" % (imageID, folderID, fileName))
             conn.commit()
             maxImageID = c.fetchone()
             self.disconnect(conn)
@@ -329,3 +328,15 @@ class DB:
                 pathName = results[0]
                 filePaths.append(Functions.removeTrailingSlash('%s%s' % (pathName, fileName)))
         return filePaths
+
+    def setHashID(self, imageID, folderID, hashID):
+        self.log(3, 'Set hashID "%s" for folderID "%s" / imageID: "%s" ...' % (hashID, folderID, imageID))
+        try:
+            conn = self.connect()
+            c = conn.cursor()
+            c.execute("update Images set HashID='%s' where ImageID='%s' and FolderID='%s';" % (hashID, imageID, folderID))
+            conn.commit()
+            self.disconnect(conn)
+        except AttributeError:
+            raise Exception('NoConnection')
+        return True
