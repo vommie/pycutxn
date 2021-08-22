@@ -94,9 +94,12 @@ class Jobs:
 
         :return: True on success, False if something went wrong
         '''
-        copyfile(self.jobsFilePath, self.jobsFileBakPath)
+        fileEditPath = self.jobsFilePath
+        if os.path.isfile(self.jobsFilePath):
+            copyfile(self.jobsFilePath, self.jobsFileBakPath)
+            fileEditPath = self.jobsFileBakPath
         try:
-            with open(self.jobsFileBakPath, 'w') as outfile:
+            with open(fileEditPath, 'w') as outfile:
                 jobsProps = {}
                 for id, job in self.jobs.items():
                     jobsProps.update({id: job.getProps()})
@@ -105,7 +108,7 @@ class Jobs:
             if os.path.isfile(self.jobsFileBakPath): os.remove(self.jobsFileBakPath)
             raise Exception('Error: Cannot save jobs to file. This will lead to an inconsistency between jobs in the current session in the GUI and the saved jobs. Message:\n%s' % e)
         finally:
-            move(self.jobsFileBakPath, self.jobsFilePath)
+            if os.path.isfile(self.jobsFileBakPath): move(self.jobsFileBakPath, self.jobsFilePath)
 
     # Other functions
 
