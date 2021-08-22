@@ -83,7 +83,7 @@ class Config:
         return self.settings.value('queue/isPaused', False, type=bool)
 
     def getTaggerDBPath(self) -> str:
-        return self.settings.value('tagger/dbPath', False, type=str)
+        return self.settings.value('tagger/dbPath', '', type=str)
 
     def getTaggerIsActive(self) -> bool:
         return self.settings.value('tagger/isActive', True, type=bool)
