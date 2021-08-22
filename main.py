@@ -1795,6 +1795,7 @@ class MainUi(QtWidgets.QMainWindow):
     def showWarningForKnownFile(self):
         '''Shows a dialog if the currently opened file was already opened in the past'''
         if not self.isFileIsKnownWarningIsActive(): return
+        if not self.isTaggerEnabled(): return
         hashID, dateTime = self.isCurrentFileKnown()
         if hashID and dateTime:
             self.log(1, 'Current source file was already opened in the past. (HashID: "%s", Date: %s)' % (hashID, dateTime))
