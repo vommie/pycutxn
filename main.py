@@ -82,6 +82,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
         self.resetVideoProps()
+        self.overwriteFile = False # File path to a target file the current session would overwrite on save
         # Filters
         self.filterAtts = {
             'crop': {
@@ -428,6 +429,7 @@ class MainUi(QtWidgets.QMainWindow):
         currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
         currentJob.setRenderSettingContainer(self.config.getRenderContainer())
         if self.isSameRenderSrcTgt(currentJob, False): return False
+        if not self.overwriteTgtFileIfExists(currentJob): return False
         if not currentJob.getSections():
             self.sectionTimeStart = self.timeFormat
             if self.videoProps['duration']: self.sectionTimeEnd = self.videoProps['duration']
@@ -935,6 +937,15 @@ class MainUi(QtWidgets.QMainWindow):
     def onActionSettings(self):
         self.settingsUI.show()
 
+    def onMsgBoxExtraBtnOverwriteFile(self):
+        '''
+        Opens a file saved in variable self.overwriteFile
+        '''
+        if self.overwriteFile:
+            if os.path.isfile(self.overwriteFile):
+                opener = Functions.getCurrentSysOpener()
+                subprocess.call([opener, self.overwriteFile])
+
     # Other Event handlers
 
     # Event handler while ffmpeg is rendering
@@ -1030,7 +1041,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI Control
 
-    def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCut Message'):
+    def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCut Message', extraBtnText='', extraBtnCallback=False):
         '''
         Shows a QMessageBox dialog.
 
@@ -1040,6 +1051,8 @@ class MainUi(QtWidgets.QMainWindow):
         :param infoText: Info text which gets displayed below the main message
         :param detailText: Detail text which gets displayed if the user clicks on a "details" button
         :param title: Title of the message box.
+        :param extraBtnText: If not a empty string, a extra button gets added with this text. This button will not be able to give a return value.
+        :param extraBtnCallback: If a function gets set, it will be called if the extra btn is clicked.
         '''
         msgBox = QMessageBox()
         if icon == "info":  msgBox.setIcon(QMessageBox.Information)
@@ -1058,6 +1071,10 @@ class MainUi(QtWidgets.QMainWindow):
         elif btns == 'retryabort': msgBox.setStandardButtons(QMessageBox.Retry | QMessageBox.Abort)
         elif btns == 'close': msgBox.setStandardButtons(QMessageBox.Close)
         else: msgBox.setStandardButtons(QMessageBox.Ok)
+        if extraBtnText != '':
+            extraBtn = msgBox.addButton(extraBtnText, msgBox.ActionRole)
+            extraBtn.disconnect()
+            if extraBtnCallback : extraBtn.clicked.connect(extraBtnCallback)
         result = msgBox.exec_()
         if(result == QMessageBox.Ok): return True
         elif(result == QMessageBox.Cancel): return False
@@ -1363,6 +1380,26 @@ class MainUi(QtWidgets.QMainWindow):
         Checks if the option to warn if the file hash of the currently opened file is known in the database is active
         '''
         return self.config.getAppWarnFileHashExistsInDB()
+
+    def overwriteTgtFileIfExists(self, currentJob) -> bool:
+        '''
+        If the target file for the jobs exists, the user gets prompted to ask if it should get overwritten.
+
+        :param currentJob: The current job.
+        :return: True if the file should get overwritten when it exists, else False
+        '''
+        overwrite = True
+        tgtFile = currentJob.getTgtFilePathLong()
+        if os.path.exists(tgtFile):
+            self.log(1, 'Target file already exists.')
+            self.overwriteFile = tgtFile
+            if not self.showMsgBox('The target file already exists. Overwrite it?', btns='yesno', infoText=tgtFile, icon='question', extraBtnText='Open target', extraBtnCallback=self.onMsgBoxExtraBtnOverwriteFile):
+                overwrite = False
+                self.log(1, 'User does not want to overwrite target file.')
+            else:
+                self.log(1, 'User wants to overwrite target file.')
+            self.overWriteFile = False
+        return overwrite
 
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
