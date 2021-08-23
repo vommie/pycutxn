@@ -213,6 +213,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
         self.renderFrame.wheelEvent = self.renderFrameWheelEvent
         # Player Progress
+        self.sliderPlayer.valueChanged.connect(self.onSliderPlayerValueChanged)
         self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
         self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
         self.sliderPlayer.sliderReleased.connect(self.onSliderPlayerReleased)
@@ -678,6 +679,11 @@ class MainUi(QtWidgets.QMainWindow):
     def onSliderPlayerReleased(self):
         self.sliderPlayerIsPressed = False
         self.setPlayerPosByPlayerSlider()
+
+    def onSliderPlayerValueChanged(self, value):
+        # Set player time to absolute end if slider hits maximum
+        if value == 99 * self.config.getPlayerSliderFactor():
+            self.playerControl.seek(self.videoProps.get('duration'), 'absolute')
 
     def onLineEditTgtFileNameChanged(self, text):
         self.jobs.getCurrentJob().setTgtFileName(text)
@@ -1402,7 +1408,8 @@ class MainUi(QtWidgets.QMainWindow):
     def setPlayerPosByPlayerSlider(self):
         value = self.sliderPlayer.value()
         percentage = value / self.config.getPlayerSliderFactor()
-        self.playerControl.seek(percentage, 'absolute-percent')
+        # Set player position by percentage only if slider is not at maximum. If it hits maximum, player pos gets set by value change event of the slider.
+        if value != 99 * self.config.getPlayerSliderFactor(): self.playerControl.seek(percentage, 'absolute-percent')
 
     def setBtnSectionAddState(self):
         if self.sectionTimeStart and self.sectionTimeEnd:
