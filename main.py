@@ -332,6 +332,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'Source path: "%s".' % videoFilePath)
         # Get Video Props
         self.videoProps = Functions.getVideoProperties(videoFilePath)
+        self.showWarningForOddVideoSourceSize(self.videoProps)
         self.log(1, 'Video properties: %s' % self.videoProps)
         # Set properties
         self.loadFilterCrop(job)
@@ -938,9 +939,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.settingsUI.show()
 
     def onMsgBoxExtraBtnOverwriteFile(self):
-        '''
-        Opens a file saved in variable self.overwriteFile
-        '''
+        '''Opens a file saved in variable self.overwriteFile'''
         if self.overwriteFile:
             if os.path.isfile(self.overwriteFile):
                 opener = Functions.getCurrentSysOpener()
@@ -1845,6 +1844,22 @@ class MainUi(QtWidgets.QMainWindow):
                 self.knownUI.show()
             else:
                 self.showMsgBox('File was already opened before.', infoText='No target renderings are known.', detailText='Date: %s\nHash ID:%s' % (dateTime, hashID))
+
+    def showWarningForOddVideoSourceSize(self, videoProps):
+        '''
+        Shows a warning if width or height of a video is odd
+
+        :param videoProps: The video properties dictionary
+        '''
+        heightIsOdd = False
+        if videoProps.get('height') % 2 == 1: heightIsOdd = True
+        widthIsOdd = False
+        if videoProps.get('width') % 2 == 1: widthIsOdd = True
+        msg = ''
+        if heightIsOdd and widthIsOdd: msg = 'Width and height of video source file are odd.'
+        elif heightIsOdd: msg = 'Height of video source is file odd.'
+        elif widthIsOdd: msg = 'Width of video source file is odd.'
+        if msg != '': self.showMsgBox(msg, infoText='This can lead to encoding errors. Please crop or resize the video to a size dividable by 2.\n\nVideo size: %s x %s' % (videoProps.get('width'), videoProps.get('height')), icon='warning')
 
     def isCurrentFileKnown(self):
         '''
