@@ -1014,8 +1014,7 @@ class MainUi(QtWidgets.QMainWindow):
         if errorMsg != '':
             job.setLog(errorMsg)
         job.setState(state)
-        if self.btnQueueKill.isEnabled():
-            self.btnQueueKill.setEnabled(False)
+        if self.btnQueueKill.isEnabled(): self.btnQueueKill.setEnabled(False)
         # Update queue table with job state
         id = job.getID()
         self.updateQueueJobState(id, state)
@@ -1577,6 +1576,10 @@ class MainUi(QtWidgets.QMainWindow):
     def queueDeleteSelectedRow(self):
         jobID, iRow = self.queueGetJobIDFromRow()
         try:
+            job = self.jobs.getJob(jobID)
+            if job.getState() == 4:
+                self.showMsgBox('Cannot delete job while it is rendering.', infoText='Abort the job first, then delete it.', icon='warning')
+                return
             self.jobs.removeJob(jobID)
         except Exception as e:
             msg = 'Error: Cannot remove Job.'
