@@ -36,9 +36,10 @@ import ffmpeg
 
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
+        self.rootDir = os.path.dirname(os.path.realpath(__file__))
         _id = QtGui.QFontDatabase.addApplicationFont('res/font_droid_sans_mono_nerd.otf') # Init Nerd Fronts Font for Icons
         super(MainUi, self).__init__()
-        uic.loadUi('./gui/main.ui', self)
+        uic.loadUi('%s/gui/main.ui' % self.rootDir, self)
         self.initMembers()
         self.initGui()
         self.initShortcuts()
@@ -1998,7 +1999,12 @@ class Slider(QtWidgets.QSlider):
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
-# window.newFile('/home/vommie/dev/personal/pycut/test_color.mp4')
-# window.newFile('/home/vommie/dev/personal/pycut/test_shake.mp4')
-window.newFile('/home/vommie/dev/personal/pycut/test_interlace.avi')
+# Debug Start
+test_input_path = '/home/vommie/videos/pycut/input'
+if os.path.exists(test_input_path) and os.path.isdir(test_input_path):
+    # test_file = 'test_color.mp4'
+    # test_file = 'test_shake.mp4'
+    test_file = 'test_interlace.avi'
+    window.newFile('%s/%s' % (test_input_path, test_file))
+# Debug End
 app.exec_()

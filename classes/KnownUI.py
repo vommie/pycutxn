@@ -5,11 +5,10 @@ import os
 import subprocess
 
 class KnownUI(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super(KnownUI, self).__init__(parent)
-        uic.loadUi('./gui/known.ui', self)
+    def __init__(self, parent):
         self.parent = parent
-
+        super(KnownUI, self).__init__(parent)
+        uic.loadUi('%s/gui/known.ui' % self.parent.rootDir, self)
         self.listWidgetFiles.itemDoubleClicked.connect(self.onListWidgeFilesItemDoubleClicked)
         self.buttonBox.accepted.connect(self.onAccepted)
 

@@ -3,11 +3,10 @@ from PyQt5.QtWidgets import *
 from .Functions import Functions
 
 class DirsUI(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super(DirsUI, self).__init__(parent)
-        uic.loadUi('./gui/dirs.ui', self)
-
+    def __init__(self, parent):
         self.parent = parent
+        super(DirsUI, self).__init__(parent)
+        uic.loadUi('%s/gui/dirs.ui' % self.parent.rootDir, self)
         self.initGuiEvents()
         self.initGui()
         self.dirs = []

@@ -3,10 +3,10 @@ from PyQt5.QtWidgets import *
 from .Functions import Functions
 
 class TagsFilterUI(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super(TagsFilterUI, self).__init__(parent)
-        uic.loadUi('./gui/tags_filter.ui', self)
+    def __init__(self, parent):
         self.parent = parent
+        super(TagsFilterUI, self).__init__(parent)
+        uic.loadUi('%s/gui/tags_filter.ui' % self.parent.rootDir, self)
         self.initGuiEvents()
         self.initGui()
 

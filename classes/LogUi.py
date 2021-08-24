@@ -3,10 +3,10 @@ from PyQt5.QtWidgets import *
 from .Functions import Functions
 
 class LogUi(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super(LogUi, self).__init__(parent)
-        uic.loadUi('./gui/log.ui', self)
+    def __init__(self, parent):
         self.parent = parent
+        super(LogUi, self).__init__(parent)
+        uic.loadUi('%s/gui/log.ui' % self.parent.rootDir, self)
         self.initGuiEvents()
         self.initGui()
 

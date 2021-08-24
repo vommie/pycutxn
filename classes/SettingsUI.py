@@ -3,10 +3,10 @@ from PyQt5.QtWidgets import QFileDialog
 from os.path import isdir, expanduser, isfile
 
 class SettingsUI(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super(SettingsUI, self).__init__(parent)
-        uic.loadUi('./gui/settings.ui', self)
+    def __init__(self, parent):
         self.parent = parent
+        super(SettingsUI, self).__init__(parent)
+        uic.loadUi('%s/gui/settings.ui' % self.parent.rootDir, self)
         self.tabWidgetSettings.setCurrentIndex(0)
         self.loadConfig()
         self.initGuiEvents()
