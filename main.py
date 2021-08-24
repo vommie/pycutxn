@@ -348,6 +348,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadTargetFileCount(job)
         self.playerTimeCurrent = self.timeFormat
         self.sectionTimeStart = self.timeFormat
+        self.sectionTimeEnd = self.videoProps['duration']
         self.setFilterBtnStates()
         # Load video file
         if self.videoProps:
@@ -434,19 +435,13 @@ class MainUi(QtWidgets.QMainWindow):
         if self.isSameRenderSrcTgt(currentJob, False): return False
         if not self.overwriteTgtFileIfExists(currentJob): return False
         if not currentJob.getSections():
-            self.sectionTimeStart = self.timeFormat
-            if self.videoProps['duration']: self.sectionTimeEnd = self.videoProps['duration']
-            else:
-                msg = 'Error: Unknown duration of the video file input.'
-                self.log(1, msg, 1)
-                self.showMsgBox(msg, infoText='Cannot set section end time automatically. It will be set to a very high number.', icon="warning")
-                self.sectionTimeEnd = '59:59:59.999'
             currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
             self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
         job = self.addCurrentJobToQueue()
         if not job: return False
         if not self.saveCurrentTagsAndRating(): return False
         if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
+        self.clearSections()
         self.log(1, 'Session saved as new job in queue.')
 
     def addCurrentJobToQueue(self):
@@ -1469,13 +1464,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setSectionBtnStates()
 
     def clearSections(self):
-        self.sectionTimeStart = self.timeFormat
-        if self.videoProps['duration']: self.sectionTimeEnd = self.videoProps['duration']
-        else:
-            msg = 'Error: Unknown duration of the video file input.'
-            self.log(1, msg, 1)
-            self.showMsgBox(msg, infoText='Cannot set section end time automatically. It will be set to a very high number.', icon="warning")
-            self.sectionTimeEnd = '59:59:59.999'
+        '''Clears the sections table (without resetting the current section timestamps)'''
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
 
