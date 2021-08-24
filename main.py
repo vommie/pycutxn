@@ -28,7 +28,7 @@ from classes.DB import DB
 
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, QSize
 from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence
 import res  # pyrcc5 -o res.py res/res.qrc
 
@@ -37,7 +37,7 @@ import ffmpeg
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         self.rootDir = os.path.dirname(os.path.realpath(__file__))
-        _id = QtGui.QFontDatabase.addApplicationFont('res/font_droid_sans_mono_nerd.otf') # Init Nerd Fronts Font for Icons
+        _id = QtGui.QFontDatabase.addApplicationFont('%s/res/font_droid_sans_mono_nerd.otf' % self.rootDir) # Init Nerd Fronts Font for Icons
         super(MainUi, self).__init__()
         uic.loadUi('%s/gui/main.ui' % self.rootDir, self)
         self.initMembers()
@@ -1108,7 +1108,7 @@ class MainUi(QtWidgets.QMainWindow):
                 item.setToolTip('TagID: %s' % tag['tagID'])
                 fontWeight = -1
                 if tag['parentID'] == -1: fontWeight = QFont.Bold
-                item.setFont(QFont('DejaVu Sans Mono', -1, weight=fontWeight))
+                item.setFont(QFont('Noto Sans', 9, weight=fontWeight))
                 self.listWidgetTagsTree.addItem(item)
                 self.buildTagsTree(tag['tagID'])
                 self.tagsTree[i]['item'] = item
@@ -2003,8 +2003,8 @@ window = MainUi()
 test_input_path = '/home/vommie/videos/pycut/input'
 if os.path.exists(test_input_path) and os.path.isdir(test_input_path):
     # test_file = 'test_color.mp4'
-    # test_file = 'test_shake.mp4'
-    test_file = 'test_interlace.avi'
+    test_file = 'test_shake.mp4'
+    # test_file = 'test_interlace.avi'
     window.newFile('%s/%s' % (test_input_path, test_file))
 # Debug End
 app.exec_()

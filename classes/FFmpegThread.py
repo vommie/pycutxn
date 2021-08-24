@@ -67,8 +67,9 @@ class FFmpegThread(QThread):
                             if render_pass == 1:
                                 video = ( video .filter('vidstabdetect', stepsize=32, shakiness=10, accuracy=10, result=deshakeFile) )
                             elif render_pass == 2:
-                                video = ( video .filter('vidstabtransform', input=deshakeFile, crop='black', optzoom=0, zoom=0, smoothing=10,interpol='bicubic') )
-                                video = ( video .filter('unsharp', 5,5,0.8,3,3,0.4) )
+                                # interpol='bicubic'    Kann Pixelfehler verursachen
+                                video = ( video .filter('vidstabtransform', input=deshakeFile, crop='black', optzoom=0, zoom=0, smoothing=10, interpol='bilinear') )
+                                # video = ( video .filter('unsharp', 5,5,0.8,3,3,0.4) )
                         elif filter == 'deinterlace' and job.getFilterDeinterlaceState():
                             deinterlacer = job.getFilterDeinterlaceDeinterlacer()
                             video = ( video .filter(deinterlacer))
