@@ -28,8 +28,8 @@ from classes.DB import DB
 
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
-from PyQt5.QtCore import Qt, pyqtSlot, QSize
-from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence
+from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
 import res  # pyrcc5 -o res.py res/res.qrc
 
 import ffmpeg
@@ -199,12 +199,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnFrameStepBack.clicked.connect(self.onBtnFrameStepBackClicked)
         self.scFrameStepBack.activated.connect(self.onBtnFrameStepBackClicked)
         self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
-        self.scSectionStart.activated.connect(self.onBtnSectionStartClicked)
+        self.scSectionStart.activated.connect(self.onScSectionStart)
         self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
         self.scSectionAdd1.activated.connect(self.onBtnSectionAddClicked)
         self.scSectionAdd2.activated.connect(self.onBtnSectionAddClicked)
         self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
-        self.scSectionEnd.activated.connect(self.onBtnSectionEndClicked)
+        self.scSectionEnd.activated.connect(self.onScSectionEnd)
         self.btnMute.clicked.connect(self.onBtnMuteClicked)
         self.scMute.activated.connect(self.onBtnMuteClicked)
         self.sliderVolume.valueChanged.connect(self.onSliderVolumeChange)
@@ -642,11 +642,47 @@ class MainUi(QtWidgets.QMainWindow):
             self.sectionTimeEnd = self.sectionTimeStart
         self.setBtnSectionAddState()
 
+    def onScSectionStart(self):
+        self.onBtnSectionStartClicked()
+        # Highlight Button
+        pal = self.btnSectionStart.palette()
+        pal.setColor(QPalette.Button, QColor(Qt.gray))
+        self.btnSectionStart.setAutoFillBackground(True)
+        self.btnSectionStart.setPalette(pal)
+        self.btnSectionStart.update()
+        self.btnSectionStart.timerEvent = self.btnSectionStartResetHighlight
+        self.btnSectionStart.startTimer(100)
+
+    def btnSectionStartResetHighlight(self, event):
+        '''Resets the palette and kills the timer of the btnSectionStart'''
+        self.btnSectionStart.killTimer(event.timerId())
+        self.btnSectionStart.setAutoFillBackground(False)
+        self.btnSectionStart.setPalette(QPalette())
+        self.btnSectionStart.update()
+
     def onBtnSectionEndClicked(self):
         self.sectionTimeEnd = self.playerTimeCurrent
         if self.timeStringToTime(self.sectionTimeEnd) < self.timeStringToTime(self.sectionTimeStart):
             self.sectionTimeStart = self.sectionTimeEnd
         self.setBtnSectionAddState()
+
+    def onScSectionEnd(self):
+        self.onBtnSectionEndClicked()
+        # Highlight Button
+        pal = self.btnSectionEnd.palette()
+        pal.setColor(QPalette.Button, QColor(Qt.gray))
+        self.btnSectionEnd.setAutoFillBackground(True)
+        self.btnSectionEnd.setPalette(pal)
+        self.btnSectionEnd.update()
+        self.btnSectionEnd.timerEvent = self.btnSectionEndResetHighlight
+        self.btnSectionEnd.startTimer(100)
+
+    def btnSectionEndResetHighlight(self, event):
+        '''Resets the palette and kills the timer of the btnSectionEnd'''
+        self.btnSectionEnd.killTimer(event.timerId())
+        self.btnSectionEnd.setAutoFillBackground(False)
+        self.btnSectionEnd.setPalette(QPalette())
+        self.btnSectionEnd.update()
 
     def onBtnSectionAddClicked(self):
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
