@@ -10,13 +10,8 @@ class PlayerSlider(QtWidgets.QSlider):
     def mousePressEvent(self, event):
         self.pressed = True
         if event.button() == QtCore.Qt.LeftButton:
-            print('press on slider')
-            # self.pressed = True
             val = self.pixelPosToRangeValue(event.pos())
             self.setValue(val)
-            # self.sliderMoved.emit(val)
-            # self.sliderReleased.emit()
-            # self.pressed = False
 
     def mouseReleaseEvent(self, event):
         self.pressed = False
