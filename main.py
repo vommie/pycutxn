@@ -168,6 +168,17 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.factor = self.config.getPlayerSliderFactor()
         self.sliderPlayer.setMinimum(0)
         self.sliderPlayer.setMaximum(99 * self.sliderPlayer.factor)
+        self.sliderPlayerstyleTemplate = """
+            QSlider::groove:horizontal {
+                background: ##BG##;
+            }
+            QSlider::handle:horizontal {
+                height: 10px;
+                background: green;
+                margin: 4 -8px;
+            }
+        """
+        self.sliderPlayer.setStyleSheet(self.sliderPlayerstyleTemplate.replace('##BG##', 'white'))
         # Init categories tree
         self.tagsTreeItemPrefix =  ''
         self.tagsTreeSpaceChar = ' '
@@ -202,8 +213,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.scFrameStep.activated.connect(self.onBtnFrameStepClicked)
         self.btnFrameStepBack.clicked.connect(self.onBtnFrameStepBackClicked)
         self.scFrameStepBack.activated.connect(self.onBtnFrameStepBackClicked)
-        # self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
-        # self.scSectionStart.activated.connect(self.onScSectionStart)
+        self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
+        self.scSectionStart.activated.connect(self.onScSectionStart)
         self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
         self.scSectionAdd1.activated.connect(self.onBtnSectionAddClicked)
         self.scSectionAdd2.activated.connect(self.onBtnSectionAddClicked)
@@ -218,7 +229,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
         self.renderFrame.wheelEvent = self.renderFrameWheelEvent
         # Player Progress
-        # self.sliderPlayer.valueChanged.connect(self.onSliderPlayerValueChanged)
         self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
         # Sections
         self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
@@ -555,20 +565,25 @@ class MainUi(QtWidgets.QMainWindow):
             pass
 
     def onPlayerTimePos(self, action, timestamp):
+        if not timestamp: return
         try:
             # Don't set current frame time if video reached it's end (video duration is then shown instead)
             if self.sliderPlayer.value() == self.sliderPlayer.maximum() and timestamp < self.playerTimeCurrentMs: return
             # Set current frame time as H:M:S.ms instead of ms
             self.playerTimeCurrentMs = timestamp
+            print('timestamp: %s' % timestamp)
             timeSplit = str(timestamp).split('.', 1)
+            print('2')
             timeMs = timeSplit[1]
+            print('3')
             if len(timeMs) == 1: timeMs = '%s0' % timeSplit[1]
+            print('4')
             timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
             time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
             self.playerTimeCurrent = time
             self.labelPlayerTimeCurr.setText(time)
         except Exception as e:
-            print(e)
+            print('Error: Cannot set player time to time label. %s' % e)
 
     def onPlayerVolume(self, action, volume):
         self.setVolumeSlider(int(volume), False)
@@ -622,6 +637,12 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFrameStepBackClicked(self):
         self.playerControl.frameBackStep()
         self.btnPause.setText('契')
+
+    def onBtnSectionStartClicked(self):
+        self.setCurrentSectionStart()
+
+    def onScSectionStart(self):
+        self.setCurrentSectionStart()
 
     def onBtnSectionAddClicked(self):
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
@@ -1925,6 +1946,28 @@ class MainUi(QtWidgets.QMainWindow):
         if not forceScrolling:
             if element.hasFocus(): scroll = False
         if scroll: element.verticalScrollBar().setValue(element.verticalScrollBar().maximum())
+
+    def setCurrentSectionStart(self):
+        self.sectionTimeStart = self.playerTimeCurrent
+        self.setCurrentSectionInSlider()
+
+    def setCurrentSectionInSlider(self):
+        '''Sets the current section time range visually in the player slider'''
+
+        gradient = 'qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:1, stop:0 rgba(255, 255, 255, 255), stop:START1 rgba(255, 255, 255, 255), stop:START2 rgba(0, 0, 0, 255), stop:START3 rgba(0, 0, 0, 255), stop:START4 rgba(255, 255, 255, 255), stop:1 rgba(255, 255, 255, 255))'
+
+        startPos = (Functions.timeStrToSeconds(self.sectionTimeStart, True) / Functions.timeStrToSeconds(self.videoProps.get('duration'), True))
+        makerWidth = 0.002
+        borderSize = 0.00001
+
+        gradient = gradient.replace('START1', str(startPos-(makerWidth/2)-borderSize))
+        gradient = gradient.replace('START2', str(startPos-(makerWidth/2)))
+        gradient = gradient.replace('START3', str(startPos+(makerWidth/2)))
+        gradient = gradient.replace('START4', str(startPos+(makerWidth/2)+borderSize))
+
+        self.sliderPlayer.setStyleSheet(self.sliderPlayerstyleTemplate.replace('##BG##', gradient))
+
+        print(self.sliderPlayer.styleSheet())
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:

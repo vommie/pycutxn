@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QStyleOptionSlider, QStyle
 
 class JumpSlider(QtWidgets.QSlider):
     '''
@@ -17,10 +18,10 @@ class JumpSlider(QtWidgets.QSlider):
             self.pressed = False
 
     def pixelPosToRangeValue(self, pos):
-        opt = QtWidgets.QStyleOptionSlider()
+        opt = QStyleOptionSlider()
         self.initStyleOption(opt)
-        gr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderGroove, self)
-        sr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderHandle, self)
+        gr = self.style().subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderGroove, self)
+        sr = self.style().subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderHandle, self)
         if self.orientation() == QtCore.Qt.Horizontal:
             sliderLength = sr.width()
             sliderMin = gr.x()
@@ -31,4 +32,4 @@ class JumpSlider(QtWidgets.QSlider):
             sliderMax = gr.bottom() - sliderLength + 1
         pr = pos - sr.center() + sr.topLeft()
         p = pr.x() if self.orientation() == QtCore.Qt.Horizontal else pr.y()
-        return QtWidgets.QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), p - sliderMin, sliderMax - sliderMin, opt.upsideDown)
+        return QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), p - sliderMin, sliderMax - sliderMin, opt.upsideDown)
