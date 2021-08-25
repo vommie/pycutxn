@@ -228,8 +228,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.scSeekSmallBack.activated.connect(self.onPlayerSeekSmallBack)
         self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
         self.renderFrame.wheelEvent = self.renderFrameWheelEvent
-        # Player Progress
-        self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
         # Sections
         self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
         self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
@@ -308,13 +306,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
         import locale
         locale.setlocale(locale.LC_NUMERIC, 'C')
-        player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal')
+        player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal', keep_open="yes")
         self.playerControl = PlayerControl(player, self.config)
         self.playerControl.volume(self.config.getPlayerVolume())
         self.setMuteState(self.config.getPlayerIsMuted())
         # Register observers
         self.playerControl.player.observe_property('pause', self.onPlayerPause)
-        self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
+        # self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
         self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
         self.playerControl.player.observe_property('volume', self.onPlayerVolume)
 
@@ -344,6 +342,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'Source path: "%s".' % videoFilePath)
         # Get Video Props
         self.videoProps = Functions.getVideoProperties(videoFilePath)
+        self.videoProps['durationMs'] = Functions.HMSToTimestamp(self.videoProps.get('durationHMS'), True)
         self.showWarningForOddVideoSourceSize(self.videoProps)
         self.log(1, 'Video properties: %s' % self.videoProps)
         # Set properties
@@ -556,34 +555,28 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnPause.setText('')
         self.frameStep = False
 
-    def onPlayerPercentPos(self, action, pos):
-        try:
-            if not self.isSliderPlayerPressed():
-                newValue = int(pos * self.sliderPlayer.factor)
-                if newValue <= self.sliderPlayer.maximum(): self.sliderPlayer.setValue(newValue)
-        except:
-            pass
+    # def onPlayerPercentPos(self, action, pos):
+    #     self.log(1, 'onPlayerPercentPos: %s' % pos, 1)
+    #     try:
+    #         if not self.isSliderPlayerPressed():
+    #             newValue = int(pos * self.sliderPlayer.factor)
+    #             if newValue <= self.sliderPlayer.maximum(): self.sliderPlayer.setValue(newValue)
+    #     except:
+    #         pass
 
     def onPlayerTimePos(self, action, timestamp):
+        '''
+        Callback function when the player time position changes. Only processes every 2nd call as mpv fires this callback two times per jump.
+        '''
         if not timestamp: return
         try:
-            # Don't set current frame time if video reached it's end (video duration is then shown instead)
-            if self.sliderPlayer.value() == self.sliderPlayer.maximum() and timestamp < self.playerTimeCurrentMs: return
-            # Set current frame time as H:M:S.ms instead of ms
             self.playerTimeCurrentMs = timestamp
-            print('timestamp: %s' % timestamp)
-            timeSplit = str(timestamp).split('.', 1)
-            print('2')
-            timeMs = timeSplit[1]
-            print('3')
-            if len(timeMs) == 1: timeMs = '%s0' % timeSplit[1]
-            print('4')
-            timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
-            time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
+            time = Functions.timestampToHMS(timestamp)
             self.playerTimeCurrent = time
-            self.labelPlayerTimeCurr.setText(time)
+            self.setLabelPlayerTimeCurr(time)
+            self.setSliderPlayerPosFromTimestamp(timestamp)
         except Exception as e:
-            print('Error: Cannot set player time to time label. %s' % e)
+            self.log(1, 'Error: Cannot set player time to time label. %s' % e, 1)
 
     def onPlayerVolume(self, action, volume):
         self.setVolumeSlider(int(volume), False)
@@ -618,16 +611,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.togglePause()
 
     def onPlayerSeekSmall(self):
-        self.playerControl.seek(2.0)
+        self.sanitizeSeek(2.0)
 
     def onPlayerSeekMedium(self):
-        self.playerControl.seek(10.0)
+        self.sanitizeSeek(10.0)
 
     def onPlayerSeekSmallBack(self):
-        self.playerControl.seek(-2.0)
+        self.sanitizeSeek(-2.0)
 
     def onPlayerSeekMediumBack(self):
-        self.playerControl.seek(-10.0)
+        self.sanitizeSeek(-10.0)
 
     def onBtnFrameStepClicked(self):
         self.frameStep = True
@@ -665,9 +658,6 @@ class MainUi(QtWidgets.QMainWindow):
     def onTableSectionItemDblClicked(self, item):
         timeStr = item.text()
         self.playerControl.seek(timeStr, 'absolute')
-
-    def onSliderPlayerMoved(self, value):
-        self.setPlayerPosBySliderValue(value)
 
     def onLineEditTgtFileNameChanged(self, text):
         self.jobs.getCurrentJob().setTgtFileName(text)
@@ -972,7 +962,7 @@ class MainUi(QtWidgets.QMainWindow):
             pass
         elif line[0] == 'out_time':
             currentSecond = int(
-                Functions.timeStrToSeconds(line[1][:-3], True) * 100)
+                Functions.HMSToTimestamp(line[1][:-3], True) * 100)
             totalSeconds = int(totalSeconds * 100)
             if currentSecond > totalSeconds:
                 currentSecond = totalSeconds
@@ -1388,12 +1378,6 @@ class MainUi(QtWidgets.QMainWindow):
                 self.log(1, 'User wants to overwrite target file.')
             self.overWriteFile = False
         return overwrite
-
-    def setPlayerPosBySliderValue(self, value):
-        '''Sets the player position by the sliderPlayer value'''
-        percentage = value / self.sliderPlayer.factor
-        if value == self.sliderPlayer.maximum(): percentage = 100
-        self.playerControl.seek(percentage, 'absolute-percent')
 
     def setBtnSectionAddState(self):
         if self.sectionTimeStart and self.sectionTimeEnd:
@@ -1905,6 +1889,65 @@ class MainUi(QtWidgets.QMainWindow):
         hash = md5.hexdigest()
         return hash
 
+    def sanitizeSeek(self, value):
+        '''
+        Seeks a relative value in the player and validates it to set start and end correctly
+
+        :param value: Time value like seconds (+2 jumps 2 seconds forward, -2 jumps 2 seconds backwards)
+        '''
+        # print('sanitizeSeek.')
+        # print('value: %s' % value)
+        # print('current time: %s' % self.playerTimeCurrentMs)
+        # print('new value: %s' % str(self.playerTimeCurrentMs+value))
+        if value < 0 and self.playerTimeCurrentMs == 0:
+            self.setLabelPlayerTimeCurr('0:00:00.000')
+            self.setSliderPlayerPosFromTimestamp(0)
+            return
+        elif value < 0 and self.playerTimeCurrentMs+value < 0:
+            self.setLabelPlayerTimeCurr('0:00:00.000')
+            self.setSliderPlayerPosFromTimestamp(0)
+            self.playerControl.seek(0, 'absolute', 'exact')
+        elif value > 0 and self.playerTimeCurrentMs+value > self.videoProps.get('durationMs'):
+            self.sliderPlayer.setValue(self.sliderPlayer.maximum())
+            self.playerControl.seek(self.videoProps.get('durationHMS'), 'absolute', 'exact')
+        else:
+            self.playerControl.seek(value)
+
+    def setSliderPlayerPosFromTimestamp(self, timestamp):
+        # print('Set sliderPlayer: %s' % timestamp)
+        if timestamp == self.sliderPlayer.maximum():
+            self.sliderPlayer.setValue(self.sliderPlayer.maximum())
+        elif timestamp > 0:
+            percentage = timestamp / self.videoProps.get('durationMs')
+            self.sliderPlayer.setValue(int(percentage * self.sliderPlayer.maximum()))
+        elif timestamp == 0:
+            self.sliderPlayer.setValue(0)
+
+    def setLabelPlayerTimeCurr(self, timeHMS):
+        '''Sets the current time label for the player
+
+        :param: HMS.ms string
+        '''
+        self.labelPlayerTimeCurr.setText(timeHMS)
+
+    def setCurrentSectionInSlider(self):
+        '''Sets the current section time range visually in the player slider'''
+
+        gradient = 'qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:1, stop:0 rgba(255, 255, 255, 255), stop:START1 rgba(255, 255, 255, 255), stop:START2 rgba(0, 0, 0, 255), stop:START3 rgba(0, 0, 0, 255), stop:START4 rgba(255, 255, 255, 255), stop:1 rgba(255, 255, 255, 255))'
+
+        startPos = (Functions.HMSToTimestamp(self.sectionTimeStart, True) / self.videoProps.get('durationMs'))
+        makerWidth = 0.002
+        borderSize = 0.00001
+
+        gradient = gradient.replace('START1', str(startPos-(makerWidth/2)-borderSize))
+        gradient = gradient.replace('START2', str(startPos-(makerWidth/2)))
+        gradient = gradient.replace('START3', str(startPos+(makerWidth/2)))
+        gradient = gradient.replace('START4', str(startPos+(makerWidth/2)+borderSize))
+
+        self.sliderPlayer.setStyleSheet(self.sliderPlayerstyleTemplate.replace('##BG##', gradient))
+
+        print(self.sliderPlayer.styleSheet())
+
     def log(self, id, line, msgType=0, timestamp=True):
         '''
         Adds a line to a log
@@ -1950,24 +1993,6 @@ class MainUi(QtWidgets.QMainWindow):
     def setCurrentSectionStart(self):
         self.sectionTimeStart = self.playerTimeCurrent
         self.setCurrentSectionInSlider()
-
-    def setCurrentSectionInSlider(self):
-        '''Sets the current section time range visually in the player slider'''
-
-        gradient = 'qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:1, stop:0 rgba(255, 255, 255, 255), stop:START1 rgba(255, 255, 255, 255), stop:START2 rgba(0, 0, 0, 255), stop:START3 rgba(0, 0, 0, 255), stop:START4 rgba(255, 255, 255, 255), stop:1 rgba(255, 255, 255, 255))'
-
-        startPos = (Functions.timeStrToSeconds(self.sectionTimeStart, True) / Functions.timeStrToSeconds(self.videoProps.get('duration'), True))
-        makerWidth = 0.002
-        borderSize = 0.00001
-
-        gradient = gradient.replace('START1', str(startPos-(makerWidth/2)-borderSize))
-        gradient = gradient.replace('START2', str(startPos-(makerWidth/2)))
-        gradient = gradient.replace('START3', str(startPos+(makerWidth/2)))
-        gradient = gradient.replace('START4', str(startPos+(makerWidth/2)+borderSize))
-
-        self.sliderPlayer.setStyleSheet(self.sliderPlayerstyleTemplate.replace('##BG##', gradient))
-
-        print(self.sliderPlayer.styleSheet())
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:

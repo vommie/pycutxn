@@ -109,8 +109,8 @@ class FFmpegThread(QThread):
                     )
                     mapping.append(audio)
                     # Calc total seconds (use in progress bar)
-                    fromSecond = Functions.timeStrToSeconds(section[0], False)
-                    toSecond = Functions.timeStrToSeconds(section[1], False)
+                    fromSecond = Functions.HMSToTimestamp(section[0], False)
+                    toSecond = Functions.HMSToTimestamp(section[1], False)
                     totalSeconds += (toSecond - fromSecond)
                 # Concatenate sections
                 joined = ffmpeg.concat(*mapping, v=1, a=1).node

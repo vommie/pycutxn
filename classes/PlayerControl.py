@@ -5,7 +5,6 @@ class PlayerControl():
     def __init__(self, player, config):
         self.config = config
         self.player = player
-        player.loop_file = 'inf'
 
     def play(self, filepath):
         self.player.play(filepath)

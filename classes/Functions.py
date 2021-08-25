@@ -47,11 +47,22 @@ class Functions:
 
     # H:M:S.f to seconds (int)
     @staticmethod
-    def timeStrToSeconds(timeStr, asFloat=False):
+    def HMSToTimestamp(timeStr, asFloat=False):
+        '''Converts a timestamp like 0:00:12.323 to a timestamp like 12.3234'''
         h, m, s = timeStr.split(':')
         s, ms = s.split('.')
         if asFloat: return float(h) * 3600 + float(m) * 60 + float(s) + (float(ms) / 1000)
         else: return float(h) * 3600 + float(m) * 60 + float(s)
+
+    @staticmethod
+    def timestampToHMS(timestamp):
+        '''Converts a timestamp like 12.3234 to HMLS like 0:00:12.323'''
+        timeSplit = str(timestamp).split('.', 1)
+        timeMs = timeSplit[1]
+        if len(timeMs) == 1: timeMs = '%s0' % timeSplit[1]
+        timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
+        time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
+        return time
 
     # Get the system opener name for the current OS / system
     @staticmethod
@@ -89,7 +100,7 @@ class Functions:
                     float(duration)
                     duration = '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(duration))), duration[-6:][:3]) # ms to h:m:s.ms
                 except: pass
-            props.update({'duration': duration})
+            props.update({'durationHMS': duration})
         except:
             props = {}
         return props

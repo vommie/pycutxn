@@ -58,7 +58,7 @@
            </font>
           </property>
           <property name="text">
-           <string>0:00:00.00</string>
+           <string>0:00:00.000</string>
           </property>
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
