@@ -297,7 +297,6 @@ class MainUi(QtWidgets.QMainWindow):
         import locale
         locale.setlocale(locale.LC_NUMERIC, 'C')
         player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal')
-        # player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='debug')
         self.playerControl = PlayerControl(player, self.config)
         self.playerControl.volume(self.config.getPlayerVolume())
         self.setMuteState(self.config.getPlayerIsMuted())
