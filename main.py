@@ -25,8 +25,9 @@ from classes.Config import Config
 from classes.Jobs import Jobs
 from classes.FFmpegThread import FFmpegThread
 from classes.DB import DB
+from classes.JumpSlider import JumpSlider
 
-from PyQt5 import QtWidgets, uic, QtGui
+from PyQt5 import uic, QtGui, QtWidgets
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
@@ -80,6 +81,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.0'
         self.playerTimeCurrent = self.timeFormat
+        self.playerTimeCurrentMs = 0
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
         self.resetVideoProps()
@@ -161,9 +163,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
         # Add custom slider to control the player time position
-        self.sliderPlayerIsPressed = False
+        self.sliderPlayer = JumpSlider(Qt.Horizontal)
+        self.framePlayerProgress.insertWidget(0, self.sliderPlayer)
+        self.sliderPlayer.factor = self.config.getPlayerSliderFactor()
         self.sliderPlayer.setMinimum(0)
-        self.sliderPlayer.setMaximum(99 * self.config.getPlayerSliderFactor())
+        self.sliderPlayer.setMaximum(99 * self.sliderPlayer.factor)
         # Init categories tree
         self.tagsTreeItemPrefix =  ''
         self.tagsTreeSpaceChar = ' '
@@ -198,13 +202,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.scFrameStep.activated.connect(self.onBtnFrameStepClicked)
         self.btnFrameStepBack.clicked.connect(self.onBtnFrameStepBackClicked)
         self.scFrameStepBack.activated.connect(self.onBtnFrameStepBackClicked)
-        self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
-        self.scSectionStart.activated.connect(self.onScSectionStart)
+        # self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
+        # self.scSectionStart.activated.connect(self.onScSectionStart)
         self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
         self.scSectionAdd1.activated.connect(self.onBtnSectionAddClicked)
         self.scSectionAdd2.activated.connect(self.onBtnSectionAddClicked)
-        self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
-        self.scSectionEnd.activated.connect(self.onScSectionEnd)
+        # self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
+        # self.scSectionEnd.activated.connect(self.onScSectionEnd)
         self.btnMute.clicked.connect(self.onBtnMuteClicked)
         self.scMute.activated.connect(self.onBtnMuteClicked)
         self.sliderVolume.valueChanged.connect(self.onSliderVolumeChange)
@@ -214,10 +218,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
         self.renderFrame.wheelEvent = self.renderFrameWheelEvent
         # Player Progress
-        self.sliderPlayer.valueChanged.connect(self.onSliderPlayerValueChanged)
+        # self.sliderPlayer.valueChanged.connect(self.onSliderPlayerValueChanged)
         self.sliderPlayer.sliderMoved.connect(self.onSliderPlayerMoved)
-        self.sliderPlayer.sliderPressed.connect(self.onSliderPlayerPressed)
-        self.sliderPlayer.sliderReleased.connect(self.onSliderPlayerReleased)
         # Sections
         self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
         self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
@@ -303,7 +305,6 @@ class MainUi(QtWidgets.QMainWindow):
         # Register observers
         self.playerControl.player.observe_property('pause', self.onPlayerPause)
         self.playerControl.player.observe_property('percent-pos', self.onPlayerPercentPos)
-        self.playerControl.player.observe_property('duration', self.onPlayerDuration)
         self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
         self.playerControl.player.observe_property('volume', self.onPlayerVolume)
 
@@ -342,12 +343,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadFilterResize(job)
         self.loadFilterDeshake(job)
         self.loadFilterPositions(job)
-        self.loadSections(job)
         self.loadTargetFileName(job)
         self.loadTargetFileCount(job)
         self.playerTimeCurrent = self.timeFormat
-        self.sectionTimeStart = self.timeFormat
-        self.sectionTimeEnd = self.videoProps['duration']
         self.setFilterBtnStates()
         # Load video file
         if self.videoProps:
@@ -433,14 +431,10 @@ class MainUi(QtWidgets.QMainWindow):
         currentJob.setRenderSettingContainer(self.config.getRenderContainer())
         if self.isSameRenderSrcTgt(currentJob, False): return False
         if not self.overwriteTgtFileIfExists(currentJob): return False
-        if not currentJob.getSections():
-            currentJob.addSection(self.sectionTimeStart, self.sectionTimeEnd)
-            self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
         job = self.addCurrentJobToQueue()
         if not job: return False
         if not self.saveCurrentTagsAndRating(): return False
         if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
-        self.clearSections()
         self.log(1, 'Session saved as new job in queue.')
 
     def addCurrentJobToQueue(self):
@@ -491,7 +485,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def isSectionsMissing(self, job, isTask=False):
         '''
-        Checks if the source and target file are not the same.
+        Checks if the job have sections
 
         :param job: The job to check
         :param isTask: If True, there will be no message box in the frontend (use it for the queue)
@@ -554,28 +548,27 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onPlayerPercentPos(self, action, pos):
         try:
-            if not self.sliderPlayerIsPressed:
-                self.sliderPlayer.setValue(int(pos * self.config.getPlayerSliderFactor()))
+            if not self.isSliderPlayerPressed():
+                newValue = int(pos * self.sliderPlayer.factor)
+                if newValue <= self.sliderPlayer.maximum(): self.sliderPlayer.setValue(newValue)
         except:
             pass
 
     def onPlayerTimePos(self, action, timestamp):
-        # Convert timestamp format s.ms to h:m:s.ms
         try:
+            # Don't set current frame time if video reached it's end (video duration is then shown instead)
+            if self.sliderPlayer.value() == self.sliderPlayer.maximum() and timestamp < self.playerTimeCurrentMs: return
+            # Set current frame time as H:M:S.ms instead of ms
+            self.playerTimeCurrentMs = timestamp
             timeSplit = str(timestamp).split('.', 1)
             timeMs = timeSplit[1]
-            if len(timeMs) == 1:
-                timeMs = '%s0' % timeSplit[1]
+            if len(timeMs) == 1: timeMs = '%s0' % timeSplit[1]
             timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
-            time = "%s.%s" % (Functions.convertSecondsToHMFS(
-                int(timeSplit[0])), timeMs)
+            time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
             self.playerTimeCurrent = time
             self.labelPlayerTimeCurr.setText(time)
-        except:
-            pass
-
-    def onPlayerDuration(self, action, duration):
-        self.duration = duration
+        except Exception as e:
+            print(e)
 
     def onPlayerVolume(self, action, volume):
         self.setVolumeSlider(int(volume), False)
@@ -630,54 +623,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.frameBackStep()
         self.btnPause.setText('契')
 
-    def onBtnSectionStartClicked(self):
-        self.sectionTimeStart = self.playerTimeCurrent
-        if self.timeStringToTime(self.sectionTimeStart) > self.timeStringToTime(self.sectionTimeEnd):
-            self.sectionTimeEnd = self.sectionTimeStart
-        self.setBtnSectionAddState()
-
-    def onScSectionStart(self):
-        self.onBtnSectionStartClicked()
-        # Highlight Button
-        pal = self.btnSectionStart.palette()
-        pal.setColor(QPalette.Button, QColor(Qt.gray))
-        self.btnSectionStart.setAutoFillBackground(True)
-        self.btnSectionStart.setPalette(pal)
-        self.btnSectionStart.update()
-        self.btnSectionStart.timerEvent = self.btnSectionStartResetHighlight
-        self.btnSectionStart.startTimer(100)
-
-    def btnSectionStartResetHighlight(self, event):
-        '''Resets the palette and kills the timer of the btnSectionStart'''
-        self.btnSectionStart.killTimer(event.timerId())
-        self.btnSectionStart.setAutoFillBackground(False)
-        self.btnSectionStart.setPalette(QPalette())
-        self.btnSectionStart.update()
-
-    def onBtnSectionEndClicked(self):
-        self.sectionTimeEnd = self.playerTimeCurrent
-        if self.timeStringToTime(self.sectionTimeEnd) < self.timeStringToTime(self.sectionTimeStart):
-            self.sectionTimeStart = self.sectionTimeEnd
-        self.setBtnSectionAddState()
-
-    def onScSectionEnd(self):
-        self.onBtnSectionEndClicked()
-        # Highlight Button
-        pal = self.btnSectionEnd.palette()
-        pal.setColor(QPalette.Button, QColor(Qt.gray))
-        self.btnSectionEnd.setAutoFillBackground(True)
-        self.btnSectionEnd.setPalette(pal)
-        self.btnSectionEnd.update()
-        self.btnSectionEnd.timerEvent = self.btnSectionEndResetHighlight
-        self.btnSectionEnd.startTimer(100)
-
-    def btnSectionEndResetHighlight(self, event):
-        '''Resets the palette and kills the timer of the btnSectionEnd'''
-        self.btnSectionEnd.killTimer(event.timerId())
-        self.btnSectionEnd.setAutoFillBackground(False)
-        self.btnSectionEnd.setPalette(QPalette())
-        self.btnSectionEnd.update()
-
     def onBtnSectionAddClicked(self):
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
         self.jobs.getCurrentJob().addSection(self.sectionTimeStart, self.sectionTimeEnd)
@@ -701,20 +646,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.seek(timeStr, 'absolute')
 
     def onSliderPlayerMoved(self, value):
-        self.sliderPlayerIsPressed = True
-        self.setPlayerPosByPlayerSlider()
-
-    def onSliderPlayerPressed(self):
-        self.sliderPlayerIsPressed = True
-
-    def onSliderPlayerReleased(self):
-        self.sliderPlayerIsPressed = False
-        self.setPlayerPosByPlayerSlider()
-
-    def onSliderPlayerValueChanged(self, value):
-        # Set player time to absolute end if slider hits maximum
-        if value == 99 * self.config.getPlayerSliderFactor():
-            self.playerControl.seek(self.videoProps.get('duration'), 'absolute')
+        self.setPlayerPosBySliderValue(value)
 
     def onLineEditTgtFileNameChanged(self, text):
         self.jobs.getCurrentJob().setTgtFileName(text)
@@ -1436,11 +1368,11 @@ class MainUi(QtWidgets.QMainWindow):
             self.overWriteFile = False
         return overwrite
 
-    def setPlayerPosByPlayerSlider(self):
-        value = self.sliderPlayer.value()
-        percentage = value / self.config.getPlayerSliderFactor()
-        # Set player position by percentage only if slider is not at maximum. If it hits maximum, player pos gets set by value change event of the slider.
-        if value != 99 * self.config.getPlayerSliderFactor(): self.playerControl.seek(percentage, 'absolute-percent')
+    def setPlayerPosBySliderValue(self, value):
+        '''Sets the player position by the sliderPlayer value'''
+        percentage = value / self.sliderPlayer.factor
+        if value == self.sliderPlayer.maximum(): percentage = 100
+        self.playerControl.seek(percentage, 'absolute-percent')
 
     def setBtnSectionAddState(self):
         if self.sectionTimeStart and self.sectionTimeEnd:
@@ -1972,6 +1904,17 @@ class MainUi(QtWidgets.QMainWindow):
         textEdit.insertHtml(line)
         self.scrollWidgetToEnd(textEdit)
 
+    def isSliderPlayerPressed(self):
+        '''
+        Checks if the player slider is currently pressed by the user mouse
+
+        :return: True if pressed, else False
+        '''
+        sliderPressed = False
+        try: sliderPressed = self.sliderPlayer.pressed
+        except: pass
+        return sliderPressed
+
     def scrollWidgetToEnd(self, element, forceScrolling=False):
         '''
         Scrolls a widget to the end.
@@ -1991,35 +1934,6 @@ class MainUi(QtWidgets.QMainWindow):
     def closeApp(self):
         self.config.setAppGeometry(self.saveGeometry())
         self.config.setAppState(self.saveState())
-
-# Custom slider class lets user clicks on position
-class Slider(QtWidgets.QSlider):
-
-    def mousePressEvent(self, event):
-        super(Slider, self).mousePressEvent(event)
-        if event.button() == Qt.LeftButton:
-            val = self.pixelPosToRangeValue(event.pos())
-            self.setValue(val)
-            self.sliderMoved.emit(val)
-            self.sliderReleased.emit()
-
-    def pixelPosToRangeValue(self, pos):
-        opt = QtWidgets.QStyleOptionSlider()
-        self.initStyleOption(opt)
-        gr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderGroove, self)
-        sr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderHandle, self)
-
-        if self.orientation() == Qt.Horizontal:
-            sliderLength = sr.width()
-            sliderMin = gr.x()
-            sliderMax = gr.right() - sliderLength + 1
-        else:
-            sliderLength = sr.height()
-            sliderMin = gr.y()
-            sliderMax = gr.bottom() - sliderLength + 1
-        pr = pos - sr.center() + sr.topLeft()
-        p = pr.x() if self.orientation() == Qt.Horizontal else pr.y()
-        return QtWidgets.QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), p - sliderMin, sliderMax - sliderMin, opt.upsideDown)
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()

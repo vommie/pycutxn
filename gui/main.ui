@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1248</width>
-    <height>858</height>
+    <width>1069</width>
+    <height>729</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -38,25 +38,6 @@
         <property name="sizeConstraint">
          <enum>QLayout::SetMaximumSize</enum>
         </property>
-        <item>
-         <widget class="QSlider" name="sliderPlayer">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::TabFocus</enum>
-          </property>
-          <property name="contextMenuPolicy">
-           <enum>Qt::NoContextMenu</enum>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QLabel" name="labelPlayerTimeCurr">
           <property name="sizePolicy">
@@ -362,7 +343,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1248</width>
+     <width>1069</width>
      <height>30</height>
     </rect>
    </property>
