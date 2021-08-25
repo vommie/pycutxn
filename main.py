@@ -25,7 +25,7 @@ from classes.Config import Config
 from classes.Jobs import Jobs
 from classes.FFmpegThread import FFmpegThread
 from classes.DB import DB
-from classes.JumpSlider import JumpSlider
+from classes.PlayerSlider import PlayerSlider
 
 from PyQt5 import uic, QtGui, QtWidgets
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
@@ -163,7 +163,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
         self.renderFrame.setAttribute(Qt.WA_NativeWindow)
         # Add custom slider to control the player time position
-        self.sliderPlayer = JumpSlider(Qt.Horizontal)
+        self.sliderPlayer = PlayerSlider(Qt.Horizontal)
         self.framePlayerProgress.insertWidget(0, self.sliderPlayer)
         self.sliderPlayer.factor = self.config.getPlayerSliderFactor()
         self.sliderPlayer.setMinimum(0)
@@ -228,6 +228,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.scSeekSmallBack.activated.connect(self.onPlayerSeekSmallBack)
         self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
         self.renderFrame.wheelEvent = self.renderFrameWheelEvent
+        self.sliderPlayer.valueChanged.connect(self.onSliderPlayerValueChanged)
         # Sections
         self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
         self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
@@ -555,15 +556,6 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnPause.setText('')
         self.frameStep = False
 
-    # def onPlayerPercentPos(self, action, pos):
-    #     self.log(1, 'onPlayerPercentPos: %s' % pos, 1)
-    #     try:
-    #         if not self.isSliderPlayerPressed():
-    #             newValue = int(pos * self.sliderPlayer.factor)
-    #             if newValue <= self.sliderPlayer.maximum(): self.sliderPlayer.setValue(newValue)
-    #     except:
-    #         pass
-
     def onPlayerTimePos(self, action, timestamp):
         '''
         Callback function when the player time position changes. Only processes every 2nd call as mpv fires this callback two times per jump.
@@ -574,7 +566,7 @@ class MainUi(QtWidgets.QMainWindow):
             time = Functions.timestampToHMS(timestamp)
             self.playerTimeCurrent = time
             self.setLabelPlayerTimeCurr(time)
-            self.setSliderPlayerPosFromTimestamp(timestamp)
+            if not self.isSliderPlayerPressed(): self.setSliderPlayerPosFromTimestamp(timestamp)
         except Exception as e:
             self.log(1, 'Error: Cannot set player time to time label. %s' % e, 1)
 
@@ -770,6 +762,9 @@ class MainUi(QtWidgets.QMainWindow):
             self.setVolumeSlider(+5)
         elif event.angleDelta().y() < 0:
             self.setVolumeSlider(-5)
+
+    def onSliderPlayerValueChanged(self, value):
+        if self.isSliderPlayerPressed(): self.seekFromPlayerSlider(value)
 
     def onTableQueueCurrCellChanged(self, row, col):
         self.setQueueBtnStates()
@@ -1895,10 +1890,6 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param value: Time value like seconds (+2 jumps 2 seconds forward, -2 jumps 2 seconds backwards)
         '''
-        # print('sanitizeSeek.')
-        # print('value: %s' % value)
-        # print('current time: %s' % self.playerTimeCurrentMs)
-        # print('new value: %s' % str(self.playerTimeCurrentMs+value))
         if value < 0 and self.playerTimeCurrentMs == 0:
             self.setLabelPlayerTimeCurr('0:00:00.000')
             self.setSliderPlayerPosFromTimestamp(0)
@@ -1913,14 +1904,22 @@ class MainUi(QtWidgets.QMainWindow):
         else:
             self.playerControl.seek(value)
 
+    def seekFromPlayerSlider(self, value):
+        percentage = (value / self.sliderPlayer.maximum()) * 100
+        self.playerControl.seek(percentage, 'absolute-percent')
+
     def setSliderPlayerPosFromTimestamp(self, timestamp):
-        # print('Set sliderPlayer: %s' % timestamp)
-        if timestamp == self.sliderPlayer.maximum():
+        '''
+        Sets the player slider to a position calculated based on a timestamp
+
+        :param timestamp: Timestimp in ms like 123122.304
+        '''
+        if timestamp >= self.sliderPlayer.maximum():
             self.sliderPlayer.setValue(self.sliderPlayer.maximum())
         elif timestamp > 0:
             percentage = timestamp / self.videoProps.get('durationMs')
             self.sliderPlayer.setValue(int(percentage * self.sliderPlayer.maximum()))
-        elif timestamp == 0:
+        elif timestamp <= 0:
             self.sliderPlayer.setValue(0)
 
     def setLabelPlayerTimeCurr(self, timeHMS):

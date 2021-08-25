@@ -1,21 +1,37 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QStyleOptionSlider, QStyle
 
-class JumpSlider(QtWidgets.QSlider):
+class PlayerSlider(QtWidgets.QSlider):
     '''
     Slider which jumps to position if the it gets clicked somewhere else than the handle
     See: https://stackoverflow.com/questions/52689047/moving-qslider-to-mouse-click-position
     '''
 
     def mousePressEvent(self, event):
-        super(JumpSlider, self).mousePressEvent(event)
+        self.pressed = True
         if event.button() == QtCore.Qt.LeftButton:
-            self.pressed = True
+            print('press on slider')
+            # self.pressed = True
             val = self.pixelPosToRangeValue(event.pos())
             self.setValue(val)
-            self.sliderMoved.emit(val)
-            self.sliderReleased.emit()
-            self.pressed = False
+            # self.sliderMoved.emit(val)
+            # self.sliderReleased.emit()
+            # self.pressed = False
+
+    def mouseReleaseEvent(self, event):
+        self.pressed = False
+
+    def mouseMoveEvent(self, event):
+        self.pressed = True
+        if event.buttons() == QtCore.Qt.LeftButton:
+            val = self.pixelPosToRangeValue(event.pos())
+            self.setValue(val)
+
+    def wheelEvent(self, event):
+        return
+
+    def dragMoveEvent(self, event):
+        return
 
     def pixelPosToRangeValue(self, pos):
         opt = QStyleOptionSlider()
