@@ -30,8 +30,11 @@
           <layout class="QVBoxLayout" name="layoutGeneral">
            <item>
             <widget class="QCheckBox" name="checkSetAutoSection">
+             <property name="toolTip">
+              <string>When the session gets saved and there is no section set, there will be one created. If no section points were made by the user, the whole video gets set as a section. If the user made section points, those will be used as a section.</string>
+             </property>
              <property name="text">
-              <string>Set whole video as section if no section is set and session gets saved</string>
+              <string>Automatically set a section on save if no sections were added by the user</string>
              </property>
             </widget>
            </item>

@@ -86,8 +86,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
         self.resetVideoProps()
         self.overwriteFile = False # File path to a target file the current session would overwrite on save
-        self.sectionTimeStart = 0
-        self.sectionTimeEnd = 0
+        self.sectionTimeStart = self.timeFormat
+        self.sectionTimeEnd = self.timeFormat
         # Filters
         self.filterAtts = {
             'crop': {
@@ -446,8 +446,6 @@ class MainUi(QtWidgets.QMainWindow):
         currentJob.setRenderSettingAudioCodec(self.config.getRenderAudioCodec())
         currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
         currentJob.setRenderSettingContainer(self.config.getRenderContainer())
-        self.log(1, self.videoProps.get('duration'), 1)
-        if not currentJob.getSections(): currentJob.addSection(self.timeFormat, self.videoProps.get('durationHMS'))
         if self.isSameRenderSrcTgt(currentJob, False): return False
         if not self.overwriteTgtFileIfExists(currentJob): return False
         job = self.addCurrentJobToQueue()
@@ -461,6 +459,8 @@ class MainUi(QtWidgets.QMainWindow):
         job = False
         try:
             id, job = self.jobs.saveCurrentJob()
+            if not job.getSections() and self.config.getAppSetAutoSection():
+                if not self.autoCreateSectionForJob(job): return False
             state = job.getState()
             iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
             job.setPosition(iRow)
@@ -470,6 +470,21 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, msg, 1)
             self.showMsgBox(msg, detailText=str(e), icon='critical')
         return job
+
+    def autoCreateSectionForJob(self, job):
+        if self.sectionTimeStart == self.timeFormat and self.sectionTimeEnd == self.timeFormat:
+            self.log(1, 'No section were added. Auto create whole video duration as section.')
+            job.addSection(self.timeFormat, self.videoProps.get('durationHMS'))
+            return True
+        elif self.sectionTimeStart == self.sectionTimeEnd:
+            msg = 'Error: No sections were added and section markers have same time position.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, infoText='Please set a valid section range.', detailText='Current section start: %s\nCurrent section End: %s' % (self.sectionTimeStart, self.sectionTimeEnd), icon='critical')
+            return False
+        else:
+            self.log(1, 'No section were added. Auto create section from %s to %s.' % (self.sectionTimeStart, self.sectionTimeEnd))
+            job.addSection(self.sectionTimeStart, self.sectionTimeEnd)
+            return True
 
     def runNextWaitJob(self):
         self.log(1, 'Running next job ...')
@@ -1419,7 +1434,6 @@ class MainUi(QtWidgets.QMainWindow):
         '''Clears the sections table (without resetting the current section timestamps)'''
         self.setSectionTimeStart(self.timeFormat)
         self.setSectionTimeEnd(self.timeFormat)
-        self.setCurrentSectionInSlider()
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
 
@@ -1774,7 +1788,6 @@ class MainUi(QtWidgets.QMainWindow):
             if sections[0]:
                 self.setSectionTimeStart(sections[0][0])
                 self.setSectionTimeEnd(sections[0][1])
-                self.setCurrentSectionInSlider()
             for section in sections:
                 self.sectionAddRow(section[0], section[1])
 
@@ -2044,13 +2057,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.setSectionTimeStart(self.playerTimeCurrent)
         if self.timeStringToTime(self.sectionTimeStart) > self.timeStringToTime(self.sectionTimeEnd):
             self.setSectionTimeEnd(self.sectionTimeStart)
-        self.setCurrentSectionInSlider()
 
     def setCurrentSectionEnd(self):
         self.setSectionTimeEnd(self.playerTimeCurrent)
         if self.timeStringToTime(self.sectionTimeEnd) < self.timeStringToTime(self.sectionTimeStart):
             self.setSectionTimeStart(self.sectionTimeEnd)
-        self.setCurrentSectionInSlider()
 
     def setSectionTimeStart(self, value):
         '''
@@ -2060,6 +2071,7 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         self.sectionTimeStart = value
         self.btnCurrentSectionStart.setText(value)
+        self.setCurrentSectionInSlider()
 
     def setSectionTimeEnd(self, value):
         '''
@@ -2069,6 +2081,7 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         self.sectionTimeEnd = value
         self.btnCurrentSectionEnd.setText(value)
+        self.setCurrentSectionInSlider()
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:
