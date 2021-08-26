@@ -12,6 +12,8 @@ class SettingsUI(QtWidgets.QDialog):
         self.initGuiEvents()
 
     def loadConfig(self):
+        # General
+        self.checkSetAutoSection.setChecked(self.parent.config.getAppSetAutoSection())
         # Player
         self.checkBoxPlayerAutoPlay.setChecked(self.parent.config.getPlayerAutoPlay())
         # Database
@@ -32,6 +34,8 @@ class SettingsUI(QtWidgets.QDialog):
         self.pushButtonDBPath.clicked.connect(self.onBtnDBPath)
 
     def onAccepted(self):
+        # General
+        self.parent.config.setAppSetAutoSection(self.checkSetAutoSection.isChecked())
         # Player
         self.parent.config.setPlayerAutoPlay(self.checkBoxPlayerAutoPlay.isChecked())
         # Database

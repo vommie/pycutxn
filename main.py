@@ -239,6 +239,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnSectionDelete.clicked.connect(self.onBtnSectionDeleteClicked)
         self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
         self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
+        self.btnCurrentSectionStart.clicked.connect(self.onBtnCurrentSectionStart)
+        self.btnCurrentSectionEnd.clicked.connect(self.onBtnCurrentSectionEnd)
         # Job Finalization
         self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
         self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
@@ -444,6 +446,8 @@ class MainUi(QtWidgets.QMainWindow):
         currentJob.setRenderSettingAudioCodec(self.config.getRenderAudioCodec())
         currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
         currentJob.setRenderSettingContainer(self.config.getRenderContainer())
+        self.log(1, self.videoProps.get('duration'), 1)
+        if not currentJob.getSections(): currentJob.addSection(self.timeFormat, self.videoProps.get('durationHMS'))
         if self.isSameRenderSrcTgt(currentJob, False): return False
         if not self.overwriteTgtFileIfExists(currentJob): return False
         job = self.addCurrentJobToQueue()
@@ -654,6 +658,12 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnSectionDownClicked(self):
         move = Functions.moveTableRow(self.tableSections, 1)
         self.jobs.getCurrentJob().moveSection(move.get('from'), move.get('to'))
+
+    def onBtnCurrentSectionStart(self):
+        if self.sectionTimeStart != self.playerTimeCurrent: self.playerControl.seek(self.sectionTimeStart, 'absolute')
+
+    def onBtnCurrentSectionEnd(self):
+        if self.sectionTimeEnd != self.playerTimeCurrent: self.playerControl.seek(self.sectionTimeEnd, 'absolute')
 
     def onTableSectionCurrCellChanged(self):
         self.setSectionBtnStates()
@@ -1407,8 +1417,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def clearSections(self):
         '''Clears the sections table (without resetting the current section timestamps)'''
-        self.sectionTimeStart = self.timeFormat
-        self.sectionTimeEnd = self.timeFormat
+        self.setSectionTimeStart(self.timeFormat)
+        self.setSectionTimeEnd(self.timeFormat)
         self.setCurrentSectionInSlider()
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
@@ -1762,8 +1772,8 @@ class MainUi(QtWidgets.QMainWindow):
         sections = job.getSections()
         if sections:
             if sections[0]:
-                self.sectionTimeStart = sections[0][0]
-                self.sectionTimeEnd = sections[0][1]
+                self.setSectionTimeStart(sections[0][0])
+                self.setSectionTimeEnd(sections[0][1])
                 self.setCurrentSectionInSlider()
             for section in sections:
                 self.sectionAddRow(section[0], section[1])
@@ -2031,16 +2041,34 @@ class MainUi(QtWidgets.QMainWindow):
         if scroll: element.verticalScrollBar().setValue(element.verticalScrollBar().maximum())
 
     def setCurrentSectionStart(self):
-        self.sectionTimeStart = self.playerTimeCurrent
+        self.setSectionTimeStart(self.playerTimeCurrent)
         if self.timeStringToTime(self.sectionTimeStart) > self.timeStringToTime(self.sectionTimeEnd):
-            self.sectionTimeEnd = self.sectionTimeStart
+            self.setSectionTimeEnd(self.sectionTimeStart)
         self.setCurrentSectionInSlider()
 
     def setCurrentSectionEnd(self):
-        self.sectionTimeEnd = self.playerTimeCurrent
+        self.setSectionTimeEnd(self.playerTimeCurrent)
         if self.timeStringToTime(self.sectionTimeEnd) < self.timeStringToTime(self.sectionTimeStart):
-            self.sectionTimeStart = self.sectionTimeEnd
+            self.setSectionTimeStart(self.sectionTimeEnd)
         self.setCurrentSectionInSlider()
+
+    def setSectionTimeStart(self, value):
+        '''
+        Setter for the current section starting time
+
+        :param value: HMS time string
+        '''
+        self.sectionTimeStart = value
+        self.btnCurrentSectionStart.setText(value)
+
+    def setSectionTimeEnd(self, value):
+        '''
+        Setter for the current section ending time
+
+        :param value: HMS time string
+        '''
+        self.sectionTimeEnd = value
+        self.btnCurrentSectionEnd.setText(value)
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:

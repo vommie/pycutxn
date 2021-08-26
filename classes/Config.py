@@ -61,6 +61,9 @@ class Config:
     def getAppWarnFileHashExistsInDB(self) -> bool:
         return self.settings.value('app/warnFileHashExistsInDB', True, type=bool)
 
+    def getAppSetAutoSection(self) -> bool:
+        return self.settings.value('app/autoSection', True, type=bool)
+
     def getDialogLogGeometry(self):
         return self.settings.value('dialogLog/geometry')
 
@@ -137,6 +140,9 @@ class Config:
 
     def setAppWarnFileHashExistsInDB(self, state : bool) -> None:
         self.settings.setValue('app/warnFileHashExistsInDB', state)
+
+    def setAppSetAutoSection(self, state : bool) -> None:
+        self.settings.setValue('app/autoSection', state)
 
     def setDialogLogGeometry(self, geometry) -> None:
         self.settings.setValue('dialogLog/geometry', geometry)

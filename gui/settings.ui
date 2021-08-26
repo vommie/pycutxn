@@ -29,6 +29,13 @@
          <item>
           <layout class="QVBoxLayout" name="layoutGeneral">
            <item>
+            <widget class="QCheckBox" name="checkSetAutoSection">
+             <property name="text">
+              <string>Set whole video as section if no section is set and session gets saved</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <spacer name="verticalSpacer_4">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
