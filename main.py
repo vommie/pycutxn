@@ -79,13 +79,15 @@ class MainUi(QtWidgets.QMainWindow):
         self.lastTagIDs = []
         self.lastRating = 0
         self.logUi = LogUi(self)
-        self.timeFormat = '0:00:0.0'
+        self.timeFormat = '0:00:0.000'
         self.playerTimeCurrent = self.timeFormat
         self.playerTimeCurrentMs = 0
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
         self.resetVideoProps()
         self.overwriteFile = False # File path to a target file the current session would overwrite on save
+        self.sectionTimeStart = 0
+        self.sectionTimeEnd = 0
         # Filters
         self.filterAtts = {
             'crop': {
@@ -356,12 +358,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.loadTargetFileName(job)
         self.loadTargetFileCount(job)
         self.playerTimeCurrent = self.timeFormat
+        self.setSliderPlayerPosFromTimestamp(0)
+        self.setLabelPlayerTimeCurr(self.timeFormat)
         self.setFilterBtnStates()
-        self.sectionTimeStart = self.timeFormat
-        self.sectionTimeEnd = self.timeFormat
-        # Load video file
+        self.loadSections(job)
+         # Load video file
         if self.videoProps:
-            self.playerControl.play(videoFilePath)
+            self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart)
             if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
             else:  self.playerControl.pause(False)
             self.setPlayerControlsState(True)
@@ -1404,6 +1407,9 @@ class MainUi(QtWidgets.QMainWindow):
 
     def clearSections(self):
         '''Clears the sections table (without resetting the current section timestamps)'''
+        self.sectionTimeStart = self.timeFormat
+        self.sectionTimeEnd = self.timeFormat
+        self.setCurrentSectionInSlider()
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
 
@@ -1751,9 +1757,14 @@ class MainUi(QtWidgets.QMainWindow):
         self.setFilterBtnStates()
 
     def loadSections(self, job):
+        '''Sets the sections from a job'''
         self.clearSections()
         sections = job.getSections()
         if sections:
+            if sections[0]:
+                self.sectionTimeStart = sections[0][0]
+                self.sectionTimeEnd = sections[0][1]
+                self.setCurrentSectionInSlider()
             for section in sections:
                 self.sectionAddRow(section[0], section[1])
 
@@ -1914,6 +1925,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.playerControl.seek(value)
 
     def seekFromPlayerSlider(self, value):
+        '''Seeks an absolute position based on a player slider value'''
         percentage = (value / self.sliderPlayer.maximum()) * 100
         if percentage <= 0:
             self.setLabelPlayerTimeCurr('0:00:00.000')
