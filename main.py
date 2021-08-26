@@ -29,7 +29,7 @@ from classes.PlayerSlider import PlayerSlider
 
 from PyQt5 import uic, QtGui, QtWidgets
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, QCoreApplication
 from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
 import res  # pyrcc5 -o res.py res/res.qrc
 
@@ -205,10 +205,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.scSectionAdd1 = QShortcut(QKeySequence(Qt.Key_Plus), self)
         self.scSectionAdd2 = QShortcut(QKeySequence(Qt.Key_ScrollLock), self)
         self.scExportSave = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
+        self.scExportSave2 = QShortcut(QKeySequence(Qt.Key_F9), self)
 
     def initGuiEvents(self):
         # Menu
         self.actionSettings.triggered.connect(self.onActionSettings)
+        self.actionQuit.triggered.connect(self.onActionQuit)
         # Player control
         self.btnPause.clicked.connect(self.onBtnPauseClicked)
         self.scPause.activated.connect(self.onBtnPauseClicked)
@@ -246,6 +248,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
         self.btnExportSave.clicked.connect(self.onBtnExportSave)
         self.scExportSave.activated.connect(self.onBtnExportSave)
+        self.scExportSave2.activated.connect(self.onBtnExportSave)
         self.btnTgtFileAutoIncrement.clicked.connect(self.onBtnTgtFileAutoIncrement)
         self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
         self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
@@ -949,6 +952,9 @@ class MainUi(QtWidgets.QMainWindow):
     def onActionSettings(self):
         self.settingsUI.show()
 
+    def onActionQuit(self):
+        QCoreApplication.quit()
+
     def onMsgBoxExtraBtnOverwriteFile(self):
         '''Opens a file saved in variable self.overwriteFile'''
         if self.overwriteFile:
@@ -1481,6 +1487,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.tableQueue.setItem(iRow, 0, itemID)
         self.tableQueue.setItem(iRow, 1, itemFilename)
         self.tableQueue.setItem(iRow, 2, itemState)
+        self.tableQueue.scrollToBottom()
         return iRow
 
     def resetCropFilter(self):
@@ -2076,7 +2083,7 @@ class MainUi(QtWidgets.QMainWindow):
         scroll = True
         if not forceScrolling:
             if element.hasFocus(): scroll = False
-        if scroll: element.verticalScrollBar().setValue(element.verticalScrollBar().maximum())
+        if scroll: element.verticalScrollBar().setValue(element.verticalScrollBar().maximum() + 1000)
 
     def setCurrentSectionStart(self):
         self.setSectionTimeStart(self.playerTimeCurrent)

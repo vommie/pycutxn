@@ -81,7 +81,6 @@ class Functions:
         props = {}
         videoInfo = ffmpeg.probe(videoFilePath, cmd='ffprobe')
         videoStream = next((stream for stream in videoInfo['streams'] if stream['codec_type'] == 'video'), None)
-        print("video stream: %s" % videoInfo)
         format = videoInfo['format']
         try:
             # Get dimensions
