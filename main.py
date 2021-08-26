@@ -184,8 +184,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.sliderPlayer.setStyleSheet(self.sliderPlayerstyleTemplate.replace('##BG##', self.sliderPlayerBgColor))
         # Init categories tree
         self.tagsTreeItemPrefix =  ''
-        self.tagsTreeSpaceChar = ' '
-        self.buildTagsTree(-1)
+        self.tagsTreeSpaceChar = ' '
+        self.setTagsTreeStyle()
         # Tagger
         self.setHistoryMode(False)
         self.btnTaggerActive.setChecked(self.config.getTaggerIsActive())
@@ -1107,13 +1107,13 @@ class MainUi(QtWidgets.QMainWindow):
             self.tagsTreeItemPrefix = '%s%s' % (self.tagsTreeSpaceChar, self.tagsTreeItemPrefix)
         for i, tag in enumerate(self.tagsTree):
             if tag['parentID'] == currTagID:
-                if 'filter' in tag and tag['filter']: continue
                 item = QListWidgetItem('%s%s' % (self.tagsTreeItemPrefix, tag['label']))
                 item.setToolTip('TagID: %s' % tag['tagID'])
                 fontWeight = -1
                 if tag['parentID'] == -1: fontWeight = QFont.Bold
-                item.setFont(QFont('Noto Sans', 9, weight=fontWeight))
+                item.setFont(QFont('Noto Sans', 8, weight=fontWeight))
                 self.listWidgetTagsTree.addItem(item)
+                if 'filter' in tag and tag['filter']: item.setHidden(True)
                 self.buildTagsTree(tag['tagID'])
                 self.tagsTree[i]['item'] = item
         self.tagsTreeItemPrefix = self.tagsTreeItemPrefix[0:-1]
@@ -1166,9 +1166,9 @@ class MainUi(QtWidgets.QMainWindow):
             if not tagIDs and not rating:
                 if not self.showMsgBox('No rating and no tags are set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
             elif not tagIDs:
-                if not self.showMsgBox('No rating is set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
-            elif not rating:
                 if not self.showMsgBox('No tags are set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
+            elif not rating:
+                if not self.showMsgBox('No rating is set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
         return True
 
     def saveCurrentTagsAndRating(self):
@@ -1237,9 +1237,15 @@ class MainUi(QtWidgets.QMainWindow):
         tagIDs = []
         for i, tag in enumerate(self.tagsTree):
             tag = self.tagsTree[i]
-            item = tag['item']
-            if item.isSelected():
-                tagIDs.append(tag['tagID'])
+            try:
+                item = tag['item']
+                if item.isSelected():
+                    tagIDs.append(tag['tagID'])
+            except Exception as e:
+                msg = 'Error: Cannot get the selection state for a tags tree item.'
+                self.log(1, msg, 1)
+                self.showMsgBox(msg, infoText='This could mean this Tag will not be set to the database', detailText=str(e), icon="warning")
+                continue
         return tagIDs
 
     def getRatingFromBtns(self):
@@ -1269,12 +1275,18 @@ class MainUi(QtWidgets.QMainWindow):
             for i in range(self.listWidgetTagsTree.count()):
                 self.listWidgetTagsTree.item(i).setSelected(False)
         selected = []
+        hiddenTags = []
         for tagID in tagIDs:
             for tag in self.tagsTree:
                 if tag['tagID'] == tagID:
                     tag['item'].setSelected(True)
+                    if tag['filter']: hiddenTags.append('"%s" (TagID "%s")' % (tag['label'], tag['tagID']))
                     selected.append(tag['item'].text().replace(self.tagsTreeSpaceChar, ''))
         if tagIDs: self.log(1, 'Selecting tags: %s' % ', '.join(selected))
+        if hiddenTags:
+            msg = 'Warning: Tags were loaded from job which are hidden in the Tags Tree.'
+            self.log(1, msg, 1)
+            self.showMsgBox(msg, detailText='%s' % '\n'.join(hiddenTags))
 
     def insertTagsInLastTagsList(self, tagIDs, clearTags=True):
         '''
@@ -1297,11 +1309,14 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         Update the filtered tags in the tags tree
         '''
-        if tagIDs: self.log(1, 'Filter TagIDs: %s' % tagIDs)
-        else: self.log(1, 'No TagIDs to filter')
-        self.tagsTree = self.setFilterStateForTagsTree(self.tagsTree)
-        self.listWidgetTagsTree.clear()
-        self.buildTagsTree(-1)
+        for tag in self.tagsTree:
+            if tag['tagID'] in tagIDs:
+                tag['filter'] = True
+                tag['item'].setHidden(True)
+                tag['item'].setSelected(False)
+            else:
+                tag['filter'] = False
+                tag['item'].setHidden(False)
 
     def setLastRating(self, rating):
         self.lastRating = rating
@@ -1347,7 +1362,9 @@ class MainUi(QtWidgets.QMainWindow):
         filterTagIDs = self.config.getTaggerFilterTagIDs()
         for i in range(len(tagsTree)):
             tag = tagsTree[i]
-            if tag['tagID'] in filterTagIDs: tagsTree[i]['filter'] = True
+            if tag['tagID'] in filterTagIDs:
+                self.log(1, 'SET FILTER FOR: %s' % tag['tagID'])
+                tagsTree[i]['filter'] = True
             else: tagsTree[i]['filter'] = False
         return tagsTree
 
@@ -1988,9 +2005,7 @@ class MainUi(QtWidgets.QMainWindow):
         gradient = 'qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:1, stop:0 BGCOLOR, stop:START1 BGCOLOR, stop:START2 MARKERCOLOR, stop:START3 MARKERCOLOR, stop:START4 CONNCOLOR, stop:END1 CONNCOLOR, stop:END2 MARKERCOLOR, stop:END3 MARKERCOLOR, stop:END4 BGCOLOR, stop:1 BGCOLOR)'
 
         startPos = (Functions.HMSToTimestamp(self.sectionTimeStart, True) / self.videoProps.get('durationMs'))
-        if startPos == 0.0 or startPos == 1.0: startPos = int(startPos)
         endPos = (Functions.HMSToTimestamp(self.sectionTimeEnd, True) / self.videoProps.get('durationMs'))
-        if endPos == 1.0 or endPos == 1.0: endPos = int(endPos)
 
         markerWidth = 0.002
         markerColor = 'rgba(225, 225, 225, 225)'
@@ -1998,18 +2013,28 @@ class MainUi(QtWidgets.QMainWindow):
 
         gradient = gradient.replace('BGCOLOR', self.sliderPlayerBgColor)
         gradient = gradient.replace('MARKERCOLOR', markerColor)
-        gradient = gradient.replace('START1', str(startPos-(markerWidth/2)-borderSize))
-        gradient = gradient.replace('START2', str(startPos-(markerWidth/2)))
-        gradient = gradient.replace('START3', str(startPos+(markerWidth/2)))
-        gradient = gradient.replace('START4', str(startPos+(markerWidth/2)+borderSize))
-        gradient = gradient.replace('END1', str(endPos-(markerWidth/2)-borderSize))
-        gradient = gradient.replace('END2', str(endPos-(markerWidth/2)))
-        gradient = gradient.replace('END3', str(endPos+(markerWidth/2)))
-        gradient = gradient.replace('END4', str(endPos+(markerWidth/2)+borderSize))
+        gradient = gradient.replace('START1', self.sanitizeGradientPos(startPos-(markerWidth/2)-borderSize))
+        gradient = gradient.replace('START2', self.sanitizeGradientPos(startPos-(markerWidth/2)))
+        gradient = gradient.replace('START3', self.sanitizeGradientPos(startPos+(markerWidth/2)))
+        gradient = gradient.replace('START4', self.sanitizeGradientPos(startPos+(markerWidth/2)+borderSize))
+        gradient = gradient.replace('END1', self.sanitizeGradientPos(endPos-(markerWidth/2)-borderSize))
+        gradient = gradient.replace('END2', self.sanitizeGradientPos(endPos-(markerWidth/2)))
+        gradient = gradient.replace('END3', self.sanitizeGradientPos(endPos+(markerWidth/2)))
+        gradient = gradient.replace('END4', self.sanitizeGradientPos(endPos+(markerWidth/2)+borderSize))
         if endPos > startPos: gradient = gradient.replace('CONNCOLOR', markerColor)
         else: gradient = gradient.replace('CONNCOLOR', self.sliderPlayerBgColor)
 
         self.sliderPlayer.setStyleSheet(self.sliderPlayerstyleTemplate.replace('##BG##', gradient))
+
+    def sanitizeGradientPos(self, pos):
+        '''Sanitizes a position so it can be safely used in a gradient
+
+        :param pos: a float or int position.
+        :return: the position as str
+        '''
+        if pos <= 0: pos = 0
+        if pos >= 1: pos = 1
+        return str(pos)
 
     def log(self, id, line, msgType=0, timestamp=True):
         '''
@@ -2082,6 +2107,29 @@ class MainUi(QtWidgets.QMainWindow):
         self.sectionTimeEnd = value
         self.btnCurrentSectionEnd.setText(value)
         self.setCurrentSectionInSlider()
+
+    def setTagsTreeStyle(self):
+        '''Sets the TagsTree Stylesheet'''
+        self.listWidgetTagsTree.setStyleSheet("""
+            QListWidget::item {
+                border-style: solid;
+                border-width: 1px;
+                border-color: """ + str(QPalette().color(QPalette.ToolTipBase).name()) + """;
+                background-color: """ + str(QPalette().color(QPalette.Base).name()) + """;
+                margin: 0;
+                padding: 0;
+                line-height: 0;
+                height: 12px;
+                max-height: 12px;
+            }
+            QListWidget::item:selected {
+                background-color: #7f7f7f;
+            }
+            QListWidget::item:hover {
+                color: #333333;
+                background-color: #bbbbbb;
+            }
+        """)
 
     def killFFmpegProcess(self):
         if self.ffmpegProcess:

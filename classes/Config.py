@@ -95,7 +95,9 @@ class Config:
         return self.settings.value('tagger/isWarningActive', True, type=bool)
 
     def getTaggerFilterTagIDs(self) -> list:
-        return self.settings.value('tagger/filterTagIDs', [], type=list)
+        tagIDs = self.settings.value('tagger/filterTagIDs', [], type=int)
+        if not isinstance(tagIDs, list): tagIDs = []
+        return tagIDs
 
     def getFiltersDeinterlacer(self) -> str:
         return self.settings.value('filters/deinterlacer', 'yadif', type=str)

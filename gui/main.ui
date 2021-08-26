@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1069</width>
-    <height>729</height>
+    <height>757</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -114,6 +114,12 @@
            </property>
            <property name="text">
             <string>契</string>
+           </property>
+           <property name="autoDefault">
+            <bool>true</bool>
+           </property>
+           <property name="default">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
