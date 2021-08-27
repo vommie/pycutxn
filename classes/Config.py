@@ -111,6 +111,9 @@ class Config:
     def getRenderContainer(self) -> str:
         return self.settings.value('render/container', 'mkv', type=str)
 
+    def getRenderPreset(self) -> str:
+        return self.settings.value('render/preset', 'medium', type=str)
+
     def getRenderAudioCodec(self) -> str:
         return self.settings.value('render/audioCodec', 'aac', type=str)
 
@@ -190,6 +193,9 @@ class Config:
 
     def setRenderContainer(self, container : str) -> None:
         self.settings.setValue('render/container', container)
+
+    def setRenderPreset(self, preset : str) -> None:
+        self.settings.setValue('render/preset', preset)
 
     def setRenderAudioCodec(self, audioCodec : str) -> None:
         self.settings.setValue('render/audioCodec', audioCodec)

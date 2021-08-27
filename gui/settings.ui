@@ -19,7 +19,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidgetSettings">
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tabGeneral">
         <attribute name="title">
@@ -218,6 +218,71 @@
                   <item>
                    <property name="text">
                     <string>mp4</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>Preset</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="comboBoxPreset">
+                  <item>
+                   <property name="text">
+                    <string>ultrafast</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>superfast</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>veryfast</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>faster</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>fast</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>medium</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>slow</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>slower</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>veryslow</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>placebo</string>
                    </property>
                   </item>
                  </widget>

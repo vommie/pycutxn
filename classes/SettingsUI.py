@@ -22,6 +22,7 @@ class SettingsUI(QtWidgets.QDialog):
         self.comboBoxVideoCodec.setCurrentText(self.parent.config.getRenderVideoCodec())
         self.spinBoxCRF.setValue(self.parent.config.getRenderCRF())
         self.comboBoxContainer.setCurrentText(self.parent.config.getRenderContainer())
+        self.comboBoxPreset.setCurrentText(self.parent.config.getRenderPreset())
         self.comboBoxAudioCodec.setCurrentText(self.parent.config.getRenderAudioCodec())
         self.spinBoxAudioBitrate.setValue(self.parent.config.getRenderAudioBitrate())
         # Messages
@@ -44,6 +45,7 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setRenderVideoCodec(str(self.comboBoxVideoCodec.currentText()))
         self.parent.config.setRenderCRF(int(self.spinBoxCRF.value()))
         self.parent.config.setRenderContainer(str(self.comboBoxContainer.currentText()))
+        self.parent.config.setRenderPreset(str(self.comboBoxPreset.currentText()))
         self.parent.config.setRenderAudioCodec(str(self.comboBoxAudioCodec.currentText()))
         self.parent.config.setRenderAudioBitrate(int(self.spinBoxAudioBitrate.value()))
         # Messages

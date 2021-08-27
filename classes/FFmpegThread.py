@@ -114,7 +114,7 @@ class FFmpegThread(QThread):
                     totalSeconds += (toSecond - fromSecond)
                 # Concatenate sections
                 joined = ffmpeg.concat(*mapping, v=1, a=1).node
-                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate())
+                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset())
 
                 # Run ffmpeg
                 try:

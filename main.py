@@ -446,6 +446,7 @@ class MainUi(QtWidgets.QMainWindow):
         currentJob.setTgtFileExt('.%s' % self.config.getRenderContainer())
         currentJob.setRenderSettingVideoCodec(self.config.getRenderVideoCodec())
         currentJob.setRenderSettingCRF(self.config.getRenderCRF())
+        currentJob.setRenderSettingPreset(self.config.getRenderPreset())
         currentJob.setRenderSettingAudioCodec(self.config.getRenderAudioCodec())
         currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
         currentJob.setRenderSettingContainer(self.config.getRenderContainer())

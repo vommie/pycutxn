@@ -242,6 +242,9 @@ class Job():
     def getRenderSettingCRF(self):
         return self._props['renderSettings'].get('crf')
 
+    def getRenderSettingPreset(self):
+        return self._props['renderSettings'].get('preset')
+
     def getRenderSettingAudioCodec(self):
         return self._props['renderSettings'].get('audioCodec')
 
@@ -366,6 +369,9 @@ class Job():
 
     def setRenderSettingCRF(self, crf : int):
         self._props['renderSettings'].update({'crf': crf })
+
+    def setRenderSettingPreset(self, preset : int):
+        self._props['renderSettings'].update({'preset': preset })
 
     def setRenderSettingAudioCodec(self, audioCodec : str):
         self._props['renderSettings'].update({'audioCodec': audioCodec})
