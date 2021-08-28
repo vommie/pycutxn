@@ -19,7 +19,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidgetSettings">
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tabGeneral">
         <attribute name="title">
@@ -35,6 +35,19 @@
              </property>
              <property name="text">
               <string>Automatically set a section on save if no sections were added by the user</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBoxPauseQOnStart">
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="statusTip">
+              <string>If the program gets started and there are jobs waiting for rendering, the queue gets paused</string>
+             </property>
+             <property name="text">
+              <string>Pause job queue processing on program start if there are waiting jobs</string>
              </property>
             </widget>
            </item>
@@ -397,6 +410,13 @@
             <widget class="QCheckBox" name="checkBoxWarnHash">
              <property name="text">
               <string>Warn if opened file was previously edited</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBoxWarnCloseWhileRender">
+             <property name="text">
+              <string>Warn if program gets closed while a job is rendering</string>
              </property>
             </widget>
            </item>

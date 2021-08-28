@@ -136,17 +136,17 @@ class MainUi(QtWidgets.QMainWindow):
         # Set GUI from config
         self.updateDirs(self.config.getTargetDirs())
         self.cmbTgtDirs.setCurrentText(self.config.getAppTgtDirName())
-        if self.config.getQueueIsPaused():
-            self.btnQueuePause.setChecked(True)
-            self.toggleQueuePause()
         self.btnTgtFileAutoIncrement.setChecked(self.config.getAppIncrementFilename())
+        waitingJobs = False
         # Queue Jobs
         if len(self.jobs.jobs.items()) > 1:
             for id, job in self.jobs.jobs.items():
                 try:
                     int(id) # Skip 'default' job
                     state = job.getState()
-                    if state == 4:
+                    if state == 0:
+                        waitingJobs = True
+                    elif state == 4:
                         job.setLog('Job had state "Rendering" when the program started.')
                         job.setState(3)
                         state = 3
@@ -155,11 +155,15 @@ class MainUi(QtWidgets.QMainWindow):
                         job.setState(3)
                         state = 3
                     self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-                    if state == 0 and not self.btnQueuePause.isChecked():
-                        self.runNextWaitJob()
                 except: pass
         else:
             self.deleteDeshakeDir()
+        # Handle queue pause
+        if self.config.getQueueIsPaused() or (waitingJobs and self.config.getAppPauseQueueOnStartWhenWaitingJobs()):
+            self.btnQueuePause.setChecked(True)
+            self.toggleQueuePause()
+        elif waitingJobs and not self.btnQueuePause.isChecked():
+            self.runNextWaitJob()
         self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
         self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
@@ -208,9 +212,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.scExportSave2 = QShortcut(QKeySequence(Qt.Key_F9), self)
 
     def initGuiEvents(self):
-        # Menu
-        self.actionSettings.triggered.connect(self.onActionSettings)
-        self.actionQuit.triggered.connect(self.onActionQuit)
         # Player control
         self.btnPause.clicked.connect(self.onBtnPauseClicked)
         self.scPause.activated.connect(self.onBtnPauseClicked)
@@ -292,7 +293,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
         self.btnQueueLoad.clicked.connect(self.onBtnQueueLoadClicked)
         # Actions
-        self.actionQuit.triggered.connect(self.onExit)
+        self.actionSettings.triggered.connect(self.onActionSettings)
+        self.actionQuit.triggered.connect(self.onActionQuit)
         self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
         self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
         self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
@@ -491,9 +493,9 @@ class MainUi(QtWidgets.QMainWindow):
             return True
 
     def runNextWaitJob(self):
-        self.log(1, 'Running next job ...')
         if self.ffmpegProcess or self.btnQueuePause.isChecked():
             return False
+        self.log(1, 'Running next job ...')
         job = self.getNextWaitingJob()
         if job:
             if self.isSameRenderSrcTgt(job, True) or self.isSectionsMissing(job, True): return False
@@ -603,11 +605,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI control event handlers
 
-    def onExit(self):
-        self.closeApp()
-
     def closeEvent(self, event):
-        self.closeApp()
+        '''Qt close event. Gets called when application closing is triggered'''
+        # Todo: Check if job rendering
+        if self.ffmpegProcess and self.config.getAppWarnCloseWhileRender():
+            if not self.showMsgBox('A job is currently rendering.', infoText='Really quit?', btns='yesno', icon='question'):
+                event.ignore()
+                return
+        self.config.setAppGeometry(self.saveGeometry())
+        self.config.setAppState(self.saveState())
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
@@ -1719,6 +1725,7 @@ class MainUi(QtWidgets.QMainWindow):
     def toggleQueuePause(self):
         if self.btnQueuePause.isChecked():
             self.btnQueuePause.setText('契')
+            self.btnQueuePause.setToolTip('Resume job processing')
             self.config.setQueueIsPaused(True)
             if self.ffmpegProcess:
                 os.kill(self.ffmpegProcess.pid, signal.SIGSTOP)
@@ -1726,6 +1733,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.updateQueueJobState(job.getID(), 5)
         else:
             self.btnQueuePause.setText('')
+            self.btnQueuePause.setToolTip('Pause job processing')
             self.config.setQueueIsPaused(False)
             if self.ffmpegProcess:
                 os.kill(self.ffmpegProcess.pid, signal.SIGCONT)
@@ -2143,10 +2151,6 @@ class MainUi(QtWidgets.QMainWindow):
         if self.ffmpegProcess:
             os.kill(self.ffmpegProcess.pid, signal.SIGKILL)
             self.ffmpegKilled = True
-
-    def closeApp(self):
-        self.config.setAppGeometry(self.saveGeometry())
-        self.config.setAppState(self.saveState())
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()

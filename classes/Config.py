@@ -52,6 +52,9 @@ class Config:
     def getAppIncrementFilename(self) -> bool:
         return self.settings.value('app/incrementFilename', True, type=bool)
 
+    def getAppPauseQueueOnStartWhenWaitingJobs(self) -> bool:
+        return self.settings.value('app/pauseQueueOnStartWhenWaitingJobs', True, type=bool)
+
     def getAppWarnFileExistsInTgtDir(self) -> bool:
         return self.settings.value('app/warnFileExistsInTgtDir', True, type=bool)
 
@@ -60,6 +63,9 @@ class Config:
 
     def getAppWarnFileHashExistsInDB(self) -> bool:
         return self.settings.value('app/warnFileHashExistsInDB', True, type=bool)
+
+    def getAppWarnCloseWhileRender(self) -> bool:
+        return self.settings.value('app/warnCloseWhileRender', True, type=bool)
 
     def getAppSetAutoSection(self) -> bool:
         return self.settings.value('app/autoSection', True, type=bool)
@@ -137,6 +143,9 @@ class Config:
     def setAppIncrementFilename(self, state : bool) -> None:
         self.settings.setValue('app/incrementFilename', state)
 
+    def setAppPauseQueueOnStartWhenWaitingJobs(self, state : bool) -> None:
+        self.settings.setValue('app/pauseQueueOnStartWhenWaitingJobs', state)
+
     def setAppWarnFileExistsInTgtDir(self, state : bool) -> None:
         self.settings.setValue('app/warnFileExistsInTgtDir', state)
 
@@ -145,6 +154,9 @@ class Config:
 
     def setAppWarnFileHashExistsInDB(self, state : bool) -> None:
         self.settings.setValue('app/warnFileHashExistsInDB', state)
+
+    def setAppWarnCloseWhileRender(self, state : bool) -> None:
+        self.settings.setValue('app/warnCloseWhileRender', state)
 
     def setAppSetAutoSection(self, state : bool) -> None:
         self.settings.setValue('app/autoSection', state)

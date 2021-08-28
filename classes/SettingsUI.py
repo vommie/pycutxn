@@ -14,6 +14,7 @@ class SettingsUI(QtWidgets.QDialog):
     def loadConfig(self):
         # General
         self.checkSetAutoSection.setChecked(self.parent.config.getAppSetAutoSection())
+        self.checkBoxPauseQOnStart.setChecked(self.parent.config.getAppPauseQueueOnStartWhenWaitingJobs())
         # Player
         self.checkBoxPlayerAutoPlay.setChecked(self.parent.config.getPlayerAutoPlay())
         # Database
@@ -25,10 +26,11 @@ class SettingsUI(QtWidgets.QDialog):
         self.comboBoxPreset.setCurrentText(self.parent.config.getRenderPreset())
         self.comboBoxAudioCodec.setCurrentText(self.parent.config.getRenderAudioCodec())
         self.spinBoxAudioBitrate.setValue(self.parent.config.getRenderAudioBitrate())
-        # Messages
+        # Warnings
         self.checkBoxWarnTgt.setChecked(self.parent.config.getAppWarnFileExistsInTgtDir())
         self.checkBoxWarnJobQueue.setChecked(self.parent.config.getAppWarnFileExistsInJobs())
         self.checkBoxWarnHash.setChecked(self.parent.config.getAppWarnFileHashExistsInDB())
+        self.checkBoxWarnCloseWhileRender.setChecked(self.parent.config.getAppWarnCloseWhileRender())
 
     def initGuiEvents(self):
         self.buttonBox.accepted.connect(self.onAccepted)
@@ -37,6 +39,7 @@ class SettingsUI(QtWidgets.QDialog):
     def onAccepted(self):
         # General
         self.parent.config.setAppSetAutoSection(self.checkSetAutoSection.isChecked())
+        self.parent.config.setAppPauseQueueOnStartWhenWaitingJobs(self.checkBoxPauseQOnStart.isChecked())
         # Player
         self.parent.config.setPlayerAutoPlay(self.checkBoxPlayerAutoPlay.isChecked())
         # Database
@@ -48,10 +51,11 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setRenderPreset(str(self.comboBoxPreset.currentText()))
         self.parent.config.setRenderAudioCodec(str(self.comboBoxAudioCodec.currentText()))
         self.parent.config.setRenderAudioBitrate(int(self.spinBoxAudioBitrate.value()))
-        # Messages
+        # Warnings
         self.parent.config.setAppWarnFileExistsInTgtDir(self.checkBoxWarnTgt.isChecked())
         self.parent.config.setAppWarnFileExistsInJobs(self.checkBoxWarnJobQueue.isChecked())
         self.parent.config.setAppWarnFileHashExistsInDB(self.checkBoxWarnHash.isChecked())
+        self.parent.config.setAppWarnCloseWhileRender(self.checkBoxWarnCloseWhileRender.isChecked())
 
     def onBtnDBPath(self):
         path = expanduser('~')
