@@ -81,6 +81,7 @@ class Functions:
         props = {}
         videoInfo = ffmpeg.probe(videoFilePath, cmd='ffprobe')
         videoStream = next((stream for stream in videoInfo['streams'] if stream['codec_type'] == 'video'), None)
+        audioStream = next((stream for stream in videoInfo['streams'] if stream['codec_type'] == 'audio'), None)
         format = videoInfo['format']
         try:
             # Get dimensions
@@ -100,6 +101,8 @@ class Functions:
                     duration = '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(duration))), duration[-6:][:3]) # ms to h:m:s.ms
                 except: pass
             props.update({'durationHMS': duration})
+            if audioStream: props.update({'hasAudio': True})
+            else: props.update({'hasAudio': False})
         except:
             props = {}
         return props

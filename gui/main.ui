@@ -2408,7 +2408,7 @@ QRadioButton::unchecked:hover {
              <enum>Qt::TabFocus</enum>
             </property>
             <property name="toolTip">
-             <string>Set tags and rating of previously saved session</string>
+             <string>Set tags of previously saved session</string>
             </property>
             <property name="text">
              <string>勒</string>

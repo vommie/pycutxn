@@ -324,7 +324,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal', keep_open="yes")
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal', keep_open='yes')
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
@@ -363,6 +363,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.setCurrTgtDir()
                 self.showWarningForKnownFile()
             if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
+            self.setWindowTitle('%s (%s) - pyCut' % (job.getSrcFileNameLong(), job.getSrcDirName()))
             self.log(1, 'Source path: "%s".' % videoFilePath)
             # Get Video Props
             self.videoProps = Functions.getVideoProperties(videoFilePath)
@@ -385,7 +386,12 @@ class MainUi(QtWidgets.QMainWindow):
             self.loadSections(job)
             # Load video file
             if self.videoProps:
-                self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart)
+                audioFilter='lavfi=[dynaudnorm=s=30]'
+                audioFilter = ''
+                audioFilter='lavfi=[loudnorm=I=-16:TP=-3:LRA=4]'
+                audioFilter='lavfi=[dynaudnorm=g=5:f=250:r=0.9:p=0.5]'
+                audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Works
+                self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart, af=audioFilter)
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
@@ -393,6 +399,7 @@ class MainUi(QtWidgets.QMainWindow):
             msg = 'Error: Cannot load new file.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
+            # TODO: Reset GUI / reset to defaultjob
 
     def loadFilterCrop(self, job):
         try:
@@ -503,7 +510,7 @@ class MainUi(QtWidgets.QMainWindow):
             if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
             self.log(1, 'Session saved as new job in queue.')
         except Exception as e:
-            msg = 'Error: Cannot sace current session as new job in queue.'
+            msg = 'Error: Cannot save current session as new job in queue.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
             return False
@@ -1021,7 +1028,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnTagsLastClicked(self):
         self.selectTagsInTagsTree(self.lastTagIDs, False)
-        self.setBtnRating(self.lastRating)
 
     def onBtnTagsClearClicked(self):
         self.clearTagsTree()
@@ -1706,6 +1712,7 @@ class MainUi(QtWidgets.QMainWindow):
             if job.getState() == 4:
                 self.showMsgBox('Cannot delete job while it is rendering.', infoText='Abort the job first, then delete it.', icon='warning')
                 return
+            self.log(1, 'Remove Job with ID %s' % jobID)
             self.jobs.removeJob(jobID)
         except Exception as e:
             msg = 'Error: Cannot remove Job.'
@@ -2257,9 +2264,11 @@ window = MainUi()
 # Debug Start
 test_input_path = '/home/vommie/videos/pycut/input'
 if os.path.exists(test_input_path) and os.path.isdir(test_input_path):
-    # test_file = 'test_color.mp4'
+    test_file = 'test_color.mp4'
     test_file = 'test_shake.mp4'
-    # test_file = 'test_interlace.avi'
+    test_file = 'test_interlace.avi'
+    test_file = 'decoding_issues.m4v'
+    test_file = 'noaudio.mp4'
     window.newFile('%s/%s' % (test_input_path, test_file))
 # Debug End
 app.exec_()

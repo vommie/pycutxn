@@ -104,19 +104,24 @@ class FFmpegThread(QThread):
                         video = ( video .crop(x=l, y=t, width=w, height=h) ) # Todo: If video first gets rotated, this calculation has to be rotated too
                 # Finalization
                 mapping.append(video)
-                audio = (
-                    in_file.audio
-                    .filter_('atrim', start=section[0], end=section[1])
-                    .filter_('asetpts', 'PTS-STARTPTS')
-                )
-                mapping.append(audio)
+                if videoProps.get('hasAudio'):
+                    audio = (
+                        in_file.audio
+                        .filter_('atrim', start=section[0], end=section[1])
+                        .filter_('asetpts', 'PTS-STARTPTS')
+                    )
+                    mapping.append(audio)
                 # Calc total seconds (use in progress bar)
                 fromSecond = Functions.HMSToTimestamp(section[0], False)
                 toSecond = Functions.HMSToTimestamp(section[1], False)
                 totalSeconds += (toSecond - fromSecond)
             # Concatenate sections
-            joined = ffmpeg.concat(*mapping, v=1, a=1).node
-            output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset())
+            if videoProps.get('hasAudio'):
+                joined = ffmpeg.concat(*mapping, v=1, a=1).node
+                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset())
+            else:
+                joined = ffmpeg.concat(*mapping, v=1).node
+                output = ffmpeg.output(joined[0], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), preset=job.getRenderSettingPreset())
 
             # Run ffmpeg
             try:

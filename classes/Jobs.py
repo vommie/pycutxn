@@ -38,6 +38,8 @@ class Jobs:
             job = Job('default', srcFilePath=videoFilePath)
         elif not videoFilePath and job: # Load job as new current session
             job = copy.deepcopy(job)
+            # Reset unique properties
+            job.setID('default')
             job.setLog(False)
         else:
             print('Critical Error: Cannot create new job as parameters have conflict or are all not set.')
