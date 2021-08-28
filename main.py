@@ -10,6 +10,7 @@ import re
 import copy
 import shutil
 import hashlib
+import locale
 
 from libs.mpv import *
 from libs.mpv import *
@@ -212,119 +213,129 @@ class MainUi(QtWidgets.QMainWindow):
         self.scExportSave2 = QShortcut(QKeySequence(Qt.Key_F9), self)
 
     def initGuiEvents(self):
-        # Player control
-        self.btnPause.clicked.connect(self.onBtnPauseClicked)
-        self.scPause.activated.connect(self.onBtnPauseClicked)
-        self.btnFrameStep.clicked.connect(self.onBtnFrameStepClicked)
-        self.scFrameStep.activated.connect(self.onBtnFrameStepClicked)
-        self.btnFrameStepBack.clicked.connect(self.onBtnFrameStepBackClicked)
-        self.scFrameStepBack.activated.connect(self.onBtnFrameStepBackClicked)
-        self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
-        self.scSectionStart.activated.connect(self.onScSectionStart)
-        self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
-        self.scSectionEnd.activated.connect(self.onScSectionEnd)
-        self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
-        self.scSectionAdd1.activated.connect(self.onBtnSectionAddClicked)
-        self.scSectionAdd2.activated.connect(self.onBtnSectionAddClicked)
-        self.btnMute.clicked.connect(self.onBtnMuteClicked)
-        self.scMute.activated.connect(self.onBtnMuteClicked)
-        self.sliderVolume.valueChanged.connect(self.onSliderVolumeChange)
-        self.scSeekSmall.activated.connect(self.onPlayerSeekSmall)
-        self.scSeekMedium.activated.connect(self.onPlayerSeekMedium)
-        self.scSeekSmallBack.activated.connect(self.onPlayerSeekSmallBack)
-        self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
-        self.renderFrame.wheelEvent = self.renderFrameWheelEvent
-        self.sliderPlayer.valueChanged.connect(self.onSliderPlayerValueChanged)
-        # Sections
-        self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
-        self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
-        self.btnSectionAdd2.clicked.connect(self.onBtnSectionAddClicked)
-        self.btnSectionDelete.clicked.connect(self.onBtnSectionDeleteClicked)
-        self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
-        self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
-        self.btnCurrentSectionStart.clicked.connect(self.onBtnCurrentSectionStart)
-        self.btnCurrentSectionEnd.clicked.connect(self.onBtnCurrentSectionEnd)
-        # Job Finalization
-        self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
-        self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
-        self.btnExportSave.clicked.connect(self.onBtnExportSave)
-        self.scExportSave.activated.connect(self.onBtnExportSave)
-        self.scExportSave2.activated.connect(self.onBtnExportSave)
-        self.btnTgtFileAutoIncrement.clicked.connect(self.onBtnTgtFileAutoIncrement)
-        self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
-        self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
-        # Filters
-        self.btnFilterCrop.clicked.connect(self.onBtnFilterCropClicked)
-        self.btnFilterCrop.toggled.connect(self.onBtnFilterCropClicked)
-        self.boxFilterCropT.valueChanged.connect(self.onBoxFilterCropTChanged)
-        self.boxFilterCropR.valueChanged.connect(self.onBoxFilterCropRChanged)
-        self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
-        self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
-        self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
-        self.btnFilterDeinterlace.toggled.connect(self.onBtnFilterDeinterlaceClicked)
-        self.comboBoxFilterDeinterlaceDeinterlacer.currentTextChanged.connect(self.onComboBoxFilterDeinterlaceDeinterlacerChanged)
-        self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
-        self.btnFilterResize.toggled.connect(self.onBtnFilterResizeClicked)
-        self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
-        self.boxFilterResizeH.valueChanged.connect(self.onBoxFilterResizeHChanged)
-        self.btnFilterDeshake.clicked.connect(self.onBtnFilterDeshake)
-        self.btnFilterDeshake.toggled.connect(self.onBtnFilterDeshake)
-        self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
-        self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
-        self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
-        # Filters Up/Down Buttons
-        self.btnFilterCropDown.clicked.connect(self.onBtnFilterCropDownClicked)
-        self.btnFilterCropUp.clicked.connect(self.onBtnFilterCropUpClicked)
-        self.btnFilterDeinterlaceDown.clicked.connect(self.onBtnFilterDeinterlaceDownClicked)
-        self.btnFilterDeinterlaceUp.clicked.connect(self.onBtnFilterDeinterlaceUpClicked)
-        self.btnFilterResizeDown.clicked.connect(self.onBtnFilterResizeDownClicked)
-        self.btnFilterResizeUp.clicked.connect(self.onBtnFilterResizeUpClicked)
-        self.btnFilterRotateDown.clicked.connect(self.onBtnFilterRotateDownClicked)
-        self.btnFilterRotateUp.clicked.connect(self.onBtnFilterRotateUpClicked)
-        self.btnFilterDeshakeDown.clicked.connect(self.onBtnFilterDeshakeDownClicked)
-        self.btnFilterDeshakeUp.clicked.connect(self.onBtnFilterDeshakeUpClicked)
-        # Queue
-        self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
-        self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
-        self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
-        self.btnQueueUp.clicked.connect(self.onBtnQueueUpClicked)
-        self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
-        self.btnQueuePause.clicked.connect(self.onBtnQueuePauseClicked)
-        self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
-        self.btnQueueLoad.clicked.connect(self.onBtnQueueLoadClicked)
-        # Actions
-        self.actionSettings.triggered.connect(self.onActionSettings)
-        self.actionQuit.triggered.connect(self.onActionQuit)
-        self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
-        self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
-        self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
-        self.actionStateResume.triggered.connect(self.onQueueCtxActioStateResume)
-        self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
-        self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
-        # Tagger
-        self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
-        self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
-        self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
-        self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
-        self.btnTagsClear.clicked.connect(self.onBtnTagsClearClicked)
-        self.btnTaggerActive.clicked.connect(self.onBtnTaggerActiveClicked)
-        self.btnTaggerWarning.clicked.connect(self.onBtnTaggerWarningClicked)
-        self.btnTaggerFilter.clicked.connect(self.onBtnTaggerFilterClicked)
+        try:
+            # Player control
+            self.btnPause.clicked.connect(self.onBtnPauseClicked)
+            self.scPause.activated.connect(self.onBtnPauseClicked)
+            self.btnFrameStep.clicked.connect(self.onBtnFrameStepClicked)
+            self.scFrameStep.activated.connect(self.onBtnFrameStepClicked)
+            self.btnFrameStepBack.clicked.connect(self.onBtnFrameStepBackClicked)
+            self.scFrameStepBack.activated.connect(self.onBtnFrameStepBackClicked)
+            self.btnSectionStart.clicked.connect(self.onBtnSectionStartClicked)
+            self.scSectionStart.activated.connect(self.onScSectionStart)
+            self.btnSectionEnd.clicked.connect(self.onBtnSectionEndClicked)
+            self.scSectionEnd.activated.connect(self.onScSectionEnd)
+            self.btnSectionAdd1.clicked.connect(self.onBtnSectionAddClicked)
+            self.scSectionAdd1.activated.connect(self.onBtnSectionAddClicked)
+            self.scSectionAdd2.activated.connect(self.onBtnSectionAddClicked)
+            self.btnMute.clicked.connect(self.onBtnMuteClicked)
+            self.scMute.activated.connect(self.onBtnMuteClicked)
+            self.sliderVolume.valueChanged.connect(self.onSliderVolumeChange)
+            self.scSeekSmall.activated.connect(self.onPlayerSeekSmall)
+            self.scSeekMedium.activated.connect(self.onPlayerSeekMedium)
+            self.scSeekSmallBack.activated.connect(self.onPlayerSeekSmallBack)
+            self.scSeekMediumBack.activated.connect(self.onPlayerSeekMediumBack)
+            self.renderFrame.wheelEvent = self.renderFrameWheelEvent
+            self.sliderPlayer.valueChanged.connect(self.onSliderPlayerValueChanged)
+            # Sections
+            self.tableSections.currentCellChanged.connect(self.onTableSectionCurrCellChanged)
+            self.tableSections.itemDoubleClicked.connect(self.onTableSectionItemDblClicked)
+            self.btnSectionAdd2.clicked.connect(self.onBtnSectionAddClicked)
+            self.btnSectionDelete.clicked.connect(self.onBtnSectionDeleteClicked)
+            self.btnSectionUp.clicked.connect(self.onBtnSectionUpClicked)
+            self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
+            self.btnCurrentSectionStart.clicked.connect(self.onBtnCurrentSectionStart)
+            self.btnCurrentSectionEnd.clicked.connect(self.onBtnCurrentSectionEnd)
+            # Job Finalization
+            self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
+            self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
+            self.btnExportSave.clicked.connect(self.onBtnExportSave)
+            self.scExportSave.activated.connect(self.onBtnExportSave)
+            self.scExportSave2.activated.connect(self.onBtnExportSave)
+            self.btnTgtFileAutoIncrement.clicked.connect(self.onBtnTgtFileAutoIncrement)
+            self.btnExportDirs.clicked.connect(self.onBtnExportDirsClicked)
+            self.cmbTgtDirs.currentTextChanged.connect(self.onCmbTgtDirsCurrTextChanged)
+            # Filters
+            self.btnFilterCrop.clicked.connect(self.onBtnFilterCropClicked)
+            self.btnFilterCrop.toggled.connect(self.onBtnFilterCropClicked)
+            self.boxFilterCropT.valueChanged.connect(self.onBoxFilterCropTChanged)
+            self.boxFilterCropR.valueChanged.connect(self.onBoxFilterCropRChanged)
+            self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
+            self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
+            self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
+            self.btnFilterDeinterlace.toggled.connect(self.onBtnFilterDeinterlaceClicked)
+            self.comboBoxFilterDeinterlaceDeinterlacer.currentTextChanged.connect(self.onComboBoxFilterDeinterlaceDeinterlacerChanged)
+            self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
+            self.btnFilterResize.toggled.connect(self.onBtnFilterResizeClicked)
+            self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
+            self.boxFilterResizeH.valueChanged.connect(self.onBoxFilterResizeHChanged)
+            self.btnFilterDeshake.clicked.connect(self.onBtnFilterDeshake)
+            self.btnFilterDeshake.toggled.connect(self.onBtnFilterDeshake)
+            self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
+            self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
+            self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
+            # Filters Up/Down Buttons
+            self.btnFilterCropDown.clicked.connect(self.onBtnFilterCropDownClicked)
+            self.btnFilterCropUp.clicked.connect(self.onBtnFilterCropUpClicked)
+            self.btnFilterDeinterlaceDown.clicked.connect(self.onBtnFilterDeinterlaceDownClicked)
+            self.btnFilterDeinterlaceUp.clicked.connect(self.onBtnFilterDeinterlaceUpClicked)
+            self.btnFilterResizeDown.clicked.connect(self.onBtnFilterResizeDownClicked)
+            self.btnFilterResizeUp.clicked.connect(self.onBtnFilterResizeUpClicked)
+            self.btnFilterRotateDown.clicked.connect(self.onBtnFilterRotateDownClicked)
+            self.btnFilterRotateUp.clicked.connect(self.onBtnFilterRotateUpClicked)
+            self.btnFilterDeshakeDown.clicked.connect(self.onBtnFilterDeshakeDownClicked)
+            self.btnFilterDeshakeUp.clicked.connect(self.onBtnFilterDeshakeUpClicked)
+            # Queue
+            self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
+            self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
+            self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
+            self.btnQueueUp.clicked.connect(self.onBtnQueueUpClicked)
+            self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
+            self.btnQueuePause.clicked.connect(self.onBtnQueuePauseClicked)
+            self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
+            self.btnQueueLoad.clicked.connect(self.onBtnQueueLoadClicked)
+            # Actions
+            self.actionSettings.triggered.connect(self.onActionSettings)
+            self.actionQuit.triggered.connect(self.onActionQuit)
+            self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
+            self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
+            self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
+            self.actionStateResume.triggered.connect(self.onQueueCtxActioStateResume)
+            self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
+            self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
+            # Tagger
+            self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
+            self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
+            self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
+            self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
+            self.btnTagsClear.clicked.connect(self.onBtnTagsClearClicked)
+            self.btnTaggerActive.clicked.connect(self.onBtnTaggerActiveClicked)
+            self.btnTaggerWarning.clicked.connect(self.onBtnTaggerWarningClicked)
+            self.btnTaggerFilter.clicked.connect(self.onBtnTaggerFilterClicked)
+        except Exception as e:
+            msg = 'Error: Cannot set all GUI events.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, infoText='Exit application', detailText=traceback.format_exc(), icon='critical')
+            exit(1)
 
     def initPlayer(self):
-        self.renderFrame = self.findChild(QtWidgets.QWidget, 'renderFrame')
-        self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
-        self.renderFrame.setAttribute(Qt.WA_NativeWindow)
-        import locale
-        locale.setlocale(locale.LC_NUMERIC, 'C')
-        player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal', keep_open="yes")
-        self.playerControl = PlayerControl(player, self.config)
-        self.playerControl.volume(self.config.getPlayerVolume())
-        self.setMuteState(self.config.getPlayerIsMuted())
-        # Register observers
-        self.playerControl.player.observe_property('pause', self.onPlayerPause)
-        self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
-        self.playerControl.player.observe_property('volume', self.onPlayerVolume)
+        try:
+            self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
+            self.renderFrame.setAttribute(Qt.WA_NativeWindow)
+            locale.setlocale(locale.LC_NUMERIC, 'C')
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal', keep_open="yes")
+            self.playerControl = PlayerControl(player, self.config)
+            self.playerControl.volume(self.config.getPlayerVolume())
+            self.setMuteState(self.config.getPlayerIsMuted())
+            # Register observers
+            self.playerControl.player.observe_property('pause', self.onPlayerPause)
+            self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
+            self.playerControl.player.observe_property('volume', self.onPlayerVolume)
+        except Exception as e:
+            msg = 'Error: Cannot initialize the video player.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
+            exit(1)
 
     def newFile(self, videoFilePath = False):
         '''
@@ -332,181 +343,230 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param videoFilePath: The path to the video file to open. If not set, the currently selected job in the queue gets loaded.
         '''
-        self.log(1, '---New File-----------------------------------')
-        self.log(3, '---New File -----------------------------------')
-        self.checkDBConnectivity()
-        if not videoFilePath:
-            self.log(1, 'Loading job from queue ...')
-            self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
-            job = self.jobs.getCurrentJob()
-            self.setTagsAndRatingToTree(False)
-            self.loadTargetDirName(job)
-            self.setHistoryMode(True)
-        else:
-            self.log(1, 'Init new job from file ...')
-            self.jobs.newCurrentJob(videoFilePath)
-            job = self.jobs.getCurrentJob()
-            self.setCurrTgtDir()
-            self.showWarningForKnownFile()
-        if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
-        self.log(1, 'Source path: "%s".' % videoFilePath)
-        # Get Video Props
-        self.videoProps = Functions.getVideoProperties(videoFilePath)
-        self.videoProps['durationMs'] = Functions.HMSToTimestamp(self.videoProps.get('durationHMS'), True)
-        self.showWarningForOddVideoSourceSize(self.videoProps)
-        self.log(1, 'Video properties: %s' % self.videoProps)
-        # Set properties
-        self.loadFilterCrop(job)
-        self.loadFilterDeinterlace(job)
-        self.loadFilterRotate(job)
-        self.loadFilterResize(job)
-        self.loadFilterDeshake(job)
-        self.loadFilterPositions(job)
-        self.loadTargetFileName(job)
-        self.loadTargetFileCount(job)
-        self.playerTimeCurrent = self.timeFormat
-        self.setSliderPlayerPosFromTimestamp(0)
-        self.setLabelPlayerTimeCurr(self.timeFormat)
-        self.setFilterBtnStates()
-        self.loadSections(job)
-         # Load video file
-        if self.videoProps:
-            self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart)
-            if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
-            else:  self.playerControl.pause(False)
-            self.setPlayerControlsState(True)
+        try:
+            self.log(1, '---New File-----------------------------------')
+            self.log(3, '---New File -----------------------------------')
+            self.playerControl.pause(True)
+            self.checkDBConnectivity()
+            if not videoFilePath:
+                self.log(1, 'Loading job from queue ...')
+                self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
+                job = self.jobs.getCurrentJob()
+                self.setTagsAndRatingToTree(False)
+                self.loadTargetDirName(job)
+                self.setHistoryMode(True)
+            else:
+                self.log(1, 'Init new job from file ...')
+                self.jobs.newCurrentJob(videoFilePath)
+                job = self.jobs.getCurrentJob()
+                self.setCurrTgtDir()
+                self.showWarningForKnownFile()
+            if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
+            self.log(1, 'Source path: "%s".' % videoFilePath)
+            # Get Video Props
+            self.videoProps = Functions.getVideoProperties(videoFilePath)
+            self.videoProps['durationMs'] = Functions.HMSToTimestamp(self.videoProps.get('durationHMS'), True)
+            self.showWarningForOddVideoSourceSize(self.videoProps)
+            self.log(1, 'Video properties: %s' % self.videoProps)
+            # Set properties
+            self.loadFilterCrop(job)
+            self.loadFilterDeinterlace(job)
+            self.loadFilterRotate(job)
+            self.loadFilterResize(job)
+            self.loadFilterDeshake(job)
+            self.loadFilterPositions(job)
+            self.loadTargetFileName(job)
+            self.loadTargetFileCount(job)
+            self.playerTimeCurrent = self.timeFormat
+            self.setSliderPlayerPosFromTimestamp(0)
+            self.setLabelPlayerTimeCurr(self.timeFormat)
+            self.setFilterBtnStates()
+            self.loadSections(job)
+            # Load video file
+            if self.videoProps:
+                self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart)
+                if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
+                else:  self.playerControl.pause(False)
+                self.setPlayerControlsState(True)
+        except Exception as e:
+            msg = 'Error: Cannot load new file.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
 
     def loadFilterCrop(self, job):
-        state = job.getFilterCropState()
-        if not state:
-            self.resetCropFilter()
-        else:
-            self.btnFilterCrop.setChecked(True)
-            value = job.getFilterCropT()
-            if value: self.boxFilterCropT.setValue(value)
-            else: self.boxFilterCropT.setValue(0)
-            value = job.getFilterCropR()
-            if value: self.boxFilterCropR.setValue(value)
-            else: self.boxFilterCropR.setValue(0)
-            value = job.getFilterCropB()
-            if value: self.boxFilterCropB.setValue(value)
-            else: self.boxFilterCropB.setValue(0)
-            value = job.getFilterCropL()
-            if value: self.boxFilterCropL.setValue(value)
-            else: self.boxFilterCropL.setValue(0)
+        try:
+            state = job.getFilterCropState()
+            if not state:
+                self.resetCropFilter()
+            else:
+                self.btnFilterCrop.setChecked(True)
+                value = job.getFilterCropT()
+                if value: self.boxFilterCropT.setValue(value)
+                else: self.boxFilterCropT.setValue(0)
+                value = job.getFilterCropR()
+                if value: self.boxFilterCropR.setValue(value)
+                else: self.boxFilterCropR.setValue(0)
+                value = job.getFilterCropB()
+                if value: self.boxFilterCropB.setValue(value)
+                else: self.boxFilterCropB.setValue(0)
+                value = job.getFilterCropL()
+                if value: self.boxFilterCropL.setValue(value)
+                else: self.boxFilterCropL.setValue(0)
+        except Exception as e:
+            msg = 'Error: Cannot load crop filter from job.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='warning')
 
     def loadFilterDeinterlace(self, job):
-        state = job.getFilterDeinterlaceState()
-        if not state: self.resetDeinterlaceFilter()
-        if state:
-            self.btnFilterDeinterlace.setChecked(True)
-        deinterlacer = job.getFilterDeinterlaceDeinterlacer()
-        self.comboBoxFilterDeinterlaceDeinterlacer.setCurrentText(deinterlacer)
-
+        try:
+            state = job.getFilterDeinterlaceState()
+            if not state: self.resetDeinterlaceFilter()
+            if state:
+                self.btnFilterDeinterlace.setChecked(True)
+            deinterlacer = job.getFilterDeinterlaceDeinterlacer()
+            self.comboBoxFilterDeinterlaceDeinterlacer.setCurrentText(deinterlacer)
+        except Exception as e:
+            msg = 'Error: Cannot load deinterlace filter from job.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='warning')
 
     def loadFilterRotate(self, job):
-        rotation = job.getFilterRotate()
-        if not rotation:
-            self.resetRotateFilter()
-        elif rotation == 90:
-            self.btnFilterRotateRight.setChecked(True)
-            self.onBtnFilterRotateRight()
-        elif rotation == -90:
-            self.btnFilterRotateLeft.setChecked(True)
-            self.onBtnFilterRotateLeft()
-        elif rotation == 180:
-            self.btnFilterRotate180.setChecked(True)
-            self.onBtnFilterRotate180()
+        try:
+            rotation = job.getFilterRotate()
+            if not rotation:
+                self.resetRotateFilter()
+            elif rotation == 90:
+                self.btnFilterRotateRight.setChecked(True)
+                self.onBtnFilterRotateRight()
+            elif rotation == -90:
+                self.btnFilterRotateLeft.setChecked(True)
+                self.onBtnFilterRotateLeft()
+            elif rotation == 180:
+                self.btnFilterRotate180.setChecked(True)
+                self.onBtnFilterRotate180()
+        except Exception as e:
+            msg = 'Error: Cannot load rotate filter from job.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='warning')
 
     def loadFilterResize(self, job):
-        state = job.getFilterResizeState()
-        if not state: self.resetResizeFilter()
-        if state:
-            self.btnFilterResize.setChecked(True)
-            value = job.getFilterResizeWidth()
-            if value: self.boxFilterResizeW.setValue(value)
-            else: self.boxFilterResizeW.setValue(0)
-            value = job.getFilterResizeHeight()
-            if value: self.boxFilterResizeH.setValue(value)
-            else: self.boxFilterResizeH.setValue(0)
+        try:
+            state = job.getFilterResizeState()
+            if not state: self.resetResizeFilter()
+            if state:
+                self.btnFilterResize.setChecked(True)
+                value = job.getFilterResizeWidth()
+                if value: self.boxFilterResizeW.setValue(value)
+                else: self.boxFilterResizeW.setValue(0)
+                value = job.getFilterResizeHeight()
+                if value: self.boxFilterResizeH.setValue(value)
+                else: self.boxFilterResizeH.setValue(0)
+        except Exception as e:
+            msg = 'Error: Cannot load resize filter from job.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='warning')
 
     def loadFilterDeshake(self, job):
-        state = job.getFilterDeshakeState()
-        if state: self.btnFilterDeshake.setChecked(True)
-        else: self.btnFilterDeshake.setChecked(False)
+        try:
+            state = job.getFilterDeshakeState()
+            if state: self.btnFilterDeshake.setChecked(True)
+            else: self.btnFilterDeshake.setChecked(False)
+        except Exception as e:
+            msg = 'Error: Cannot load deshake filter from job.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='warning')
 
     def saveSession(self):
         '''
         Saves the current job session as new job and into the database
         '''
-        if(self.historyMode): return False
-        self.log(1, 'Saving current session ...')
-        if not self.warnWhenNoTagsOrRating():
-            self.log(1, 'Saving aborted by user.')
+        try:
+            if(self.historyMode): return False
+            self.log(1, 'Saving current session ...')
+            if not self.warnWhenNoTagsOrRating():
+                self.log(1, 'Saving aborted by user.')
+                return False
+            currentJob = self.jobs.getCurrentJob()
+            currentJob.setTgtFileExt('.%s' % self.config.getRenderContainer())
+            currentJob.setRenderSettingVideoCodec(self.config.getRenderVideoCodec())
+            currentJob.setRenderSettingCRF(self.config.getRenderCRF())
+            currentJob.setRenderSettingPreset(self.config.getRenderPreset())
+            currentJob.setRenderSettingAudioCodec(self.config.getRenderAudioCodec())
+            currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
+            currentJob.setRenderSettingContainer(self.config.getRenderContainer())
+            if self.isSameRenderSrcTgt(currentJob, False): return False
+            if not self.overwriteTgtFileIfExists(currentJob): return False
+            job = self.addCurrentJobToQueue()
+            if not job: return False
+            if not self.saveCurrentTagsAndRating(): return False
+            if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
+            self.log(1, 'Session saved as new job in queue.')
+        except Exception as e:
+            msg = 'Error: Cannot sace current session as new job in queue.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
             return False
-        currentJob = self.jobs.getCurrentJob()
-        currentJob.setTgtFileExt('.%s' % self.config.getRenderContainer())
-        currentJob.setRenderSettingVideoCodec(self.config.getRenderVideoCodec())
-        currentJob.setRenderSettingCRF(self.config.getRenderCRF())
-        currentJob.setRenderSettingPreset(self.config.getRenderPreset())
-        currentJob.setRenderSettingAudioCodec(self.config.getRenderAudioCodec())
-        currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
-        currentJob.setRenderSettingContainer(self.config.getRenderContainer())
-        if self.isSameRenderSrcTgt(currentJob, False): return False
-        if not self.overwriteTgtFileIfExists(currentJob): return False
-        job = self.addCurrentJobToQueue()
-        if not job: return False
-        if not self.saveCurrentTagsAndRating(): return False
-        if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
-        self.log(1, 'Session saved as new job in queue.')
 
     def addCurrentJobToQueue(self):
         '''Adds the current job session as new job to the jobs queue'''
-        job = False
         try:
-            id, job = self.jobs.saveCurrentJob()
-            if not job.getSections() and self.config.getAppSetAutoSection():
-                if not self.autoCreateSectionForJob(job): return False
-            state = job.getState()
-            iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-            job.setPosition(iRow)
-            self.runNextWaitJob()
+            job = False
+            try:
+                id, job = self.jobs.saveCurrentJob()
+                if not job.getSections() and self.config.getAppSetAutoSection():
+                    if not self.autoCreateSectionForJob(job): return False
+                state = job.getState()
+                iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
+                job.setPosition(iRow)
+                self.runNextWaitJob()
+            except Exception as e:
+                msg = 'Error: Cannot add session to job queue.'
+                self.log(1, msg, 1)
+                self.showMsgBox(msg, detailText=str(e), icon='critical')
+            return job
         except Exception as e:
-            msg = 'Error: Cannot add session to job queue.'
-            self.log(1, msg, 1)
-            self.showMsgBox(msg, detailText=str(e), icon='critical')
-        return job
+            raise Exception(traceback.format_exc())
 
     def autoCreateSectionForJob(self, job):
-        if self.sectionTimeStart == self.timeFormat and self.sectionTimeEnd == self.timeFormat:
-            self.log(1, 'No section were added. Auto create whole video duration as section.')
-            job.addSection(self.timeFormat, self.videoProps.get('durationHMS'))
-            return True
-        elif self.sectionTimeStart == self.sectionTimeEnd:
-            msg = 'Error: No sections were added and section markers have same time position.'
-            self.log(1, msg, 1)
-            self.showMsgBox(msg, infoText='Please set a valid section range.', detailText='Current section start: %s\nCurrent section End: %s' % (self.sectionTimeStart, self.sectionTimeEnd), icon='critical')
-            return False
-        else:
-            self.log(1, 'No section were added. Auto create section from %s to %s.' % (self.sectionTimeStart, self.sectionTimeEnd))
-            job.addSection(self.sectionTimeStart, self.sectionTimeEnd)
-            return True
+        '''Creates a section for a job if none section is added but a range is selected'''
+        try:
+            if self.sectionTimeStart == self.timeFormat and self.sectionTimeEnd == self.timeFormat:
+                self.log(1, 'No section were added. Auto create whole video duration as section.')
+                job.addSection(self.timeFormat, self.videoProps.get('durationHMS'))
+                return True
+            elif self.sectionTimeStart == self.sectionTimeEnd:
+                msg = 'Error: No sections were added and section markers have same time position.'
+                self.log(1, msg, 1)
+                self.showMsgBox(msg, infoText='Please set a valid section range.', detailText='Current section start: %s\nCurrent section End: %s' % (self.sectionTimeStart, self.sectionTimeEnd), icon='critical')
+                return False
+            else:
+                self.log(1, 'No section were added. Auto create section from %s to %s.' % (self.sectionTimeStart, self.sectionTimeEnd))
+                job.addSection(self.sectionTimeStart, self.sectionTimeEnd)
+                return True
+        except Exception as e:
+            raise Exception(traceback.format_exc())
 
     def runNextWaitJob(self):
-        if self.ffmpegProcess or self.btnQueuePause.isChecked():
+        try:
+            if self.ffmpegProcess or self.btnQueuePause.isChecked():
+                return False
+            self.log(1, 'Running next job ...')
+            job = self.getNextWaitingJob()
+            if job:
+                if self.isSameRenderSrcTgt(job, True) or self.isSectionsMissing(job, True): return False
+                self.FFmpegThread = FFmpegThread(job, self.config.getConfigDeshakePath())
+                self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
+                self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
+                self.FFmpegThread.ffmpegProcess.connect(self.onFFmpegProgress)
+                self.FFmpegThread.ffmpegExit.connect(self.onFFmpegExit)
+                self.FFmpegThread.start()
+                self.log(1, 'FFmpeg thread started.')
+            return True
+        except Exception as e:
+            msg = 'Error: Cannot run next waiting job in queue.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
             return False
-        self.log(1, 'Running next job ...')
-        job = self.getNextWaitingJob()
-        if job:
-            if self.isSameRenderSrcTgt(job, True) or self.isSectionsMissing(job, True): return False
-            self.FFmpegThread = FFmpegThread(job, self.config.getConfigDeshakePath())
-            self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
-            self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
-            self.FFmpegThread.ffmpegProcess.connect(self.onFFmpegProgress)
-            self.FFmpegThread.ffmpegExit.connect(self.onFFmpegExit)
-            self.FFmpegThread.start()
-            self.log(1, 'FFmpeg thread started.')
-        return True
 
     def isSameRenderSrcTgt(self, job, isTask=False):
         '''
@@ -515,13 +575,16 @@ class MainUi(QtWidgets.QMainWindow):
         :param job: The job to check
         :param isTask: If True, there will be no message box in the frontend (use it for the queue)
         '''
-        if Functions.isSameString(job.getSrcFilePathLong(), job.getTgtFilePathLong()):
-            msg = 'Error: Input and Output Path are the same.'
-            self.log(1, msg, 1)
-            self.onFFmpegExit([job, -100, msg, False, False])
-            if not isTask: self.showMsgBox(msg, btns="ok", icon="critical")
-            return True
-        return False
+        try:
+            if Functions.isSameString(job.getSrcFilePathLong(), job.getTgtFilePathLong()):
+                msg = 'Error: Input and Output Path are the same.'
+                self.log(1, msg, 1)
+                self.onFFmpegExit([job, -100, msg, False, False])
+                if not isTask: self.showMsgBox(msg, btns="ok", icon="critical")
+                return True
+            return False
+        except Exception as e:
+            raise Exception(e)
 
     def isSectionsMissing(self, job, isTask=False):
         '''
@@ -529,14 +592,18 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param job: The job to check
         :param isTask: If True, there will be no message box in the frontend (use it for the queue)
+        :return: True if sections are missing, else False
         '''
-        if len(job.getSections()) == 0:
-            msg = 'Error: No sections to render.'
-            self.log(1, msg, 1)
-            self.onFFmpegExit([job, -101, msg, False, False])
-            if not isTask: self.showMsgBox(msg, btns="ok", icon="critical")
-            return True
-        return False
+        try:
+            if len(job.getSections()) == 0:
+                msg = 'Error: No sections to render.'
+                self.log(1, msg, 1)
+                self.onFFmpegExit([job, -101, msg, False, False])
+                if not isTask: self.showMsgBox(msg, btns="ok", icon="critical")
+                return True
+            return False
+        except Exception as e:
+            raise Exception(e)
 
     def getNextWaitingJob(self):
         return self.getNextJobByStateID(0)
@@ -548,14 +615,20 @@ class MainUi(QtWidgets.QMainWindow):
         return self.getNextJobByStateID(4)
 
     def getNextJobByStateID(self, stateID):
-        job = False
-        jobItems = self.tableQueue.findItems(self.getJobStateString(stateID), Qt.MatchExactly)
-        if(jobItems):
-            iRow = self.tableQueue.row(jobItems[0])
-            jobItem = self.tableQueue.item(iRow, 0)
-            jobIndex = jobItem.text()
-            job = self.jobs.getJob(jobIndex)
-        return job
+        try:
+            job = False
+            jobItems = self.tableQueue.findItems(self.getJobStateString(stateID), Qt.MatchExactly)
+            if(jobItems):
+                iRow = self.tableQueue.row(jobItems[0])
+                jobItem = self.tableQueue.item(iRow, 0)
+                jobIndex = jobItem.text()
+                job = self.jobs.getJob(jobIndex)
+            return job
+        except Exception as e:
+            msg = 'Error: Cannot get the next job by ID.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
+            return False
 
     def setPlayerControlsState(self, state):
         self.framePlayerBtns.setEnabled(state)
@@ -702,7 +775,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.setBtnExportSaveState()
 
     def onBoxFileCountChanged(self, text):
-        self.jobs.getCurrentJob().setTgtFileCount(text)
+        try:
+            self.jobs.getCurrentJob().setTgtFileCount(text)
+        except Exception as e:
+            msg = 'Error: increase file count.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, detailText=traceback.format_exc(), icon='warning')
 
     def onBtnExportSave(self):
         self.saveSession()
@@ -1005,12 +1083,15 @@ class MainUi(QtWidgets.QMainWindow):
             # Todo: set fps label
             pass
         elif line[0] == 'out_time':
-            currentSecond = int(
-                Functions.HMSToTimestamp(line[1][:-3], True) * 100)
+            currentSecond = int(Functions.HMSToTimestamp(line[1][:-3], True) * 100)
             totalSeconds = int(totalSeconds * 100)
             if currentSecond > totalSeconds:
                 currentSecond = totalSeconds
-            self.progressBarRender.setValue(currentSecond)
+            if currentSecond == 0:
+                self.progressBarRender.setMaximum(0)
+            else:
+                self.progressBarRender.setMaximum(totalSeconds)
+                self.progressBarRender.setValue(currentSecond)
 
     # Event handler when ffmpeg exits rendering
     @pyqtSlot('PyQt_PyObject')
@@ -1053,7 +1134,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.updateQueueJobState(job.getID(), 4)
         if not self.progressBarRender.isEnabled():
             self.progressBarRender.setEnabled(True)
-        self.progressBarRender.setMaximum(int(totalSeconds * 100))
+        self.progressBarRender.setMinimum(0)
+        self.progressBarRender.setMaximum(0)
         self.progressBarRender.setValue(0)
         if not self.btnQueueKill.isEnabled():
             self.btnQueueKill.setEnabled(True)
@@ -1376,7 +1458,6 @@ class MainUi(QtWidgets.QMainWindow):
         for i in range(len(tagsTree)):
             tag = tagsTree[i]
             if tag['tagID'] in filterTagIDs:
-                self.log(1, 'SET FILTER FOR: %s' % tag['tagID'])
                 tagsTree[i]['filter'] = True
             else: tagsTree[i]['filter'] = False
         return tagsTree
@@ -1965,20 +2046,24 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param value: Time value like seconds (+2 jumps 2 seconds forward, -2 jumps 2 seconds backwards)
         '''
-        if value < 0 and self.playerTimeCurrentMs == 0:
-            self.setLabelPlayerTimeCurr('0:00:00.000')
-            self.playerTimeCurrent = '0:00:00.000'
-            self.setSliderPlayerPosFromTimestamp(0)
-        elif value < 0 and self.playerTimeCurrentMs+value < 0:
-            self.setLabelPlayerTimeCurr('0:00:00.000')
-            self.playerTimeCurrent = '0:00:00.000'
-            self.setSliderPlayerPosFromTimestamp(0)
-            self.playerControl.seek(0, 'absolute', 'exact')
-        elif value > 0 and self.playerTimeCurrentMs+value > self.videoProps.get('durationMs'):
-            self.sliderPlayer.setValue(self.sliderPlayer.maximum())
-            self.playerControl.seek(self.videoProps.get('durationHMS'), 'absolute', 'exact')
-        else:
-            self.playerControl.seek(value)
+        try:
+            if value < 0 and self.playerTimeCurrentMs == 0:
+                self.setLabelPlayerTimeCurr('0:00:00.000')
+                self.playerTimeCurrent = '0:00:00.000'
+                self.setSliderPlayerPosFromTimestamp(0)
+            elif value < 0 and self.playerTimeCurrentMs+value < 0:
+                self.setLabelPlayerTimeCurr('0:00:00.000')
+                self.playerTimeCurrent = '0:00:00.000'
+                self.setSliderPlayerPosFromTimestamp(0)
+                self.playerControl.seek(0, 'absolute', 'exact')
+            elif value > 0 and self.playerTimeCurrentMs+value > self.videoProps.get('durationMs'):
+                self.sliderPlayer.setValue(self.sliderPlayer.maximum())
+                self.playerControl.seek(self.videoProps.get('durationHMS'), 'absolute', 'exact')
+            else:
+                self.playerControl.seek(value)
+        except Exception as e:
+            msg = 'Error: Cannot seek played file.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
 
     def seekFromPlayerSlider(self, value):
         '''Seeks an absolute position based on a player slider value'''
@@ -2052,15 +2137,17 @@ class MainUi(QtWidgets.QMainWindow):
         if pos >= 1: pos = 1
         return str(pos)
 
-    def log(self, id, line, msgType=0, timestamp=True):
+    def log(self, id, line, msgType=0, timestamp=True, traceback=False):
         '''
         Adds a line to a log
 
         :param line: String to add to the log
         :param msType: 0 = Normal, 1 = Error
         :param timestamp: Adds a timestamp with h:m:s as prefix if true
+        :param traceback: Provide a error traceback to print it in a new line after the message (console only)
         '''
         print(line)
+        if traceback: print(traceback)
         if timestamp:
             line = '%s %s' % (datetime.datetime.now().strftime('%H:%M:%S'), line)
         if msgType == 1:

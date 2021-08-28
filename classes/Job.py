@@ -40,6 +40,7 @@ class Job():
             'renderSettings': {
                 'videoCodec': False,
                 'crf': False,
+                'preset': False,
                 'audioCodec': False,
                 'audioBitrate': False,
                 'container': False
@@ -286,8 +287,10 @@ class Job():
         self.propValueChanged()
 
     def setTgtFileCount(self, count):
-        self._props['tgtFile'].update({'count': count})
-        self.propValueChanged()
+        try:
+            self._props['tgtFile'].update({'count': count})
+            self.propValueChanged()
+        except: raise Exception()
 
     def setState(self, state):
         self._props.update({'state': state})
@@ -398,16 +401,22 @@ class Job():
         }
 
     def addSection(self, timeFrom, timeTo):
-        sections = self._props.get('sections')
-        sections.append([timeFrom, timeTo])
-        self._props.update({'sections': sections})
-        self.propValueChanged()
+        try:
+            sections = self._props.get('sections')
+            sections.append([timeFrom, timeTo])
+            self._props.update({'sections': sections})
+            self.propValueChanged()
+        except Exception as e:
+            raise Exception(traceback.format_exc())
 
     def removeSection(self, index):
-        sections = self._props.get('sections')
-        sections.pop(index)
-        self._props.update({'sections': sections})
-        self.propValueChanged()
+        try:
+            sections = self._props.get('sections')
+            sections.pop(index)
+            self._props.update({'sections': sections})
+            self.propValueChanged()
+        except Exception as e:
+            raise Exception(traceback.format_exc())
 
     def moveSection(self, fromIndex, toIndex):
         if fromIndex == toIndex:

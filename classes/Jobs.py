@@ -12,7 +12,7 @@ class Jobs:
 
     def __init__(self, jobsFilePath):
         self.jobsFilePath = jobsFilePath
-        self.jobsFileBakPath = '%s.bak' % jobsFilePath
+        self.jobsFileBakPath = '%s._tmp' % jobsFilePath
         self.jobs = {}
         self.currentJob = False
         self.initJobs()
