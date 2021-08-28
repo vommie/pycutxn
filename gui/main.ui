@@ -2221,8 +2221,14 @@ QRadioButton::unchecked:hover {
        <property name="verticalScrollBarPolicy">
         <enum>Qt::ScrollBarAlwaysOff</enum>
        </property>
+       <property name="autoScroll">
+        <bool>false</bool>
+       </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::MultiSelection</enum>
+       </property>
+       <property name="horizontalScrollMode">
+        <enum>QAbstractItemView::ScrollPerPixel</enum>
        </property>
        <property name="isWrapping" stdset="0">
         <bool>true</bool>
@@ -2549,6 +2555,9 @@ QRadioButton::unchecked:hover {
    </attribute>
    <widget class="QWidget" name="dockContentQueue">
     <layout class="QVBoxLayout" name="verticalLayout_8">
+     <property name="spacing">
+      <number>0</number>
+     </property>
      <item>
       <widget class="QTableWidget" name="tableQueue">
        <property name="contextMenuPolicy">
@@ -2596,10 +2605,22 @@ QRadioButton::unchecked:hover {
      </item>
      <item>
       <layout class="QHBoxLayout" name="layoutQueueProgress">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>4</number>
+       </property>
        <item>
         <widget class="QProgressBar" name="progressBarRender">
          <property name="enabled">
           <bool>false</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>18</height>
+          </size>
          </property>
          <property name="value">
           <number>0</number>
@@ -2609,7 +2630,95 @@ QRadioButton::unchecked:hover {
       </layout>
      </item>
      <item>
+      <widget class="QWidget" name="widgetRenderDetails" native="true">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>18</height>
+        </size>
+       </property>
+       <layout class="QHBoxLayout" name="layoutRenderDetails">
+        <property name="spacing">
+         <number>3</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="labelRenderFPS">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Frames per second</string>
+          </property>
+          <property name="text">
+           <string>0 fps</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelRenderSpeed">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Speed ratio</string>
+          </property>
+          <property name="text">
+           <string>0x</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelRenderSize">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Total size</string>
+          </property>
+          <property name="text">
+           <string>0 MiB</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelRenderTime">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Time</string>
+          </property>
+          <property name="text">
+           <string>00:00:00.000</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
       <layout class="QHBoxLayout" name="layoutQueueBtns">
+       <property name="topMargin">
+        <number>6</number>
+       </property>
        <item>
         <spacer name="horizontalSpacer_6">
          <property name="orientation">

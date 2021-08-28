@@ -125,6 +125,7 @@ class MainUi(QtWidgets.QMainWindow):
         if state: self.restoreState(state)
         # Other
         self.toolTipBtnExportSave = self.btnExportSave.toolTip()
+        self.resetRenderDetails()
         # GUI elements options
         header = self.tableSections.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
@@ -1072,18 +1073,20 @@ class MainUi(QtWidgets.QMainWindow):
             return
         if not len(line) == 2:
             return
-        if line[0] == 'progress':
-            if line[1] == 'end':
-                # Todo: Reset progress bar
-                pass
-        elif line[0] == 'speed':
-            # Todo: Set speed label
-            pass
+        if line[0] == 'speed':
+            try: self.labelRenderSpeed.setText('%.2fx' % float(line[1][:-1]))
+            except: pass
         elif line[0] == 'fps':
-            # Todo: set fps label
-            pass
+            try: self.labelRenderFPS.setText('%.2f %s' % (float(line[1]), line[0]))
+            except: pass
+        elif line[0] == 'total_size':
+            try: self.labelRenderSize.setText('%.2f MiB' % float(int(line[1])/1000000))
+            except: pass
         elif line[0] == 'out_time':
-            currentSecond = int(Functions.HMSToTimestamp(line[1][:-3], True) * 100)
+            try: self.labelRenderTime.setText(line[1][:-3])
+            except: pass
+        elif line[0] == 'out_time_ms':
+            currentSecond = int(int(line[1])/10000)
             totalSeconds = int(totalSeconds * 100)
             if currentSecond > totalSeconds:
                 currentSecond = totalSeconds
@@ -1107,6 +1110,8 @@ class MainUi(QtWidgets.QMainWindow):
         if self.progressBarRender.isEnabled():
             self.progressBarRender.setValue(0)
             self.progressBarRender.setEnabled(False)
+        if self.widgetRenderDetails.isEnabled():
+            self.resetRenderDetails()
         state = job.getState()
         if code == 0:
             state = 1
@@ -1132,11 +1137,11 @@ class MainUi(QtWidgets.QMainWindow):
         job.setState(4)
         self.ffmpegProcess = atts[2]
         self.updateQueueJobState(job.getID(), 4)
-        if not self.progressBarRender.isEnabled():
-            self.progressBarRender.setEnabled(True)
-        self.progressBarRender.setMinimum(0)
+        if not self.progressBarRender.isEnabled(): self.progressBarRender.setEnabled(True)
+        self.progressBarRender.setMinimum(0) # When min and max are same value, progress bar gets an "idle" animation in some system themes
         self.progressBarRender.setMaximum(0)
         self.progressBarRender.setValue(0)
+        if not self.widgetRenderDetails.isEnabled(): self.widgetRenderDetails.setEnabled(True)
         if not self.btnQueueKill.isEnabled():
             self.btnQueueKill.setEnabled(True)
 
@@ -1601,6 +1606,14 @@ class MainUi(QtWidgets.QMainWindow):
     def resetDeinterlaceFilter(self):
         self.btnFilterDeinterlace.setChecked(False)
         self.comboBoxFilterDeinterlaceDeinterlacer.setCurrentText(self.config.getFiltersDeinterlacer())
+
+    def resetRenderDetails(self):
+        '''Resets the render details to 0 and disables the layout'''
+        self.widgetRenderDetails.setEnabled(False)
+        self.labelRenderFPS.setText('0 fps')
+        self.labelRenderSpeed.setText('0x')
+        self.labelRenderSize.setText('0 MiB')
+        self.labelRenderTime.setText(self.timeFormat)
 
     def setVolumeSlider(self, value : int, relative=True):
         '''
