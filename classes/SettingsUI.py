@@ -13,7 +13,7 @@ class SettingsUI(QtWidgets.QDialog):
 
     def loadConfig(self):
         # General
-        self.checkSetAutoSection.setChecked(self.parent.config.getAppSetAutoSection())
+        self.checkSetAutoSection.setChecked(self.parent.config.getSectionsAutoCreate())
         self.checkBoxPauseQOnStart.setChecked(self.parent.config.getAppPauseQueueOnStartWhenWaitingJobs())
         # Player
         self.checkBoxPlayerAutoPlay.setChecked(self.parent.config.getPlayerAutoPlay())
@@ -38,7 +38,7 @@ class SettingsUI(QtWidgets.QDialog):
 
     def onAccepted(self):
         # General
-        self.parent.config.setAppSetAutoSection(self.checkSetAutoSection.isChecked())
+        self.parent.config.setSectionsAutoCreate(self.checkSetAutoSection.isChecked())
         self.parent.config.setAppPauseQueueOnStartWhenWaitingJobs(self.checkBoxPauseQOnStart.isChecked())
         # Player
         self.parent.config.setPlayerAutoPlay(self.checkBoxPlayerAutoPlay.isChecked())

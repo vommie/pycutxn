@@ -67,8 +67,11 @@ class Config:
     def getAppWarnCloseWhileRender(self) -> bool:
         return self.settings.value('app/warnCloseWhileRender', True, type=bool)
 
-    def getAppSetAutoSection(self) -> bool:
-        return self.settings.value('app/autoSection', True, type=bool)
+    def getSectionsAutoCreate(self) -> bool:
+        return self.settings.value('sections/autoCreate', True, type=bool)
+
+    def getSectionsAutoRemove(self) -> bool:
+        return self.settings.value('sections/autoRemove', True, type=bool)
 
     def getDialogLogGeometry(self):
         return self.settings.value('dialogLog/geometry')
@@ -158,8 +161,11 @@ class Config:
     def setAppWarnCloseWhileRender(self, state : bool) -> None:
         self.settings.setValue('app/warnCloseWhileRender', state)
 
-    def setAppSetAutoSection(self, state : bool) -> None:
-        self.settings.setValue('app/autoSection', state)
+    def setSectionsAutoCreate(self, state : bool) -> None:
+        self.settings.setValue('sections/autoCreate', state)
+
+    def setSectionsAutoRemove(self, state : bool) -> None:
+        self.settings.setValue('sections/autoRemove', state)
 
     def setDialogLogGeometry(self, geometry) -> None:
         self.settings.setValue('dialogLog/geometry', geometry)

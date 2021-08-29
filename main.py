@@ -139,6 +139,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.updateDirs(self.config.getTargetDirs())
         self.cmbTgtDirs.setCurrentText(self.config.getAppTgtDirName())
         self.btnTgtFileAutoIncrement.setChecked(self.config.getAppIncrementFilename())
+        self.btnSectionAutoRemove.setChecked(self.config.getSectionsAutoRemove())
         waitingJobs = False
         # Queue Jobs
         if len(self.jobs.jobs.items()) > 1:
@@ -247,6 +248,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnSectionDown.clicked.connect(self.onBtnSectionDownClicked)
             self.btnCurrentSectionStart.clicked.connect(self.onBtnCurrentSectionStart)
             self.btnCurrentSectionEnd.clicked.connect(self.onBtnCurrentSectionEnd)
+            self.btnSectionAutoRemove.clicked.connect(self.onBtnSectionAutoRemove)
             # Job Finalization
             self.lineEditTgtFileName.textChanged.connect(self.onLineEditTgtFileNameChanged)
             self.boxTgtFileCount.valueChanged.connect(self.onBoxFileCountChanged)
@@ -351,8 +353,10 @@ class MainUi(QtWidgets.QMainWindow):
             self.checkDBConnectivity()
             if not videoFilePath:
                 self.log(1, 'Loading job from queue ...')
+                loadedJob = True
                 self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
                 job = self.jobs.getCurrentJob()
+                videoFilePath = job.getSrcFilePathLong()
                 self.setTagsAndRatingToTree(False)
                 self.loadTargetDirName(job)
                 self.setHistoryMode(True)
@@ -362,7 +366,6 @@ class MainUi(QtWidgets.QMainWindow):
                 job = self.jobs.getCurrentJob()
                 self.setCurrTgtDir()
                 self.showWarningForKnownFile()
-            if not videoFilePath: videoFilePath = job.getSrcFilePathLong()
             self.setWindowTitle('%s (%s) - pyCut' % (job.getSrcFileNameLong(), job.getSrcDirName()))
             self.log(1, 'Source path: "%s".' % videoFilePath)
             # Get Video Props
@@ -386,6 +389,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.loadSections(job)
             # Load video file
             if self.videoProps:
+                # TODO: Audio Normalization
                 audioFilter='lavfi=[dynaudnorm=s=30]'
                 audioFilter = ''
                 audioFilter='lavfi=[loudnorm=I=-16:TP=-3:LRA=4]'
@@ -508,6 +512,7 @@ class MainUi(QtWidgets.QMainWindow):
             if not job: return False
             if not self.saveCurrentTagsAndRating(): return False
             if self.btnTgtFileAutoIncrement.isChecked(): self.changeTargetFileCount(1)
+            if self.btnSectionAutoRemove.isChecked(): self.clearSections(clearCurrentJob=True, clearCurrentSection=False)
             self.log(1, 'Session saved as new job in queue.')
         except Exception as e:
             msg = 'Error: Cannot save current session as new job in queue.'
@@ -770,6 +775,9 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnCurrentSectionEnd(self):
         if self.sectionTimeEnd != self.playerTimeCurrent: self.playerControl.seek(self.sectionTimeEnd, 'absolute')
+
+    def onBtnSectionAutoRemove(self):
+        self.config.setSectionsAutoRemove(self.btnSectionAutoRemove.isChecked())
 
     def onTableSectionCurrCellChanged(self):
         self.setSectionBtnStates()
@@ -1552,12 +1560,21 @@ class MainUi(QtWidgets.QMainWindow):
             self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
 
-    def clearSections(self):
-        '''Clears the sections table (without resetting the current section timestamps)'''
-        self.setSectionTimeStart(self.timeFormat)
-        self.setSectionTimeEnd(self.timeFormat)
+    def clearSections(self, clearCurrentJob=True, clearCurrentSection=True):
+        '''
+        Clears the sections.
+
+        :param clearCurrentJob: If True, all sections gets removed from the current job too.
+        :param clearCurrentSection: If true, the current section range will be cleared too.
+        '''
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
+        if clearCurrentJob:
+            job = self.jobs.getCurrentJob()
+            job.clearSections()
+        if clearCurrentSection:
+            self.setSectionTimeStart(self.timeFormat)
+            self.setSectionTimeEnd(self.timeFormat)
 
     def emptyTagsTree(self):
         '''Deletes all items from the tagsTree'''
@@ -1916,7 +1933,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def loadSections(self, job):
         '''Sets the sections from a job'''
-        self.clearSections()
+        self.clearSections(clearCurrentJob=False, clearCurrentSection=True)
         sections = job.getSections()
         if sections:
             if sections[0]:
