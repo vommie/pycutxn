@@ -1445,6 +1445,49 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QPushButton" name="btnFilterMirrorH">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>56</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>24</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Mirror horizontally</string>
+                </property>
+                <property name="text">
+                 <string>⬌</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
            </layout>
@@ -1763,6 +1806,9 @@
             </property>
             <property name="focusPolicy">
              <enum>Qt::TabFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>If active, the section list gets cleared on save. The current section range will not be cleared.</string>
             </property>
             <property name="text">
              <string></string>

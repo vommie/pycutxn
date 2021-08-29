@@ -526,7 +526,7 @@ class MainUi(QtWidgets.QMainWindow):
             job = False
             try:
                 id, job = self.jobs.saveCurrentJob()
-                if not job.getSections() and self.config.getAppSetAutoSection():
+                if not job.getSections() and self.config.getSectionsAutoCreate():
                     if not self.autoCreateSectionForJob(job): return False
                 state = job.getState()
                 iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
@@ -819,43 +819,53 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFilterCropClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterCropState(self.btnFilterCrop.isChecked())
+        self.setVideoFilter()
 
     def onBoxFilterCropTChanged(self, px):
         job = self.jobs.getCurrentJob()
         job.setFilterCropT(px)
+        self.setVideoFilter()
 
     def onBoxFilterCropRChanged(self, px):
         job = self.jobs.getCurrentJob()
         job.setFilterCropR(px)
+        self.setVideoFilter()
 
     def onBoxFilterCropBChanged(self, px):
         job = self.jobs.getCurrentJob()
         job.setFilterCropB(px)
+        self.setVideoFilter()
 
     def onBoxFilterCropLChanged(self, px):
         job = self.jobs.getCurrentJob()
         job.setFilterCropL(px)
+        self.setVideoFilter()
 
     def onBtnFilterDeinterlaceClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterDeinterlaceState(self.btnFilterDeinterlace.isChecked())
+        self.setVideoFilter()
 
     def onComboBoxFilterDeinterlaceDeinterlacerChanged(self, text):
         job = self.jobs.getCurrentJob()
         job.setFilterDeinterlaceDeinterlacer(text)
         self.config.setFiltersDeinterlacer(text)
+        self.setVideoFilter()
 
     def onBtnFilterResizeClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterResizeState(self.btnFilterResize.isChecked())
+        self.setVideoFilter()
 
     def onBoxFilterResizeWChanged(self, text):
         job = self.jobs.getCurrentJob()
         job.setFilterResizeWidth(text)
+        self.setVideoFilter()
 
     def onBoxFilterResizeHChanged(self, text):
         job = self.jobs.getCurrentJob()
         job.setFilterResizeHeight(text)
+        self.setVideoFilter()
 
     def onBtnFilterDeshake(self):
         job = self.jobs.getCurrentJob()
@@ -869,6 +879,7 @@ class MainUi(QtWidgets.QMainWindow):
             job.setFilterRotate(False)
         self.btnFilterRotateRight.setChecked(False)
         self.btnFilterRotate180.setChecked(False)
+        self.setVideoFilter()
 
     def onBtnFilterRotateRight(self):
         job = self.jobs.getCurrentJob()
@@ -878,6 +889,7 @@ class MainUi(QtWidgets.QMainWindow):
             job.setFilterRotate(False)
         self.btnFilterRotateLeft.setChecked(False)
         self.btnFilterRotate180.setChecked(False)
+        self.setVideoFilter()
 
     def onBtnFilterRotate180(self):
         job = self.jobs.getCurrentJob()
@@ -887,6 +899,7 @@ class MainUi(QtWidgets.QMainWindow):
             job.setFilterRotate(False)
         self.btnFilterRotateLeft.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
+        self.setVideoFilter()
 
     def onBtnMuteClicked(self):
         self.config.setPlayerIsMuted(not self.config.getPlayerIsMuted())
@@ -1901,6 +1914,7 @@ class MainUi(QtWidgets.QMainWindow):
             filterPositions.update({index: key})
         job = self.jobs.getCurrentJob()
         job.setFilterPositions(filterPositions)
+        self.setVideoFilter()
 
     def getFilterPositionItems(self):
         items = []
@@ -2174,6 +2188,53 @@ class MainUi(QtWidgets.QMainWindow):
         if pos >= 1: pos = 1
         return str(pos)
 
+    def setVideoFilter(self):
+        '''Set video filters on MPV'''
+        filters = []
+        filterPositions = self.jobs.getCurrentJob().getFilterPositions()
+        vW = self.videoProps.get('width')
+        vH = self.videoProps.get('height')
+        for position in sorted(filterPositions.keys()):
+            filterName = filterPositions.get(position)
+            # Crop
+            if filterName == 'crop' and self.btnFilterCrop.isChecked():
+                cropT = self.boxFilterCropT.value()
+                cropR = self.boxFilterCropR.value()
+                cropB = self.boxFilterCropB.value()
+                cropL = self.boxFilterCropL.value()
+                if cropT or cropR or cropB or cropL:
+                    vW = vW-cropR-cropL
+                    vH = vH-cropT-cropB
+                    filters.append('crop=%s:%s:%s:%s' % (vW, vH, cropL, cropT))
+            # Resize
+            elif filterName == 'resize' and self.btnFilterResize.isChecked():
+                w = self.boxFilterResizeW.value()
+                h = self.boxFilterResizeH.value()
+                if w: vW = w
+                if h: vH = h
+                if w or h:
+                    if not w: w = -1
+                    if not h: h = -1
+                    filters.append('scale=%s:%s,setsar=1:1' % (w, h))
+            # Rotate:
+            elif filterName == 'rotate':
+                if self.btnFilterRotateLeft.isChecked():
+                    filters.append('transpose=0')
+                elif self.btnFilterRotateRight.isChecked():
+                    filters.append('transpose=1')
+                elif self.btnFilterRotate180.isChecked():
+                    filters.append('rotate=PI:bilinear=0,format=yuv420p')
+            # Deinterlace
+            elif filterName == 'deinterlace' and self.btnFilterDeinterlace.isChecked():
+                filters.append('%s' % self.comboBoxFilterDeinterlaceDeinterlacer.currentText())
+        # Set Filter
+        if filters:
+            vFilter = ','.join(filters)
+            self.log(1, 'Set video filters: %s' % vFilter)
+            self.playerControl.player['vf'] = vFilter
+        else:
+            self.playerControl.player['vf'] = ''
+
     def log(self, id, line, msgType=0, timestamp=True, traceback=False):
         '''
         Adds a line to a log
@@ -2283,9 +2344,9 @@ test_input_path = '/home/vommie/videos/pycut/input'
 if os.path.exists(test_input_path) and os.path.isdir(test_input_path):
     test_file = 'test_color.mp4'
     test_file = 'test_shake.mp4'
-    test_file = 'test_interlace.avi'
     test_file = 'decoding_issues.m4v'
     test_file = 'noaudio.mp4'
+    test_file = 'test_interlace.avi'
     window.newFile('%s/%s' % (test_input_path, test_file))
 # Debug End
 app.exec_()
