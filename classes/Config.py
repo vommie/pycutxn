@@ -111,6 +111,9 @@ class Config:
     def getFiltersDeinterlacer(self) -> str:
         return self.settings.value('filters/deinterlacer', 'yadif', type=str)
 
+    def getFiltersPreview(self) -> str:
+        return self.settings.value('filters/preview', True, type=bool)
+
     def getRenderVideoCodec(self) -> str:
         return self.settings.value('render/videoCodec', 'libx265', type=str)
 
@@ -202,6 +205,9 @@ class Config:
 
     def setFiltersDeinterlacer(self, deinterlacer : str) -> None:
         self.settings.setValue('filters/deinterlacer', deinterlacer)
+
+    def setFiltersPreview(self, state : bool) -> None:
+        self.settings.setValue('filters/preview', state)
 
     def setRenderVideoCodec(self, codec : str) -> None:
         self.settings.setValue('render/videoCodec', codec)

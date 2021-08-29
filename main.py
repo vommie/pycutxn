@@ -140,6 +140,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.cmbTgtDirs.setCurrentText(self.config.getAppTgtDirName())
         self.btnTgtFileAutoIncrement.setChecked(self.config.getAppIncrementFilename())
         self.btnSectionAutoRemove.setChecked(self.config.getSectionsAutoRemove())
+        self.btnFiltersPreview.setChecked(self.config.getFiltersPreview())
         waitingJobs = False
         # Queue Jobs
         if len(self.jobs.jobs.items()) > 1:
@@ -277,6 +278,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
             self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
             self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
+            self.btnFiltersPreview.clicked.connect(self.onBtnFiltersPreview)
             # Filters Up/Down Buttons
             self.btnFilterCropDown.clicked.connect(self.onBtnFilterCropDownClicked)
             self.btnFilterCropUp.clicked.connect(self.onBtnFilterCropUpClicked)
@@ -899,6 +901,10 @@ class MainUi(QtWidgets.QMainWindow):
             job.setFilterRotate(False)
         self.btnFilterRotateLeft.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
+        self.setVideoFilter()
+
+    def onBtnFiltersPreview(self):
+        self.config.setFiltersPreview(self.btnFiltersPreview.isChecked())
         self.setVideoFilter()
 
     def onBtnMuteClicked(self):
@@ -2191,42 +2197,43 @@ class MainUi(QtWidgets.QMainWindow):
     def setVideoFilter(self):
         '''Set video filters on MPV'''
         filters = []
-        filterPositions = self.jobs.getCurrentJob().getFilterPositions()
-        vW = self.videoProps.get('width')
-        vH = self.videoProps.get('height')
-        for position in sorted(filterPositions.keys()):
-            filterName = filterPositions.get(position)
-            # Crop
-            if filterName == 'crop' and self.btnFilterCrop.isChecked():
-                cropT = self.boxFilterCropT.value()
-                cropR = self.boxFilterCropR.value()
-                cropB = self.boxFilterCropB.value()
-                cropL = self.boxFilterCropL.value()
-                if cropT or cropR or cropB or cropL:
-                    vW = vW-cropR-cropL
-                    vH = vH-cropT-cropB
-                    filters.append('crop=%s:%s:%s:%s' % (vW, vH, cropL, cropT))
-            # Resize
-            elif filterName == 'resize' and self.btnFilterResize.isChecked():
-                w = self.boxFilterResizeW.value()
-                h = self.boxFilterResizeH.value()
-                if w: vW = w
-                if h: vH = h
-                if w or h:
-                    if not w: w = -1
-                    if not h: h = -1
-                    filters.append('scale=%s:%s,setsar=1:1' % (w, h))
-            # Rotate:
-            elif filterName == 'rotate':
-                if self.btnFilterRotateLeft.isChecked():
-                    filters.append('transpose=0')
-                elif self.btnFilterRotateRight.isChecked():
-                    filters.append('transpose=1')
-                elif self.btnFilterRotate180.isChecked():
-                    filters.append('rotate=PI:bilinear=0,format=yuv420p')
-            # Deinterlace
-            elif filterName == 'deinterlace' and self.btnFilterDeinterlace.isChecked():
-                filters.append('%s' % self.comboBoxFilterDeinterlaceDeinterlacer.currentText())
+        if self.btnFiltersPreview.isChecked():
+            filterPositions = self.jobs.getCurrentJob().getFilterPositions()
+            vW = self.videoProps.get('width')
+            vH = self.videoProps.get('height')
+            for position in sorted(filterPositions.keys()):
+                filterName = filterPositions.get(position)
+                # Crop
+                if filterName == 'crop' and self.btnFilterCrop.isChecked():
+                    cropT = self.boxFilterCropT.value()
+                    cropR = self.boxFilterCropR.value()
+                    cropB = self.boxFilterCropB.value()
+                    cropL = self.boxFilterCropL.value()
+                    if cropT or cropR or cropB or cropL:
+                        vW = vW-cropR-cropL
+                        vH = vH-cropT-cropB
+                        filters.append('crop=%s:%s:%s:%s' % (vW, vH, cropL, cropT))
+                # Resize
+                elif filterName == 'resize' and self.btnFilterResize.isChecked():
+                    w = self.boxFilterResizeW.value()
+                    h = self.boxFilterResizeH.value()
+                    if w: vW = w
+                    if h: vH = h
+                    if w or h:
+                        if not w: w = -1
+                        if not h: h = -1
+                        filters.append('scale=%s:%s,setsar=1:1' % (w, h))
+                # Rotate:
+                elif filterName == 'rotate':
+                    if self.btnFilterRotateLeft.isChecked():
+                        filters.append('transpose=0')
+                    elif self.btnFilterRotateRight.isChecked():
+                        filters.append('transpose=1')
+                    elif self.btnFilterRotate180.isChecked():
+                        filters.append('rotate=PI:bilinear=0,format=yuv420p')
+                # Deinterlace
+                elif filterName == 'deinterlace' and self.btnFilterDeinterlace.isChecked():
+                    filters.append('%s' % self.comboBoxFilterDeinterlaceDeinterlacer.currentText())
         # Set Filter
         if filters:
             vFilter = ','.join(filters)
