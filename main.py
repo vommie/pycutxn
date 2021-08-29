@@ -141,6 +141,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnTgtFileAutoIncrement.setChecked(self.config.getAppIncrementFilename())
         self.btnSectionAutoRemove.setChecked(self.config.getSectionsAutoRemove())
         self.btnFiltersPreview.setChecked(self.config.getFiltersPreview())
+        self.setBtnFiltersPreviewIcon()
         waitingJobs = False
         # Queue Jobs
         if len(self.jobs.jobs.items()) > 1:
@@ -908,6 +909,7 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFiltersPreview(self):
         self.config.setFiltersPreview(self.btnFiltersPreview.isChecked())
         self.setVideoFilter()
+        self.setBtnFiltersPreviewIcon()
 
     def onBtnFiltersReset(self):
         self.resetFilters()
@@ -1669,6 +1671,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.labelRenderSpeed.setText('0x')
         self.labelRenderSize.setText('0 MiB')
         self.labelRenderTime.setText(self.timeFormat)
+
+    def setBtnFiltersPreviewIcon(self):
+        if self.btnFiltersPreview.isChecked(): self.btnFiltersPreview.setText('')
+        else: self.btnFiltersPreview.setText('')
 
     def setVolumeSlider(self, value : int, relative=True):
         '''
