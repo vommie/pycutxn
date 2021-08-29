@@ -329,7 +329,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='x11', log_handler=print, loglevel='fatal', keep_open='yes')
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,xv,x11,', loglevel='fatal', keep_open='yes')
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
@@ -399,6 +399,7 @@ class MainUi(QtWidgets.QMainWindow):
                 audioFilter='lavfi=[dynaudnorm=g=5:f=250:r=0.9:p=0.5]'
                 audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Works
                 self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart, af=audioFilter)
+                self.playerControl.player['background'] = self.config.getPlayerBgColor()
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
@@ -2208,6 +2209,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def setVideoFilter(self):
         '''Set video filters on MPV'''
+        # TODO: When rotate, change video X, Y, width and height accordingly, so very filter applies correctly if reordered (also on export!)
         filters = []
         if self.btnFiltersPreview.isChecked():
             filterPositions = self.jobs.getCurrentJob().getFilterPositions()
