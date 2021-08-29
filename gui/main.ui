@@ -1529,7 +1529,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnFilterReset">
+           <widget class="QPushButton" name="btnFiltersReset">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
               <horstretch>0</horstretch>

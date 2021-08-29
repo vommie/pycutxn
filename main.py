@@ -279,6 +279,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
             self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
             self.btnFiltersPreview.clicked.connect(self.onBtnFiltersPreview)
+            self.btnFiltersReset.clicked.connect(self.onBtnFiltersReset)
             # Filters Up/Down Buttons
             self.btnFilterCropDown.clicked.connect(self.onBtnFilterCropDownClicked)
             self.btnFilterCropUp.clicked.connect(self.onBtnFilterCropUpClicked)
@@ -906,6 +907,9 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFiltersPreview(self):
         self.config.setFiltersPreview(self.btnFiltersPreview.isChecked())
         self.setVideoFilter()
+
+    def onBtnFiltersReset(self):
+        self.resetFilters()
 
     def onBtnMuteClicked(self):
         self.config.setPlayerIsMuted(not self.config.getPlayerIsMuted())
@@ -1624,6 +1628,14 @@ class MainUi(QtWidgets.QMainWindow):
         self.tableQueue.setItem(iRow, 2, itemState)
         self.tableQueue.scrollToBottom()
         return iRow
+
+    def resetFilters(self):
+        '''Resets all filters to default values'''
+        self.resetCropFilter()
+        self.resetRotateFilter()
+        self.resetResizeFilter()
+        self.resetDeshakeFilter()
+        self.resetDeinterlaceFilter()
 
     def resetCropFilter(self):
         self.btnFilterCrop.setChecked(False)
