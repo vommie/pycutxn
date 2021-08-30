@@ -19,7 +19,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidgetSettings">
        <property name="currentIndex">
-        <number>0</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="tabGeneral">
         <attribute name="title">
@@ -393,9 +393,19 @@
          <item>
           <layout class="QVBoxLayout" name="layoutWarnings">
            <item>
-            <widget class="QCheckBox" name="checkBoxWarnTgt">
+            <widget class="QCheckBox" name="checkBoxWarnTgtTgt">
              <property name="text">
               <string>Warn if saved file already exists in target folder</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBoxWarnSrcTgt">
+             <property name="toolTip">
+              <string>Checks if the source filename (without extension) already exists as beginning filename in the target directory</string>
+             </property>
+             <property name="text">
+              <string>Warn if loaded file propably already exists in target folder</string>
              </property>
             </widget>
            </item>

@@ -1532,7 +1532,7 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         Checks if the option to warn if the target file already exists in the target directory is active
         '''
-        return self.config.getAppWarnFileExistsInTgtDir()
+        return self.config.getAppWarnTgtFileExistsInTgtDir()
 
     def isTgtFileExistsInJobsWarningActive(self):
         '''

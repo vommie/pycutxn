@@ -55,8 +55,11 @@ class Config:
     def getAppPauseQueueOnStartWhenWaitingJobs(self) -> bool:
         return self.settings.value('app/pauseQueueOnStartWhenWaitingJobs', True, type=bool)
 
-    def getAppWarnFileExistsInTgtDir(self) -> bool:
-        return self.settings.value('app/warnFileExistsInTgtDir', True, type=bool)
+    def getAppWarnTgtFileExistsInTgtDir(self) -> bool:
+        return self.settings.value('app/warnTgtFileExistsInTgtDir', True, type=bool)
+
+    def getAppWarnSrcFileExistsInTgtDir(self) -> bool:
+        return self.settings.value('app/warnSrcFileExistsInTgtDir', True, type=bool)
 
     def getAppWarnFileExistsInJobs(self) -> bool:
         return self.settings.value('app/warnFileExistsInJobs', True, type=bool)
@@ -92,7 +95,7 @@ class Config:
         return self.settings.value('player/autoPlay', True, type=bool)
 
     def getPlayerBgColor(self) -> str:
-        return self.settings.value('player/bgColor', '0.0/0.0/0.0', type=str)
+        return self.settings.value('player/bgColor', '0.0', type=str)
 
     def getQueueIsPaused(self) -> bool:
         return self.settings.value('queue/isPaused', False, type=bool)
@@ -155,8 +158,11 @@ class Config:
     def setAppPauseQueueOnStartWhenWaitingJobs(self, state : bool) -> None:
         self.settings.setValue('app/pauseQueueOnStartWhenWaitingJobs', state)
 
-    def setAppWarnFileExistsInTgtDir(self, state : bool) -> None:
-        self.settings.setValue('app/warnFileExistsInTgtDir', state)
+    def setAppWarnTgtFileExistsInTgtDir(self, state : bool) -> None:
+        self.settings.setValue('app/warnTgtFileExistsInTgtDir', state)
+
+    def setAppWarnSrcFileExistsInTgtDir(self, state : bool) -> None:
+        self.settings.setValue('app/warnSrcFileExistsInTgtDir', state)
 
     def setAppWarnFileExistsInJobs(self, state : bool) -> None:
         self.settings.setValue('app/warnFileExistsInJobs', state)
