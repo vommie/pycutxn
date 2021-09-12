@@ -37,7 +37,10 @@
    <item>
     <layout class="QHBoxLayout" name="layoutBtns">
      <item>
-      <widget class="QPushButton" name="btnAdd">
+      <widget class="QPushButton" name="btnDown">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="maximumSize">
         <size>
          <width>32</width>
@@ -51,10 +54,10 @@
         </font>
        </property>
        <property name="toolTip">
-        <string>Add new directory to list</string>
+        <string>Move selected directory down</string>
        </property>
        <property name="text">
-        <string></string>
+        <string></string>
        </property>
       </widget>
      </item>
@@ -84,10 +87,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnDown">
-       <property name="enabled">
-        <bool>false</bool>
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
        </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnAdd">
        <property name="maximumSize">
         <size>
          <width>32</width>
@@ -101,10 +108,10 @@
         </font>
        </property>
        <property name="toolTip">
-        <string>Move selected directory down</string>
+        <string>Add new directory to list</string>
        </property>
        <property name="text">
-        <string></string>
+        <string></string>
        </property>
       </widget>
      </item>
