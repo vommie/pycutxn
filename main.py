@@ -78,7 +78,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.labelTaggerError.setHidden(True)
         self.tagsTree = []
         self.lastTagIDs = []
-        self.lastRating = 0
         self.logUi = LogUi(self)
         self.timeFormat = '0:00:0.000'
         self.playerTimeCurrent = self.timeFormat
@@ -319,6 +318,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnTaggerActive.clicked.connect(self.onBtnTaggerActiveClicked)
             self.btnTaggerWarning.clicked.connect(self.onBtnTaggerWarningClicked)
             self.btnTaggerFilter.clicked.connect(self.onBtnTaggerFilterClicked)
+            self.btnLastRating.clicked.connect(self.onBtnLastRatingClicked)
         except Exception as e:
             msg = 'Error: Cannot set all GUI events.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
@@ -1067,7 +1067,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.clearTagsTree()
 
     def onBtnLastRatingClicked(self):
-        self.setBtnRating(self.lastRating)
+        self.setBtnRating(int(self.btnLastRating.text()))
 
     def onBtnTaggerActiveClicked(self):
         self.config.setTaggerIsActive(not self.config.getTaggerIsActive())
@@ -1459,17 +1459,21 @@ class MainUi(QtWidgets.QMainWindow):
                 tag['item'].setHidden(False)
 
     def setLastRating(self, rating):
-        self.lastRating = rating
         self.btnLastRating.setText(str(rating))
 
     def setBtnRating(self, rating):
         self.log(1, 'Selecting rating: %s' % rating)
+        try: rating = int(rating)
+        except:
+            self.log(1, 'Error: Rating is no number convertable to an integer.')
+            return False
         if rating == 0: self.radioButton_rate0.setChecked(True)
-        if rating == 1: self.radioButton_rate1.setChecked(True)
-        if rating == 2: self.radioButton_rate2.setChecked(True)
-        if rating == 3: self.radioButton_rate3.setChecked(True)
-        if rating == 4: self.radioButton_rate4.setChecked(True)
-        if rating == 5: self.radioButton_rate5.setChecked(True)
+        elif rating == 1: self.radioButton_rate1.setChecked(True)
+        elif rating == 2: self.radioButton_rate2.setChecked(True)
+        elif rating == 3: self.radioButton_rate3.setChecked(True)
+        elif rating == 4: self.radioButton_rate4.setChecked(True)
+        elif rating == 5: self.radioButton_rate5.setChecked(True)
+        else: self.log(1, 'Error: Cannot set rating to value "%s"' % rating)
 
     def disableTaggerPanel(self):
         '''Disables the Tagger panel. For use when no database connection is possible.'''
