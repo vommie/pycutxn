@@ -1253,10 +1253,27 @@ class MainUi(QtWidgets.QMainWindow):
                 if tag['parentID'] == -1: fontWeight = QFont.Bold
                 item.setFont(QFont('Noto Sans', 8, weight=fontWeight))
                 self.listWidgetTagsTree.addItem(item)
-                if 'filter' in tag and tag['filter']: item.setHidden(True)
+                item.setHidden(self.tagOrParentTagsHaveFilter(tag))
                 self.buildTagsTree(tag['tagID'])
                 self.tagsTree[i]['item'] = item
         self.tagsTreeItemPrefix = self.tagsTreeItemPrefix[0:-1]
+
+    def tagOrParentTagsHaveFilter(self, currTag, setFilter = False):
+        '''
+        Checks if the given tag or any of it's parent tags (if any) have their filter attribute set to True.
+        This is a recursive function.
+
+        :param currTag: The tag array to check.
+        :param setFilter: Used by recursive function calls.
+        :return: True if the tag or any of it's parent have an active filter. False if not.
+        '''
+        if setFilter: return True
+        if 'filter' in currTag and currTag['filter']: return True
+        else:
+            for tag in self.tagsTree:
+                if tag['tagID'] == currTag['parentID']:
+                    return self.tagOrParentTagsHaveFilter(tag, setFilter)
+        return setFilter
 
     def setTagsAndRatingToTree(self, forSource:bool = True):
         '''
@@ -1452,11 +1469,11 @@ class MainUi(QtWidgets.QMainWindow):
         for tag in self.tagsTree:
             if tag['tagID'] in tagIDs:
                 tag['filter'] = True
-                tag['item'].setHidden(True)
+                tag['item'].setHidden(self.tagOrParentTagsHaveFilter(tag))
                 tag['item'].setSelected(False)
             else:
                 tag['filter'] = False
-                tag['item'].setHidden(False)
+                tag['item'].setHidden(self.tagOrParentTagsHaveFilter(tag))
 
     def setLastRating(self, rating):
         self.btnLastRating.setText(str(rating))
