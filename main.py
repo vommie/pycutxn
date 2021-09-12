@@ -1143,9 +1143,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegProcess = False
         job, code, output, error, deshakeFile = atts
         errorMsg = ''
-        if error: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(error))
-        if error and output: errorMsg = '%s\n\n' % errorMsg
-        if output: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(output))
+        # if error: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(error))
+        # if error and output: errorMsg = '%s\n\n' % errorMsg
+        # if output: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(output))
         job.setFilterDeshakeFile(deshakeFile)
         if self.progressBarRender.isEnabled():
             self.progressBarRender.setValue(0)
@@ -1873,6 +1873,9 @@ class MainUi(QtWidgets.QMainWindow):
         jobID = self.queueGetJobIDFromRow()[0]
         job = self.jobs.getJob(jobID)
         log = job.getLog()
+        if not log:
+            self.showMsgBox('There is nothing logged.')
+            return
         # Todo: handle if no log is set
         self.logUi.setTitle('Log for Job %s' % jobID)
         self.logUi.setLogText(log.replace('\\n', '\n'))

@@ -3,6 +3,7 @@ from .Functions import Functions
 
 import ffmpeg
 import os
+import traceback
 from PyQt5.QtCore import pyqtSignal, QThread
 
 class FFmpegThread(QThread):
@@ -115,16 +116,16 @@ class FFmpegThread(QThread):
             # Concatenate sections
             if videoProps.get('hasAudio'):
                 joined = ffmpeg.concat(*mapping, v=1, a=1).node
-                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset())
+                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='quiet')
             else:
                 joined = ffmpeg.concat(*mapping, v=1).node
-                output = ffmpeg.output(joined[0], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), preset=job.getRenderSettingPreset())
+                output = ffmpeg.output(joined[0], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='quiet')
 
             # Run ffmpeg
             try:
-                args = output.get_args()
-                process = output.run_async(overwrite_output=True, pipe_stdout=True, pipe_stderr=True)
+                args = ' '.join(output.get_args())
                 print(f'ffmpeg args: {args}')
+                process = output.run_async(overwrite_output=True, pipe_stdout=True)
                 self.ffmpegStart.emit([job, totalSeconds, process])
                 # Handle stdout (progress information), by passing it to callback functions
                 for line in process.stdout:
@@ -135,6 +136,7 @@ class FFmpegThread(QThread):
                 out, err = process.communicate()
                 code = process.returncode
             except Exception as e:
+                print(traceback.format_exc())
                 code = 1
                 err = str(e)
         self.ffmpegExit.emit([job, code, out, err, deshakeFile])
