@@ -11,6 +11,7 @@ import copy
 import shutil
 import hashlib
 import locale
+import time
 
 from libs.mpv import *
 from libs.mpv import *
@@ -513,6 +514,7 @@ class MainUi(QtWidgets.QMainWindow):
             currentJob.setRenderSettingContainer(self.config.getRenderContainer())
             if self.isSameRenderSrcTgt(currentJob, False): return False
             if not self.overwriteTgtFileIfExists(currentJob): return False
+            if not self.overwriteTgtFileIfExistsInQueue(currentJob): return False
             job = self.addCurrentJobToQueue()
             if not job: return False
             if not self.saveCurrentTagsAndRating(): return False
@@ -1587,6 +1589,48 @@ class MainUi(QtWidgets.QMainWindow):
             self.overWriteFile = False
         return overwrite
 
+    def overwriteTgtFileIfExistsInQueue(self, currentJob) -> bool:
+        '''
+        Shows a warning if the target filename already exists in a job in the job queue
+
+        :return: True if the user wants to save anyways, else False
+        '''
+        if not self.settingsUI.checkBoxWarnJobQueue.isChecked(): return True
+        overwrite = True
+        currTgtFile = currentJob.getTgtFilePathLong()
+        jobs = []
+        detailText = 'Jobs in queue with target file "%s":' % currTgtFile
+        for i in range(self.tableQueue.rowCount()):
+            item = self.tableQueue.item(i, 0)
+            jobID = False
+            try: jobID = int(item.text())
+            except:
+                msg = 'Error: Cannot convert JobID from job queue to integer.'
+                self.log(1, msg, 1, traceback=traceback.format_exc())
+                return False
+            if jobID is False:
+                msg = 'Error: Cannot get JobID from job queue. JobID: %s' % jobID
+                self.log(1, msg, 1)
+                return False
+            job = self.jobs.getJob(jobID)
+            if job.getTgtFilePathLong() == currTgtFile:
+                jobs.append(job)
+                detailText = '%s\nID: %s' % (detailText, jobID)
+        if jobs:
+            self.jobsToReplace = jobs
+            self.log(1, 'Target file already exists in %s previous job(s).' % len(jobs))
+            if not self.showMsgBox('The target file already exists in the jobs queue. Save anyways?', btns='yesno', infoText=currTgtFile, detailText=detailText, icon='question', extraBtnText='Delete existing Jobs', extraBtnCallback=self.onMsgBoxExtraBtnDeleteJobsWithTgtFile):
+                overwrite = False
+                self.log(1, 'User does not want to overwrite target file.')
+            else:
+                self.log(1, 'User wants to overwrite target file.')
+            self.jobsToReplace = False
+        return overwrite
+
+    def onMsgBoxExtraBtnDeleteJobsWithTgtFile(self):
+        for job in self.jobsToReplace:
+            self.queueRemoveRowByJob(job)
+
     def setBtnSectionAddState(self):
         if self.sectionTimeStart and self.sectionTimeEnd:
             self.btnSectionAdd2.setEnabled(True)
@@ -1792,14 +1836,38 @@ class MainUi(QtWidgets.QMainWindow):
             self.jobs.removeJob(jobID)
         except Exception as e:
             msg = 'Error: Cannot remove Job.'
-            self.log(1, msg, 1)
-            self.showMsgBox(msg, btns="ok", icon="warning", detailText=str(e))
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
             return False
         self.tableQueue.removeRow(iRow)
         if(iRow > 0): self.tableQueue.setCurrentCell(iRow-1, 0)
         elif(iRow == 0):
             if len(self.jobs.jobs.items()) == 1: self.deleteDeshakeDir()
         self.setQueueBtnStates()
+
+    def queueRemoveRowByJob(self, job):
+        '''
+        Removes a row from the jobs queue by given job object
+
+        :param job: The job object
+        '''
+        try:
+            jobID = str(job.getID())
+            for iRow in range(self.tableQueue.rowCount()):
+                item = self.tableQueue.item(iRow, 0)
+                if not item.text() == jobID: continue
+                if job.getState() == 4:
+                    self.showMsgBox('One of the jobs is currently rendering and is not removed.', infoText='Abort the job manually, then delete it.', icon='warning')
+                    return False
+                self.jobs.removeJob(jobID)
+                self.tableQueue.removeRow(iRow)
+                self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
+                return True
+        except Exception as e:
+            msg = 'Error: Cannot remove job queue row or job.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
+            return False
 
     def queueGetJobIDFromRow(self, iRow = False):
         if iRow is False:

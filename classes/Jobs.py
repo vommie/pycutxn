@@ -74,6 +74,7 @@ class Jobs:
     # Jobs management
 
     def getJob(self, id):
+        id = str(id)
         return self.jobs.get(id)
 
     def updateJob(self, id, job):
