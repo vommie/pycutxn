@@ -3169,6 +3169,31 @@ QRadioButton::unchecked:hover {
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="btnQueueDeleteAll">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>22</pointsize>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>Removes all finished jobs from the queue</string>
+         </property>
+         <property name="text">
+          <string>裸</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="horizontalSpacer_7">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>

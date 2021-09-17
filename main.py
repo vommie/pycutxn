@@ -163,6 +163,7 @@ class MainUi(QtWidgets.QMainWindow):
                 except: pass
         else:
             self.deleteDeshakeDir()
+        self.setBtnQueueDeleteAllState()
         # Handle queue pause
         if self.config.getQueueIsPaused() or (waitingJobs and self.config.getAppPauseQueueOnStartWhenWaitingJobs()):
             self.btnQueuePause.setChecked(True)
@@ -295,12 +296,14 @@ class MainUi(QtWidgets.QMainWindow):
             # Queue
             self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
             self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
+            self.tableQueue.cellChanged.connect(self.onTableQueueCellChanged)
             self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
             self.btnQueueUp.clicked.connect(self.onBtnQueueUpClicked)
             self.btnQueueDown.clicked.connect(self.onBtnQueueDownClicked)
             self.btnQueuePause.clicked.connect(self.onBtnQueuePauseClicked)
             self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
             self.btnQueueLoad.clicked.connect(self.onBtnQueueLoadClicked)
+            self.btnQueueDeleteAll.clicked.connect(self.onBtnQueueDeleteAll)
             # Actions
             self.actionSettings.triggered.connect(self.onActionSettings)
             self.actionQuit.triggered.connect(self.onActionQuit)
@@ -946,6 +949,9 @@ class MainUi(QtWidgets.QMainWindow):
         elif state == 3:
             self.queueShowLog()
 
+    def onTableQueueCellChanged(self, iRow, iCol):
+        if iCol == 2: self.setBtnQueueDeleteAllState()
+
     def onBtnQueueDeleteClicked(self):
         self.queueDeleteSelectedRow()
 
@@ -963,6 +969,9 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnQueueLoadClicked(self):
         self.newFile(False)
+
+    def onBtnQueueDeleteAll(self):
+        self.queueRemoveFinishedRows()
 
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
@@ -1840,6 +1849,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
             return False
         self.tableQueue.removeRow(iRow)
+        self.setBtnQueueDeleteAllState()
         if(iRow > 0): self.tableQueue.setCurrentCell(iRow-1, 0)
         elif(iRow == 0):
             if len(self.jobs.jobs.items()) == 1: self.deleteDeshakeDir()
@@ -1861,6 +1871,8 @@ class MainUi(QtWidgets.QMainWindow):
                     return False
                 self.jobs.removeJob(jobID)
                 self.tableQueue.removeRow(iRow)
+                self.setBtnQueueDeleteAllState()
+                self.setQueueBtnStates()
                 self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
                 return True
         except Exception as e:
@@ -1868,6 +1880,28 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
             return False
+
+    def queueRemoveFinishedRows(self):
+        '''
+        Removes all rows with finished jobs
+        '''
+        try:
+            for iRow in reversed(range(self.tableQueue.rowCount())):
+                jobID = self.tableQueue.item(iRow, 0).text()
+                state = self.tableQueue.item(iRow, 2).text()
+                if(state != self.jobStates[1]): continue
+                self.jobs.removeJob(jobID)
+                self.tableQueue.removeRow(iRow)
+                self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
+        except Exception as e:
+            msg = 'Error: Cannot remove all finished jobs in queue.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
+            self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
+            return False
+        try:
+            self.btnQueueDeleteAll.setEnabled(False)
+            self.setQueueBtnStates()
+        except: pass
 
     def queueGetJobIDFromRow(self, iRow = False):
         if iRow is False:
@@ -1891,6 +1925,18 @@ class MainUi(QtWidgets.QMainWindow):
         itemState = QTableWidgetItem(self.jobStates[state])
         self.tableQueue.setItem(iRow, 2, itemState)
         self.runNextWaitJob()
+
+    def setBtnQueueDeleteAllState(self):
+        rowCount = self.tableQueue.rowCount()
+        state = False
+        for iRow in range(rowCount):
+            try:
+                itemState = self.tableQueue.item(iRow, 2)
+                if(itemState.text() == self.jobStates[1]):
+                    state = True
+                    break
+            except: pass
+        self.btnQueueDeleteAll.setEnabled(state)
 
     def jobStateStrToID(self, stateStr):
         stateStr = stateStr.lower()
