@@ -1873,6 +1873,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.tableQueue.removeRow(iRow)
                 self.setBtnQueueDeleteAllState()
                 self.setQueueBtnStates()
+                self.tableQueue.setCurrentCell(iRow-1)
                 self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
                 return True
         except Exception as e:
@@ -1900,6 +1901,7 @@ class MainUi(QtWidgets.QMainWindow):
             return False
         try:
             self.btnQueueDeleteAll.setEnabled(False)
+            self.tableQueue.setCurrentCell(self.tableQueue.rowCount()-1)
             self.setQueueBtnStates()
         except: pass
 
