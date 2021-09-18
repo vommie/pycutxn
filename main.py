@@ -281,6 +281,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnFilterRotateRight.clicked.connect(self.onBtnFilterRotateRight)
             self.btnFilterRotate180.clicked.connect(self.onBtnFilterRotate180)
             self.btnFiltersPreview.clicked.connect(self.onBtnFiltersPreview)
+            self.btnFiltersKeep.clicked.connect(self.onBtnFiltersKeep)
             self.btnFiltersReset.clicked.connect(self.onBtnFiltersReset)
             # Filters Up/Down Buttons
             self.btnFilterCropDown.clicked.connect(self.onBtnFilterCropDownClicked)
@@ -357,6 +358,7 @@ class MainUi(QtWidgets.QMainWindow):
         try:
             self.log(1, '---New File-----------------------------------')
             self.log(3, '---New File -----------------------------------')
+            prevFilters = self.jobs.getCurrentJob().getFilters()
             self.playerControl.pause(True)
             self.checkDBConnectivity()
             if not videoFilePath:
@@ -382,6 +384,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.showWarningForOddVideoSourceSize(self.videoProps)
             self.log(1, 'Video properties: %s' % self.videoProps)
             # Set properties
+            if self.btnFiltersKeep.isChecked() and prevFilters: job.setFilters(prevFilters)
             self.loadFilterCrop(job)
             self.loadFilterDeinterlace(job)
             self.loadFilterRotate(job)
@@ -915,6 +918,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.config.setFiltersPreview(self.btnFiltersPreview.isChecked())
         self.setVideoFilter()
         self.setBtnFiltersPreviewIcon()
+
+    def onBtnFiltersKeep(self):
+        pass
 
     def onBtnFiltersReset(self):
         self.resetFilters()

@@ -131,6 +131,12 @@ class Job():
     def getPosition(self):
         return self._props.get('position')
 
+    def getFilters(self):
+        try:
+            return self._props['filters']
+        except:
+            return False
+
     def getFilterCropState(self):
         try:
             self._props['filters']['crop']
@@ -307,6 +313,10 @@ class Job():
     def setPosition(self, position):
         # todo: check, position is not used, or move other jobs 1 down
         self._props.update({'position': position})
+        self.propValueChanged()
+
+    def setFilters(self, filters):
+        self._props['filters'] = filters
         self.propValueChanged()
 
     def setFilterCropState(self, state):

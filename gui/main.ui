@@ -1552,6 +1552,34 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="btnFiltersKeep">
+            <property name="maximumSize">
+             <size>
+              <width>40</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>DroidSansMono Nerd Font Mono</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>Keep filters when new file gets loaded</string>
+            </property>
+            <property name="text">
+             <string></string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="btnFiltersPreview">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -3161,7 +3189,7 @@ QRadioButton::unchecked:hover {
           <enum>Qt::TabFocus</enum>
          </property>
          <property name="toolTip">
-          <string>Delete job</string>
+          <string>Delete selected job</string>
          </property>
          <property name="text">
           <string></string>
