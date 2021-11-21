@@ -2392,8 +2392,10 @@ class MainUi(QtWidgets.QMainWindow):
                 # Rotate:
                 elif filterName == 'rotate':
                     if self.btnFilterRotateLeft.isChecked():
-                        filters.append('transpose=0')
+                        # filters.append('transpose=0')
+                        filters.append('transpose=2')
                     elif self.btnFilterRotateRight.isChecked():
+                        # filters.append('transpose=1')
                         filters.append('transpose=1')
                     elif self.btnFilterRotate180.isChecked():
                         filters.append('rotate=PI:bilinear=0,format=yuv420p')
