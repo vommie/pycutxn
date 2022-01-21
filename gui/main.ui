@@ -592,8 +592,14 @@
         <string>Filters</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <property name="sizeConstraint">
          <enum>QLayout::SetMaximumSize</enum>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
         </property>
         <item>
          <layout class="QGridLayout" name="gridLayoutFilters">
@@ -1117,7 +1123,7 @@
                 <property name="font">
                  <font>
                   <family>DroidSansMono Nerd Font Mono</family>
-                  <pointsize>24</pointsize>
+                  <pointsize>16</pointsize>
                  </font>
                 </property>
                 <property name="focusPolicy">
@@ -1595,14 +1601,10 @@
          </layout>
         </item>
         <item>
-         <widget class="Line" name="line_7">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="topMargin">
+           <number>6</number>
+          </property>
           <item>
            <spacer name="horizontalSpacer_8">
             <property name="orientation">

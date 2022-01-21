@@ -894,8 +894,10 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateLeft.isChecked():
             job.setFilterRotate(-90)
+            # self.setCropFieldsByRotation(-90)
         else:
             job.setFilterRotate(False)
+            # self.setCropFieldsByRotation(False)
         self.btnFilterRotateRight.setChecked(False)
         self.btnFilterRotate180.setChecked(False)
         self.setVideoFilter()
@@ -904,8 +906,10 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateRight.isChecked():
             job.setFilterRotate(90)
+            # self.setCropFieldsByRotation(90)
         else:
             job.setFilterRotate(False)
+            # self.setCropFieldsByRotation(False)
         self.btnFilterRotateLeft.setChecked(False)
         self.btnFilterRotate180.setChecked(False)
         self.setVideoFilter()
@@ -914,8 +918,10 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotate180.isChecked():
             job.setFilterRotate(180)
+            # self.setCropFieldsByRotation(180)
         else:
             job.setFilterRotate(False)
+            # self.setCropFieldsByRotation(False)
         self.btnFilterRotateLeft.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
         self.setVideoFilter()
@@ -2404,10 +2410,8 @@ class MainUi(QtWidgets.QMainWindow):
                 # Rotate:
                 elif filterName == 'rotate':
                     if self.btnFilterRotateLeft.isChecked():
-                        # filters.append('transpose=0')
                         filters.append('transpose=2')
                     elif self.btnFilterRotateRight.isChecked():
-                        # filters.append('transpose=1')
                         filters.append('transpose=1')
                     elif self.btnFilterRotate180.isChecked():
                         filters.append('rotate=PI:bilinear=0,format=yuv420p')
@@ -2524,6 +2528,45 @@ class MainUi(QtWidgets.QMainWindow):
             if not result or result == QMessageBox.Abort: return False
             os.system("shutdown now -h")
             # os.system("shutdown /s /t 1")
+
+    # Todo: Auf Filter-Prio achten (wegen Resize vorallem). Ggf. Drehung in Klammern hinter original setzen.
+    def setCropFieldsByRotation(self, rotation):
+        '''
+        Change the icon and tooltip of all crop fields based on the rotation
+        '''
+        chars = {
+            't': [ 'Top', ''],
+            'r': [ 'Right', ''],
+            'b': [ 'Bottom', ''],
+            'l': [ 'Left', ''],
+        }
+        t = chars['t']
+        r = chars['r']
+        b = chars['b']
+        l = chars['l']
+        if rotation == 90:
+            t = chars['r']
+            r = chars['b']
+            b = chars['l']
+            l = chars['t']
+        elif rotation == -90:
+            t = chars['l']
+            r = chars['t']
+            b = chars['r']
+            l = chars['b']
+        elif rotation == 180:
+            t = chars['b']
+            r = chars['l']
+            b = chars['t']
+            l = chars['r']
+        self.labelCropT.setText(t[1])
+        self.boxFilterCropT.setToolTip(t[0])
+        self.labelCropR.setText(r[1])
+        self.boxFilterCropR.setToolTip(r[0])
+        self.labelCropB.setText(b[1])
+        self.boxFilterCropB.setToolTip(b[0])
+        self.labelCropL.setText(l[1])
+        self.boxFilterCropL.setToolTip(l[0])
 
     def setTagsTreeStyle(self):
         '''Sets the TagsTree Stylesheet'''
