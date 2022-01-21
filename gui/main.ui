@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1069</width>
-    <height>804</height>
+    <width>1208</width>
+    <height>834</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -346,7 +346,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1069</width>
+     <width>1208</width>
      <height>30</height>
     </rect>
    </property>
@@ -603,43 +603,15 @@
           <property name="verticalSpacing">
            <number>2</number>
           </property>
-          <item row="0" column="0">
-           <layout class="QHBoxLayout" name="layoutFilterCrop">
-            <property name="sizeConstraint">
-             <enum>QLayout::SetMinAndMaxSize</enum>
-            </property>
+          <item row="6" column="0">
+           <layout class="QHBoxLayout" name="layoutFilterDeshake">
             <item>
-             <layout class="QHBoxLayout" name="layoutFilterCropBtns">
+             <layout class="QHBoxLayout" name="layoutFilterDeshakeBtns">
               <property name="spacing">
                <number>0</number>
               </property>
-              <property name="sizeConstraint">
-               <enum>QLayout::SetMaximumSize</enum>
-              </property>
               <item>
-               <widget class="QPushButton" name="btnFilterCropDown">
-                <property name="maximumSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>DroidSansMono Nerd Font Mono</family>
-                  <pointsize>14</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="text">
-                 <string></string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnFilterCropUp">
+               <widget class="QPushButton" name="btnFilterDeshakeDown">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -659,195 +631,12 @@
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="text">
-                 <string></string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="layoutFilterCropSettings">
-              <item>
-               <widget class="QPushButton" name="btnFilterCrop">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>70</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Activate crop filter</string>
-                </property>
-                <property name="text">
-                 <string>Crop</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="boxFilterCropT">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>45</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Top</string>
-                </property>
-                <property name="maximum">
-                 <number>99999</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="boxFilterCropR">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>45</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Right</string>
-                </property>
-                <property name="maximum">
-                 <number>99999</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="boxFilterCropB">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>45</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Bottom</string>
-                </property>
-                <property name="maximum">
-                 <number>99999</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="boxFilterCropL">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>45</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Left</string>
-                </property>
-                <property name="maximum">
-                 <number>99999</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </item>
-          <item row="1" column="0">
-           <layout class="QHBoxLayout" name="layoutFilterDeinterlace">
-            <item>
-             <layout class="QHBoxLayout" name="layoutFilterDeinterlaceBtns">
-              <property name="spacing">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QPushButton" name="btnFilterDeinterlaceDown">
-                <property name="maximumSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>DroidSansMono Nerd Font Mono</family>
-                  <pointsize>14</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="text">
                  <string></string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="btnFilterDeinterlaceUp">
+               <widget class="QPushButton" name="btnFilterDeshakeUp">
                 <property name="maximumSize">
                  <size>
                   <width>24</width>
@@ -871,9 +660,9 @@
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="layoutFilterDeinterlaceSettings">
+             <layout class="QHBoxLayout" name="layoutFilterDeshakeSettings">
               <item>
-               <widget class="QPushButton" name="btnFilterDeinterlace">
+               <widget class="QPushButton" name="btnFilterDeshake">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -890,64 +679,14 @@
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Activate deinterlace filter</string>
+                 <string>Activate Deshake filter</string>
                 </property>
                 <property name="text">
-                 <string>Deinterlace</string>
+                 <string>Deshake</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QComboBox" name="comboBoxFilterDeinterlaceDeinterlacer">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Select deinterlacer</string>
-                </property>
-                <property name="currentText">
-                 <string>bwdif</string>
-                </property>
-                <item>
-                 <property name="text">
-                  <string>bwdif</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>kerndeint</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>nnedi</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>w3fdif</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>yadif</string>
-                 </property>
-                </item>
                </widget>
               </item>
              </layout>
@@ -1174,96 +913,6 @@
             </item>
            </layout>
           </item>
-          <item row="6" column="0">
-           <layout class="QHBoxLayout" name="layoutFilterDeshake">
-            <item>
-             <layout class="QHBoxLayout" name="layoutFilterDeshakeBtns">
-              <property name="spacing">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QPushButton" name="btnFilterDeshakeDown">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>DroidSansMono Nerd Font Mono</family>
-                  <pointsize>14</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="text">
-                 <string></string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnFilterDeshakeUp">
-                <property name="maximumSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>DroidSansMono Nerd Font Mono</family>
-                  <pointsize>14</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="text">
-                 <string></string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="layoutFilterDeshakeSettings">
-              <item>
-               <widget class="QPushButton" name="btnFilterDeshake">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Activate Deshake filter</string>
-                </property>
-                <property name="text">
-                 <string>Deshake</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </item>
           <item row="5" column="0">
            <layout class="QHBoxLayout" name="layoutFilterRotate">
             <item>
@@ -1483,6 +1132,460 @@
                 <property name="checkable">
                  <bool>true</bool>
                 </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="layoutFilterCrop">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetMinAndMaxSize</enum>
+            </property>
+            <item>
+             <layout class="QHBoxLayout" name="layoutFilterCropBtns">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>18</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="btnFilterCropDown">
+                <property name="maximumSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="text">
+                 <string></string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnFilterCropUp">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="text">
+                 <string></string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="layoutFilterCropSettingsWrap">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QHBoxLayout" name="layoutFilterCropSettingsIcons">
+                <item>
+                 <spacer name="horizontalSpacer_10">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Fixed</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>70</width>
+                    <height>10</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QLabel" name="labelCropT">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>10</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string></string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="labelCropR">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>10</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string></string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="labelCropB">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>10</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string></string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="labelCropL">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>10</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string></string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="layoutFilterCropSettings">
+                <item>
+                 <widget class="QPushButton" name="btnFilterCrop">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>70</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>70</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="focusPolicy">
+                   <enum>Qt::TabFocus</enum>
+                  </property>
+                  <property name="toolTip">
+                   <string>Activate crop filter</string>
+                  </property>
+                  <property name="text">
+                   <string>Crop</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="boxFilterCropT">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Top</string>
+                  </property>
+                  <property name="maximum">
+                   <number>99999</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="boxFilterCropR">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Right</string>
+                  </property>
+                  <property name="maximum">
+                   <number>99999</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="boxFilterCropB">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Bottom</string>
+                  </property>
+                  <property name="maximum">
+                   <number>99999</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="boxFilterCropL">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>45</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Left</string>
+                  </property>
+                  <property name="maximum">
+                   <number>99999</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0">
+           <layout class="QHBoxLayout" name="layoutFilterDeinterlace">
+            <item>
+             <layout class="QHBoxLayout" name="layoutFilterDeinterlaceBtns">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="btnFilterDeinterlaceDown">
+                <property name="maximumSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="text">
+                 <string></string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnFilterDeinterlaceUp">
+                <property name="maximumSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>DroidSansMono Nerd Font Mono</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="text">
+                 <string></string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="layoutFilterDeinterlaceSettings">
+              <item>
+               <widget class="QPushButton" name="btnFilterDeinterlace">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Activate deinterlace filter</string>
+                </property>
+                <property name="text">
+                 <string>Deinterlace</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBoxFilterDeinterlaceDeinterlacer">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Select deinterlacer</string>
+                </property>
+                <property name="currentText">
+                 <string>bwdif</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>bwdif</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>kerndeint</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>nnedi</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>w3fdif</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>yadif</string>
+                 </property>
+                </item>
                </widget>
               </item>
              </layout>
@@ -1794,7 +1897,7 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>40</width>
+              <width>24</width>
               <height>24</height>
              </size>
             </property>
@@ -1828,7 +1931,7 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>40</width>
+              <width>24</width>
               <height>24</height>
              </size>
             </property>
@@ -2988,7 +3091,7 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>40</width>
+           <width>24</width>
            <height>24</height>
           </size>
          </property>
@@ -3022,7 +3125,7 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="maximumSize">
           <size>
-           <width>40</width>
+           <width>24</width>
            <height>24</height>
           </size>
          </property>
@@ -3218,6 +3321,63 @@ QRadioButton::unchecked:hover {
          </property>
          <property name="text">
           <string>裸</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_11">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnQueueSleep">
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>Send computer to sleep after last job finishes</string>
+         </property>
+         <property name="text">
+          <string>⏾</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnQueueShutdown">
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>DroidSansMono Nerd Font Mono</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>Shutdown the computer after last job finishes</string>
+         </property>
+         <property name="text">
+          <string></string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

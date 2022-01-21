@@ -28,6 +28,7 @@ from classes.Jobs import Jobs
 from classes.FFmpegThread import FFmpegThread
 from classes.DB import DB
 from classes.PlayerSlider import PlayerSlider
+from classes.TimerMessageBox import TimerMessageBox
 
 from PyQt5 import uic, QtGui, QtWidgets
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
@@ -89,6 +90,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.overwriteFile = False # File path to a target file the current session would overwrite on save
         self.sectionTimeStart = self.timeFormat
         self.sectionTimeEnd = self.timeFormat
+        self.powerMode = False
         # Filters
         self.filterAtts = {
             'crop': {
@@ -305,6 +307,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnQueueKill.clicked.connect(self.onBtnQueueKillClicked)
             self.btnQueueLoad.clicked.connect(self.onBtnQueueLoadClicked)
             self.btnQueueDeleteAll.clicked.connect(self.onBtnQueueDeleteAll)
+            self.btnQueueSleep.clicked.connect(self.onBtnQueueSleepClicked)
+            self.btnQueueShutdown.clicked.connect(self.onBtnQueueShutdownClicked)
             # Actions
             self.actionSettings.triggered.connect(self.onActionSettings)
             self.actionQuit.triggered.connect(self.onActionQuit)
@@ -587,6 +591,8 @@ class MainUi(QtWidgets.QMainWindow):
                 self.FFmpegThread.ffmpegExit.connect(self.onFFmpegExit)
                 self.FFmpegThread.start()
                 self.log(1, 'FFmpeg thread started.')
+            else:
+                if self.powerMode: self.activatePowerMode(self.powerMode)
             return True
         except Exception as e:
             msg = 'Error: Cannot run next waiting job in queue.'
@@ -978,6 +984,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnQueueDeleteAll(self):
         self.queueRemoveFinishedRows()
+
+    def onBtnQueueSleepClicked(self, state):
+        self.togglePowerMode('sleep', state)
+
+    def onBtnQueueShutdownClicked(self, state):
+        self.togglePowerMode('shutdown', state)
 
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
@@ -2484,6 +2496,35 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnCurrentSectionEnd.setText(value)
         self.setCurrentSectionInSlider()
 
+    def togglePowerMode(self, mode, state):
+        '''
+        Toggles the queue shutdown / sleep buttons
+        '''
+        if state: self.powerMode = mode
+        else: self.powerMode = False
+        if mode == 'sleep':
+            self.btnQueueShutdown.setChecked(False)
+        if mode == 'shutdown':
+            self.btnQueueSleep.setChecked(False)
+
+    def activatePowerMode(self, mode):
+        '''
+        Activates the PC power mode (sleep, shutdown)
+
+        :param mode: "sleep" or "shutdown"
+        '''
+        if mode == 'sleep':
+            messagebox = TimerMessageBox(timeout=5, title="Send to sleep", text="All jobs completed. Sending the PC to sleep mode.", parent=self)
+            result = messagebox.exec_()
+            if not result or result == QMessageBox.Abort: return False
+            os.system("systemctl suspend")
+        elif mode == 'shutdown':
+            messagebox = TimerMessageBox(timeout=5, title="Shutdown", text="All jobs completed. Shutting down the PC.", parent=self)
+            result = messagebox.exec_()
+            if not result or result == QMessageBox.Abort: return False
+            os.system("shutdown now -h")
+            # os.system("shutdown /s /t 1")
+
     def setTagsTreeStyle(self):
         '''Sets the TagsTree Stylesheet'''
         self.listWidgetTagsTree.setStyleSheet("""
@@ -2511,6 +2552,8 @@ class MainUi(QtWidgets.QMainWindow):
         if self.ffmpegProcess:
             os.kill(self.ffmpegProcess.pid, signal.SIGKILL)
             self.ffmpegKilled = True
+
+
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
