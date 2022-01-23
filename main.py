@@ -895,37 +895,34 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateLeft.isChecked():
             job.setFilterRotate(-90)
-            # self.setCropFieldsByRotation(-90)
         else:
             job.setFilterRotate(False)
-            # self.setCropFieldsByRotation(False)
         self.btnFilterRotateRight.setChecked(False)
         self.btnFilterRotate180.setChecked(False)
         self.setVideoFilter()
+        self.setCropFieldsByRotation()
 
     def onBtnFilterRotateRight(self):
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotateRight.isChecked():
             job.setFilterRotate(90)
-            # self.setCropFieldsByRotation(90)
         else:
             job.setFilterRotate(False)
-            # self.setCropFieldsByRotation(False)
         self.btnFilterRotateLeft.setChecked(False)
         self.btnFilterRotate180.setChecked(False)
         self.setVideoFilter()
+        self.setCropFieldsByRotation()
 
     def onBtnFilterRotate180(self):
         job = self.jobs.getCurrentJob()
         if self.btnFilterRotate180.isChecked():
             job.setFilterRotate(180)
-            # self.setCropFieldsByRotation(180)
         else:
             job.setFilterRotate(False)
-            # self.setCropFieldsByRotation(False)
         self.btnFilterRotateLeft.setChecked(False)
         self.btnFilterRotateRight.setChecked(False)
         self.setVideoFilter()
+        self.setCropFieldsByRotation()
 
     def onBtnFiltersPreview(self):
         self.config.setFiltersPreview(self.btnFiltersPreview.isChecked())
@@ -2113,6 +2110,7 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         job.setFilterPositions(filterPositions)
         self.setVideoFilter()
+        self.setCropFieldsByRotation()
 
     def getFilterPositionItems(self):
         items = []
@@ -2549,11 +2547,21 @@ class MainUi(QtWidgets.QMainWindow):
             # os.system("shutdown /s /t 1")
         self.disablePowerMode()
 
-    # Todo: Auf Filter-Prio achten (wegen Resize vorallem). Ggf. Drehung in Klammern hinter original setzen.
-    def setCropFieldsByRotation(self, rotation):
+    def setCropFieldsByRotation(self):
         '''
         Change the icon and tooltip of all crop fields based on the rotation
         '''
+        # Check if crop filter is before rotate filter
+        filterPositions = self.jobs.getCurrentJob().getFilterPositions()
+        isCropBeforeRotate = True
+        for position in sorted(filterPositions.keys()):
+            filter = filterPositions.get(position)
+            if filter == 'crop':
+                break
+            elif filter == 'rotate':
+                isCropBeforeRotate = False
+                break
+        # Change labels and tooltips based on rotation
         chars = {
             't': [ 'Top', ''],
             'r': [ 'Right', ''],
@@ -2564,21 +2572,22 @@ class MainUi(QtWidgets.QMainWindow):
         r = chars['r']
         b = chars['b']
         l = chars['l']
-        if rotation == 90:
-            t = chars['r']
-            r = chars['b']
-            b = chars['l']
-            l = chars['t']
-        elif rotation == -90:
-            t = chars['l']
-            r = chars['t']
-            b = chars['r']
-            l = chars['b']
-        elif rotation == 180:
-            t = chars['b']
-            r = chars['l']
-            b = chars['t']
-            l = chars['r']
+        if isCropBeforeRotate:
+            if self.btnFilterRotateRight.isChecked():
+                t = chars['r']
+                r = chars['b']
+                b = chars['l']
+                l = chars['t']
+            elif self.btnFilterRotateLeft.isChecked():
+                t = chars['l']
+                r = chars['t']
+                b = chars['r']
+                l = chars['b']
+            elif self.btnFilterRotate180.isChecked():
+                t = chars['b']
+                r = chars['l']
+                b = chars['t']
+                l = chars['r']
         self.labelCropT.setText(t[1])
         self.boxFilterCropT.setToolTip(t[0])
         self.labelCropR.setText(r[1])
