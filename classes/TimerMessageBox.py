@@ -21,6 +21,7 @@ class TimerMessageBox(QMessageBox):
         self.time_to_wait -= 1
         self.setText(self.text + "\n\n{0} seconds remaining ...".format(self.time_to_wait))
         if self.time_to_wait <= 0:
+            self.setResult(3)
             self.close()
 
     def closeEvent(self, event):

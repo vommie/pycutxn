@@ -593,7 +593,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.FFmpegThread.start()
                 self.log(1, 'FFmpeg thread started.')
             else:
-                if self.powerMode: self.activatePowerMode(self.powerMode)
+                if self.powerMode: self.runPowerMode(self.powerMode)
             return True
         except Exception as e:
             msg = 'Error: Cannot run next waiting job in queue.'
@@ -2512,17 +2512,27 @@ class MainUi(QtWidgets.QMainWindow):
     def togglePowerMode(self, mode, state):
         '''
         Toggles the queue shutdown / sleep buttons
+
+        :param mode: 'all' (use it to deactivate all modes), 'sleep' or 'shutdown'
         '''
         if state: self.powerMode = mode
         else: self.powerMode = False
         if mode == 'sleep':
             self.btnQueueShutdown.setChecked(False)
-        if mode == 'shutdown':
+        elif mode == 'shutdown':
             self.btnQueueSleep.setChecked(False)
 
-    def activatePowerMode(self, mode):
+    def disablePowerMode(self):
         '''
-        Activates the PC power mode (sleep, shutdown)
+        Disables the power modes and unchecks the corresponding buttons
+        '''
+        self.powerMode = False
+        self.btnQueueShutdown.setChecked(False)
+        self.btnQueueSleep.setChecked(False)
+
+    def runPowerMode(self, mode):
+        '''
+        Runs the PC power mode (sleep, shutdown)
 
         :param mode: "sleep" or "shutdown"
         '''
@@ -2530,13 +2540,14 @@ class MainUi(QtWidgets.QMainWindow):
             messagebox = TimerMessageBox(timeout=5, title="Send to sleep", text="All jobs completed. Sending the PC to sleep mode.", parent=self)
             result = messagebox.exec_()
             if not result or result == QMessageBox.Abort: return False
-            os.system("systemctl suspend")
+            os.system('systemctl suspend')
         elif mode == 'shutdown':
             messagebox = TimerMessageBox(timeout=5, title="Shutdown", text="All jobs completed. Shutting down the PC.", parent=self)
             result = messagebox.exec_()
             if not result or result == QMessageBox.Abort: return False
-            os.system("shutdown now -h")
+            os.system('shutdown now -h')
             # os.system("shutdown /s /t 1")
+        self.disablePowerMode()
 
     # Todo: Auf Filter-Prio achten (wegen Resize vorallem). Ggf. Drehung in Klammern hinter original setzen.
     def setCropFieldsByRotation(self, rotation):
