@@ -1225,7 +1225,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI Control
 
-    def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCut Message', extraBtnText='', extraBtnCallback=False):
+    def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCut Message', extraBtns=()):
         '''
         Shows a QMessageBox dialog.
 
@@ -1235,8 +1235,7 @@ class MainUi(QtWidgets.QMainWindow):
         :param infoText: Info text which gets displayed below the main message
         :param detailText: Detail text which gets displayed if the user clicks on a "details" button
         :param title: Title of the message box.
-        :param extraBtnText: If not a empty string, a extra button gets added with this text. This button will not be able to give a return value.
-        :param extraBtnCallback: If a function gets set, it will be called if the extra btn is clicked.
+        :param extraBtn: Tuple with 'text' and 'callback' (optional) as keys. Extra buttons gets added with provided text. This buttons will not be able to give a return value.  If a function gets set as callback, it will be called if the extra btn is clicked.
         '''
         msgBox = QMessageBox()
         if icon == "info":  msgBox.setIcon(QMessageBox.Information)
@@ -1255,10 +1254,11 @@ class MainUi(QtWidgets.QMainWindow):
         elif btns == 'retryabort': msgBox.setStandardButtons(QMessageBox.Retry | QMessageBox.Abort)
         elif btns == 'close': msgBox.setStandardButtons(QMessageBox.Close)
         else: msgBox.setStandardButtons(QMessageBox.Ok)
-        if extraBtnText != '':
-            extraBtn = msgBox.addButton(extraBtnText, msgBox.ActionRole)
-            extraBtn.disconnect()
-            if extraBtnCallback : extraBtn.clicked.connect(extraBtnCallback)
+        for extraBtn in extraBtns:
+            if 'text' in extraBtn:
+                btn = msgBox.addButton(extraBtn['text'], msgBox.ActionRole)
+                btn.disconnect()
+                if 'callback' in extraBtn and extraBtn['callback']: btn.clicked.connect(extraBtn['callback'])
         result = msgBox.exec_()
         if(result == QMessageBox.Ok): return True
         elif(result == QMessageBox.Cancel): return False
@@ -1614,7 +1614,7 @@ class MainUi(QtWidgets.QMainWindow):
         if os.path.exists(tgtFile):
             self.log(1, 'Target file already exists.')
             self.overwriteFile = tgtFile
-            if not self.showMsgBox('The target file already exists. Overwrite it?', btns='yesno', infoText=tgtFile, icon='question', extraBtnText='Open target', extraBtnCallback=self.onMsgBoxExtraBtnOverwriteFile):
+            if not self.showMsgBox('The target file already exists. Overwrite it?', btns='yesno', infoText=tgtFile, icon='question', extraBtns=({'text': 'Open target', 'callback': self.onMsgBoxExtraBtnOverwriteFile},)):
                 overwrite = False
                 self.log(1, 'User does not want to overwrite target file.')
             else:
@@ -1652,7 +1652,7 @@ class MainUi(QtWidgets.QMainWindow):
         if jobs:
             self.jobsToReplace = jobs
             self.log(1, 'Target file already exists in %s previous job(s).' % len(jobs))
-            if not self.showMsgBox('The target file already exists in the jobs queue. Save anyways?', btns='yesno', infoText=currTgtFile, detailText=detailText, icon='question', extraBtnText='Delete existing Jobs', extraBtnCallback=self.onMsgBoxExtraBtnDeleteJobsWithTgtFile):
+            if not self.showMsgBox('The target file already exists in the jobs queue. Save anyways?', btns='yesno', infoText=currTgtFile, detailText=detailText, icon='question', extraBtns=({'text': 'Delete existing Jobs', 'callback': self.onMsgBoxExtraBtnDeleteJobsWithTgtFile},)):
                 overwrite = False
                 self.log(1, 'User does not want to overwrite target file.')
             else:
