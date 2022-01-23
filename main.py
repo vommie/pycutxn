@@ -91,6 +91,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.sectionTimeStart = self.timeFormat
         self.sectionTimeEnd = self.timeFormat
         self.powerMode = False
+        self.lastMsgBox = False # The lastly opened MsgBox (for use in callback functions)
         # Filters
         self.filterAtts = {
             'crop': {
@@ -1123,6 +1124,13 @@ class MainUi(QtWidgets.QMainWindow):
                 opener = Functions.getCurrentSysOpener()
                 subprocess.call([opener, self.overwriteFile])
 
+    def onMsgBoxExtraBtnRenameTarget(self):
+        self.autoRenameTargetFilename()
+        try:
+            self.lastMsgBox.done(1)
+            self.saveSession()
+        except: pass
+
     # Other Event handlers
 
     # Event handler while ffmpeg is rendering
@@ -1238,6 +1246,7 @@ class MainUi(QtWidgets.QMainWindow):
         :param extraBtn: Tuple with 'text' and 'callback' (optional) as keys. Extra buttons gets added with provided text. This buttons will not be able to give a return value.  If a function gets set as callback, it will be called if the extra btn is clicked.
         '''
         msgBox = QMessageBox()
+        self.lastMsgBox = msgBox
         if icon == "info":  msgBox.setIcon(QMessageBox.Information)
         elif icon == "question":  msgBox.setIcon(QMessageBox.Question)
         elif icon == "warning":  msgBox.setIcon(QMessageBox.Warning)
@@ -1614,7 +1623,7 @@ class MainUi(QtWidgets.QMainWindow):
         if os.path.exists(tgtFile):
             self.log(1, 'Target file already exists.')
             self.overwriteFile = tgtFile
-            if not self.showMsgBox('The target file already exists. Overwrite it?', btns='yesno', infoText=tgtFile, icon='question', extraBtns=({'text': 'Open target', 'callback': self.onMsgBoxExtraBtnOverwriteFile},)):
+            if not self.showMsgBox('The target file already exists. Overwrite it?', btns='yesno', infoText=tgtFile, icon='question', extraBtns=({'text': 'Open target', 'callback': self.onMsgBoxExtraBtnOverwriteFile}, {'text': 'Auto-Rename', 'callback': self.onMsgBoxExtraBtnRenameTarget})):
                 overwrite = False
                 self.log(1, 'User does not want to overwrite target file.')
             else:
@@ -2567,6 +2576,23 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterCropB.setToolTip(b[0])
         self.labelCropL.setText(l[1])
         self.boxFilterCropL.setToolTip(l[0])
+
+    def autoRenameTargetFilename(self):
+        '''
+        Checks if the target file exists and renames the job target filename with a counter in it
+        '''
+        try:
+            job = self.jobs.getCurrentJob()
+            originalName = job.getTgtFileName()
+            for i in range(1, 1000):
+                if os.path.isfile(job.getTgtFilePathLong()):
+                    job.setTgtFileName('{f} ({i})'.format(f=originalName, i=i))
+                else:
+                    self.lineEditTgtFileName.setText(job.getTgtFileName())
+                    return
+        except Exception as e:
+            msg = 'Error: Cannot auto rename target filename.'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
 
     def setTagsTreeStyle(self):
         '''Sets the TagsTree Stylesheet'''
