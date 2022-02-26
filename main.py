@@ -271,7 +271,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.boxFilterCropR.valueChanged.connect(self.onBoxFilterCropRChanged)
             self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
             self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
-            self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
+            # self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
             self.btnFilterDeinterlace.toggled.connect(self.onBtnFilterDeinterlaceClicked)
             self.comboBoxFilterDeinterlaceDeinterlacer.currentTextChanged.connect(self.onComboBoxFilterDeinterlaceDeinterlacerChanged)
             self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
@@ -864,6 +864,7 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFilterDeinterlaceClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterDeinterlaceState(self.btnFilterDeinterlace.isChecked())
+        job.setFilterDeinterlaceDeinterlacer(self.comboBoxFilterDeinterlaceDeinterlacer.currentText())
         self.setVideoFilter()
 
     def onComboBoxFilterDeinterlaceDeinterlacerChanged(self, text):
