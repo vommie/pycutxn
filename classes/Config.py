@@ -58,8 +58,8 @@ class Config:
     def getAppWarnTgtFileExistsInTgtDir(self) -> bool:
         return self.settings.value('app/warnTgtFileExistsInTgtDir', True, type=bool)
 
-    def getAppWarnSrcFileExistsInTgtDir(self) -> bool:
-        return self.settings.value('app/warnSrcFileExistsInTgtDir', True, type=bool)
+    def getAppWarnBaseFileExistsInTgtDir(self) -> bool:
+        return self.settings.value('app/warnBaseFileExistsInTgtDir', True, type=bool)
 
     def getAppWarnFileExistsInJobs(self) -> bool:
         return self.settings.value('app/warnFileExistsInJobs', True, type=bool)
@@ -164,8 +164,8 @@ class Config:
     def setAppWarnTgtFileExistsInTgtDir(self, state : bool) -> None:
         self.settings.setValue('app/warnTgtFileExistsInTgtDir', state)
 
-    def setAppWarnSrcFileExistsInTgtDir(self, state : bool) -> None:
-        self.settings.setValue('app/warnSrcFileExistsInTgtDir', state)
+    def setAppWarnBaseFileExistsInTgtDir(self, state : bool) -> None:
+        self.settings.setValue('app/warnBaseFileExistsInTgtDir', state)
 
     def setAppWarnFileExistsInJobs(self, state : bool) -> None:
         self.settings.setValue('app/warnFileExistsInJobs', state)

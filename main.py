@@ -416,6 +416,8 @@ class MainUi(QtWidgets.QMainWindow):
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
+            print('NEW FILE')
+            if self.isBaseFileExistsInTgtDirWarningActive(): self.warnIfOpenedFileCouldExist(job)
         except Exception as e:
             msg = 'Error: Cannot load new file.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
@@ -524,8 +526,10 @@ class MainUi(QtWidgets.QMainWindow):
             currentJob.setRenderSettingAudioBitrate(self.config.getRenderAudioBitrate())
             currentJob.setRenderSettingContainer(self.config.getRenderContainer())
             if self.isSameRenderSrcTgt(currentJob, False): return False
-            if not self.overwriteTgtFileIfExists(currentJob): return False
-            if not self.overwriteTgtFileIfExistsInQueue(currentJob): return False
+            if self.isTgtFileExistsInTgtDirWarningActive():
+                if not self.overwriteTgtFileIfExists(currentJob): return False
+            if self.isTgtFileExistsInJobsWarningActive():
+                if not self.overwriteTgtFileIfExistsInQueue(currentJob): return False
             job = self.addCurrentJobToQueue()
             if not job: return False
             if not self.saveCurrentTagsAndRating(): return False
@@ -835,6 +839,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setCurrTgtDir()
         self.config.setAppTgtDirName(text)
         self.setBtnExportSaveState()
+        if self.isBaseFileExistsInTgtDirWarningActive(): self.warnIfOpenedFileCouldExist(self.jobs.getCurrentJob())
 
     def onBtnFilterCropClicked(self):
         job = self.jobs.getCurrentJob()
@@ -1603,6 +1608,12 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         return self.config.getAppWarnFileExistsInJobs()
 
+    def isBaseFileExistsInTgtDirWarningActive(self):
+        '''
+        Checks if the option to warn if the current files basename already exists in the current target dir
+        '''
+        return self.config.getAppWarnBaseFileExistsInTgtDir()
+
     def isFileIsKnownWarningIsActive(self):
         '''
         Checks if the option to warn if the file hash of the currently opened file is known in the database is active
@@ -1628,6 +1639,35 @@ class MainUi(QtWidgets.QMainWindow):
                 self.log(1, 'User wants to overwrite target file.')
             self.overWriteFile = False
         return overwrite
+
+    def warnIfOpenedFileCouldExist(self, currentJob) -> bool:
+        '''
+        If the current basename exists for files in the current target directory, the user gets warned with a file list.
+
+        :param currentJob: The current job.
+        :return: False if no existing files were found, True if the user got the warning dialog
+        '''
+        path = currentJob.getTgtDirName()
+        fileName = currentJob.getTgtFileName()
+        sep = currentJob.getTgtFileSep()
+        count = currentJob.getTgtFileCount()
+        searchName = '{f}{s}01'.format(f=fileName, s=sep) if int(count) > 0 else '{f}'.format(f=fileName)
+        matches = []
+        for file in os.listdir(path):
+            if file.lower().startswith(searchName.lower()):
+                matches.append('{p}/{f}'.format(p=path, f=file))
+
+        if not matches:
+            return False
+
+        ui = KnownUI(self)
+        ui.setFilesList(matches)
+        ui.setLabel('The current file\'s basename already exists in the target directory:')
+        ui.setTitle('Current file found in target dir')
+
+        self.playerControl.pause(True)
+        ui.show()
+        return True
 
     def overwriteTgtFileIfExistsInQueue(self, currentJob) -> bool:
         '''

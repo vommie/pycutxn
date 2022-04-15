@@ -28,7 +28,7 @@ class SettingsUI(QtWidgets.QDialog):
         self.spinBoxAudioBitrate.setValue(self.parent.config.getRenderAudioBitrate())
         # Warnings
         self.checkBoxWarnTgtTgt.setChecked(self.parent.config.getAppWarnTgtFileExistsInTgtDir())
-        self.checkBoxWarnSrcTgt.setChecked(self.parent.config.getAppWarnSrcFileExistsInTgtDir())
+        self.checkBoxWarnBaseFileExists.setChecked(self.parent.config.getAppWarnBaseFileExistsInTgtDir())
         self.checkBoxWarnJobQueue.setChecked(self.parent.config.getAppWarnFileExistsInJobs())
         self.checkBoxWarnHash.setChecked(self.parent.config.getAppWarnFileHashExistsInDB())
         self.checkBoxWarnCloseWhileRender.setChecked(self.parent.config.getAppWarnCloseWhileRender())
@@ -54,7 +54,7 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setRenderAudioBitrate(int(self.spinBoxAudioBitrate.value()))
         # Warnings
         self.parent.config.setAppWarnTgtFileExistsInTgtDir(self.checkBoxWarnTgtTgt.isChecked())
-        self.parent.config.setAppWarnSrcFileExistsInTgtDir(self.checkBoxWarnSrcTgt.isChecked())
+        self.parent.config.setAppWarnBaseFileExistsInTgtDir(self.checkBoxWarnBaseFileExists.isChecked())
         self.parent.config.setAppWarnFileExistsInJobs(self.checkBoxWarnJobQueue.isChecked())
         self.parent.config.setAppWarnFileHashExistsInDB(self.checkBoxWarnHash.isChecked())
         self.parent.config.setAppWarnCloseWhileRender(self.checkBoxWarnCloseWhileRender.isChecked())

@@ -19,6 +19,12 @@ class KnownUI(QtWidgets.QDialog):
         for file in filesList:
             self.addRow(file)
 
+    def setLabel(self, label):
+        self.labelInfo.setText(label)
+
+    def setTitle(self, title):
+        self.setWindowTitle(title)
+
     def onListWidgeFilesItemDoubleClicked(self, item):
         file = item.text()
         if os.path.isfile(file):

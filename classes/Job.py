@@ -28,6 +28,7 @@ class Job():
                 'fileName': False,
                 'fileExt': False,
                 'count': 0,
+                'sep': ' - '
             },
             'sections': [],
             'filters': {
@@ -100,13 +101,17 @@ class Job():
     def getTgtFileCount(self):
         return self._props['tgtFile'].get('count')
 
+    def getTgtFileSep(self):
+        return self._props['tgtFile'].get('sep')
+
     def getTgtFileNameLong(self):
         name = self.getTgtFileName()
         fileNameLong = name
         ext = self.getTgtFileExt()
         count = self.getTgtFileCount()
+        sep = self.getTgtFileSep()
         if(count):
-            fileNameLong = "%s - %02d" % (fileNameLong, count)
+            fileNameLong = '{f}{s}{c:02d}'.format(f=fileNameLong, s=sep, c=count)
         fileNameLong = "%s%s" % (fileNameLong, ext)
         return fileNameLong
 

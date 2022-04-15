@@ -400,19 +400,19 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBoxWarnSrcTgt">
-             <property name="toolTip">
-              <string>Checks if the source filename (without extension) already exists as beginning filename in the target directory</string>
-             </property>
+            <widget class="QCheckBox" name="checkBoxWarnJobQueue">
              <property name="text">
-              <string>Warn if loaded file propably already exists in target folder</string>
+              <string>Warn if saved file already exists in previous jobs in queue</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBoxWarnJobQueue">
+            <widget class="QCheckBox" name="checkBoxWarnBaseFileExists">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When the base filename (without current counter and ext) already exists in the currently selected target directory, warn and list files which already exist with the basename.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
-              <string>Warn if saved file already exists in previous jobs in queue</string>
+              <string>Warn if base file propably already exists in target folder</string>
              </property>
             </widget>
            </item>
