@@ -3581,17 +3581,13 @@ QRadioButton::unchecked:hover {
    <widget class="QWidget" name="dockCodecContents">
     <layout class="QVBoxLayout" name="verticalLayout_6">
      <item>
-      <widget class="QTableWidget" name="tableWidgetCodecs">
-       <column>
-        <property name="text">
-         <string>Property</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Value</string>
-        </property>
-       </column>
+      <widget class="QPlainTextEdit" name="plainTextEditCodecInfo">
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::NoWrap</enum>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
     </layout>

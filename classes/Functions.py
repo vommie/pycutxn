@@ -1,6 +1,7 @@
 import sys
 import ffmpeg
 import time
+import json
 
 class Functions:
 
@@ -106,3 +107,10 @@ class Functions:
         except:
             props = {}
         return props
+
+    @staticmethod
+    def getVideoCodecInfo(videoFilePath):
+        output = ''
+        output = '{o}Video properties:\n{p}'.format(o=output, p=json.dumps(Functions.getVideoProperties(videoFilePath), indent=2))
+        output = '{o}\n\nffprobe output:\n{a}'.format(o=output, a=json.dumps(ffmpeg.probe(videoFilePath, cmd='ffprobe'), indent=2))
+        return output

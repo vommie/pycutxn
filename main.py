@@ -387,6 +387,7 @@ class MainUi(QtWidgets.QMainWindow):
             # Get Video Props
             self.videoProps = Functions.getVideoProperties(videoFilePath)
             self.videoProps['durationMs'] = Functions.HMSToTimestamp(self.videoProps.get('durationHMS'), True)
+            self.plainTextEditCodecInfo.setPlainText(str(Functions.getVideoCodecInfo(videoFilePath)))
             self.showWarningForOddVideoSourceSize(self.videoProps)
             self.log(1, 'Video properties: %s' % self.videoProps)
             # Set properties
