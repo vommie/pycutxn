@@ -368,9 +368,9 @@
     <property name="title">
      <string>Debug</string>
     </property>
-    <addaction name="actionEdit_Jobs_File"/>
-    <addaction name="actionOpen_application_directory"/>
-    <addaction name="actionOpen_application_settings_directory"/>
+    <addaction name="actionEditJobsFile"/>
+    <addaction name="actionOpenAppDir"/>
+    <addaction name="actionOpenAppData"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_View"/>
@@ -3669,17 +3669,17 @@ QRadioButton::unchecked:hover {
     <string>Settings</string>
    </property>
   </action>
-  <action name="actionEdit_Jobs_File">
+  <action name="actionEditJobsFile">
    <property name="text">
     <string>Edit Jobs File</string>
    </property>
   </action>
-  <action name="actionOpen_application_directory">
+  <action name="actionOpenAppDir">
    <property name="text">
     <string>Open application directory</string>
    </property>
   </action>
-  <action name="actionOpen_application_settings_directory">
+  <action name="actionOpenAppData">
    <property name="text">
     <string>Open application data directory</string>
    </property>

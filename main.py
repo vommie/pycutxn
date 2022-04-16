@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from socket import AI_PASSIVE
 import sys
 import datetime
 import json
@@ -314,6 +315,9 @@ class MainUi(QtWidgets.QMainWindow):
             # Actions
             self.actionSettings.triggered.connect(self.onActionSettings)
             self.actionQuit.triggered.connect(self.onActionQuit)
+            self.actionEditJobsFile.triggered.connect(self.onActionEditJobsFile)
+            self.actionOpenAppDir.triggered.connect(self.onActionOpenAppDir)
+            self.actionOpenAppData.triggered.connect(self.onActionOpenAppData)
             self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
             self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
             self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
@@ -1144,6 +1148,18 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onActionQuit(self):
         QCoreApplication.quit()
+
+    def onActionEditJobsFile(self):
+        opener = Functions.getCurrentSysOpener()
+        subprocess.call([opener, self.jobs.jobsFilePath])
+
+    def onActionOpenAppDir(self):
+        opener = Functions.getCurrentSysOpener()
+        subprocess.call([opener, self.rootDir])
+
+    def onActionOpenAppData(self):
+        opener = Functions.getCurrentSysOpener()
+        subprocess.call([opener, self.config.getConfigPath()])
 
     def onMsgBoxExtraBtnOverwriteFile(self):
         '''Opens a file saved in variable self.overwriteFile'''
