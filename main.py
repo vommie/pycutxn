@@ -318,6 +318,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.actionEditJobsFile.triggered.connect(self.onActionEditJobsFile)
             self.actionOpenAppDir.triggered.connect(self.onActionOpenAppDir)
             self.actionOpenAppData.triggered.connect(self.onActionOpenAppData)
+            self.actionRestorePanels.triggered.connect(self.onActionRestorePanels)
             self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
             self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
             self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
@@ -1160,6 +1161,13 @@ class MainUi(QtWidgets.QMainWindow):
     def onActionOpenAppData(self):
         opener = Functions.getCurrentSysOpener()
         subprocess.call([opener, self.config.getConfigPath()])
+
+    def onActionRestorePanels(self):
+        self.dockExport.show()
+        self.dockTagger.show()
+        self.dockQueue.show()
+        self.dockLogs.show()
+        self.dockCodecs.show()
 
     def onMsgBoxExtraBtnOverwriteFile(self):
         '''Opens a file saved in variable self.overwriteFile'''

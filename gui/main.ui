@@ -362,7 +362,7 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
-    <addaction name="actionRestore_hidden_panels"/>
+    <addaction name="actionRestorePanels"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -3684,7 +3684,7 @@ QRadioButton::unchecked:hover {
     <string>Open application data directory</string>
    </property>
   </action>
-  <action name="actionRestore_hidden_panels">
+  <action name="actionRestorePanels">
    <property name="text">
     <string>Restore hidden panels</string>
    </property>
