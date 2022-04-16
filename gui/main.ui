@@ -1479,6 +1479,9 @@
                     <height>24</height>
                    </size>
                   </property>
+                  <property name="focusPolicy">
+                   <enum>Qt::TabFocus</enum>
+                  </property>
                   <property name="toolTip">
                    <string>Set crop values automatically</string>
                   </property>
