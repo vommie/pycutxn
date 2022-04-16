@@ -3,16 +3,14 @@
 from socket import AI_PASSIVE
 import sys
 import datetime
-import json
 import subprocess
 import os
 import signal
 import re
-import copy
 import shutil
 import hashlib
 import locale
-import time
+import math
 
 from libs.mpv import *
 from libs.mpv import *
@@ -280,6 +278,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnFilterResize.toggled.connect(self.onBtnFilterResizeClicked)
             self.boxFilterResizeW.valueChanged.connect(self.onBoxFilterResizeWChanged)
             self.boxFilterResizeH.valueChanged.connect(self.onBoxFilterResizeHChanged)
+            self.btnFilterResize169.clicked.connect(self.onBtnFilterResize169)
+            self.btnFilterResize43.clicked.connect(self.onBtnFilterResize43)
             self.btnFilterDeshake.clicked.connect(self.onBtnFilterDeshake)
             self.btnFilterDeshake.toggled.connect(self.onBtnFilterDeshake)
             self.btnFilterRotateLeft.clicked.connect(self.onBtnFilterRotateLeft)
@@ -374,7 +374,6 @@ class MainUi(QtWidgets.QMainWindow):
             self.checkDBConnectivity()
             if not videoFilePath:
                 self.log(1, 'Loading job from queue ...')
-                loadedJob = True
                 self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
                 job = self.jobs.getCurrentJob()
                 videoFilePath = job.getSrcFilePathLong()
@@ -412,12 +411,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.loadSections(job)
             # Load video file
             if self.videoProps:
-                # TODO: Audio Normalization
-                audioFilter='lavfi=[dynaudnorm=s=30]'
-                audioFilter = ''
-                audioFilter='lavfi=[loudnorm=I=-16:TP=-3:LRA=4]'
-                audioFilter='lavfi=[dynaudnorm=g=5:f=250:r=0.9:p=0.5]'
-                audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Works
+                audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Audio Normalization
                 self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart, af=audioFilter)
                 self.playerControl.player['background'] = self.config.getPlayerBgColor()
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
@@ -911,6 +905,10 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFilterResizeClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterResizeState(self.btnFilterResize.isChecked())
+        if self.boxFilterResizeW.value() == 0:
+            self.boxFilterResizeW.setValue(self.videoProps.get('width'))
+        if self.boxFilterResizeH.value() == 0:
+            self.boxFilterResizeH.setValue(self.videoProps.get('height'))
         self.setVideoFilter()
 
     def onBoxFilterResizeWChanged(self, text):
@@ -922,6 +920,12 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         job.setFilterResizeHeight(text)
         self.setVideoFilter()
+
+    def onBtnFilterResize169(self, e):
+        self.boxFilterResizeH.setValue(math.ceil((self.boxFilterResizeW.value() / (16/9)) / 2.) * 2)
+
+    def onBtnFilterResize43(self):
+        self.boxFilterResizeH.setValue(math.ceil((self.boxFilterResizeW.value() / (4/3)) / 2.) * 2)
 
     def onBtnFilterDeshake(self):
         job = self.jobs.getCurrentJob()

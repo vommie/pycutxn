@@ -865,15 +865,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>45</width>
-                  <height>0</height>
-                 </size>
-                </property>
                 <property name="maximumSize">
                  <size>
-                  <width>56</width>
+                  <width>40</width>
                   <height>24</height>
                  </size>
                 </property>
@@ -881,7 +875,7 @@
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Calculate 16:9 ratio based on height. Ignores cropping values if higher in priority.</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Calculate 16:9 ratio based on width.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="layoutDirection">
                  <enum>Qt::RightToLeft</enum>
@@ -899,15 +893,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>45</width>
-                  <height>0</height>
-                 </size>
-                </property>
                 <property name="maximumSize">
                  <size>
-                  <width>56</width>
+                  <width>33</width>
                   <height>24</height>
                  </size>
                 </property>
@@ -915,7 +903,7 @@
                  <enum>Qt::TabFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Calculate 4:3 ratio based on height. Ignores cropping values if higher in priority.</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Calculate 4:3 ratio based on width.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="layoutDirection">
                  <enum>Qt::RightToLeft</enum>
