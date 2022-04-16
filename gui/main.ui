@@ -362,9 +362,19 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <addaction name="actionRestore_hidden_panels"/>
+   </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
+    <addaction name="actionEdit_Jobs_File"/>
+    <addaction name="actionOpen_application_directory"/>
+    <addaction name="actionOpen_application_settings_directory"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_View"/>
+   <addaction name="menuDebug"/>
   </widget>
   <widget class="QDockWidget" name="dockExport">
    <property name="sizePolicy">
@@ -1452,6 +1462,28 @@
                   </property>
                   <property name="maximum">
                    <number>99999</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="btnAutoCrop">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>27</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Set crop values automatically</string>
+                  </property>
+                  <property name="text">
+                   <string>AC</string>
                   </property>
                  </widget>
                 </item>
@@ -3539,6 +3571,32 @@ QRadioButton::unchecked:hover {
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockCodecs">
+   <property name="windowTitle">
+    <string>Codecs Info</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockCodecContents">
+    <layout class="QVBoxLayout" name="verticalLayout_6">
+     <item>
+      <widget class="QTableWidget" name="tableWidgetCodecs">
+       <column>
+        <property name="text">
+         <string>Property</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Value</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
@@ -3610,6 +3668,26 @@ QRadioButton::unchecked:hover {
   <action name="actionSettings">
    <property name="text">
     <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionEdit_Jobs_File">
+   <property name="text">
+    <string>Edit Jobs File</string>
+   </property>
+  </action>
+  <action name="actionOpen_application_directory">
+   <property name="text">
+    <string>Open application directory</string>
+   </property>
+  </action>
+  <action name="actionOpen_application_settings_directory">
+   <property name="text">
+    <string>Open application data directory</string>
+   </property>
+  </action>
+  <action name="actionRestore_hidden_panels">
+   <property name="text">
+    <string>Restore hidden panels</string>
    </property>
   </action>
  </widget>

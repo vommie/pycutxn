@@ -271,6 +271,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.boxFilterCropR.valueChanged.connect(self.onBoxFilterCropRChanged)
             self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
             self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
+            self.btnAutoCrop.clicked.connect(self.onBtnFilterAutoCropClicked)
             # self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
             self.btnFilterDeinterlace.toggled.connect(self.onBtnFilterDeinterlaceClicked)
             self.comboBoxFilterDeinterlaceDeinterlacer.currentTextChanged.connect(self.onComboBoxFilterDeinterlaceDeinterlacerChanged)
@@ -416,7 +417,6 @@ class MainUi(QtWidgets.QMainWindow):
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
-            print('NEW FILE')
             if self.isBaseFileExistsInTgtDirWarningActive(): self.warnIfOpenedFileCouldExist(job)
         except Exception as e:
             msg = 'Error: Cannot load new file.'
@@ -845,6 +845,30 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
         job.setFilterCropState(self.btnFilterCrop.isChecked())
         self.setVideoFilter()
+
+    def onBtnFilterAutoCropClicked(self):
+        crop = self.get_autocrop_vlaues(24)
+        t = int(crop[3])
+        r = self.videoProps.get('width') - int(crop[0]) - int(crop[2])
+        b = self.videoProps.get('height') - int(crop[1]) - int(crop[3])
+        l = int(crop[2])
+        # Checks
+        if t < 0 or t == self.videoProps.get('height'): t = 0
+        if r < 0 or r == self.videoProps.get('width'): r = 0
+        if b < 0 or b == self.videoProps.get('height'): b = 0
+        if l < 0 or l == self.videoProps.get('width'): l = 0
+        # Prevent odd values
+        if t + b % 2 == 1: b = b + 1
+        if l + r % 2 == 1: r = r + 1
+        # Set cropping values
+        self.boxFilterCropT.setValue(t)
+        self.boxFilterCropR.setValue(r)
+        self.boxFilterCropB.setValue(b)
+        self.boxFilterCropL.setValue(l)
+        if t == 0 and r == 0 and b == 0 and l == 0:
+            if self.btnFilterCrop.isChecked(): self.btnFilterCrop.setChecked(False)
+        else:
+            if not self.btnFilterCrop.isChecked(): self.btnFilterCrop.setChecked(True)
 
     def onBoxFilterCropTChanged(self, px):
         job = self.jobs.getCurrentJob()
@@ -2638,6 +2662,25 @@ class MainUi(QtWidgets.QMainWindow):
         self.labelCropL.setText(l[1])
         self.boxFilterCropL.setToolTip(l[0])
 
+    def get_autocrop_vlaues(self, limit=24, round=2, skip=0, reset=0):
+        '''
+        Get autocrop values from ffmpeg for currently opened file
+
+        :param limit: Black threshold (ffmpeg default 24)
+        :param round: Output resolution must be divisible to this (ffmpeg default 16)
+        :param skip: Set the number of initial frames for which evaluation is skipped. Default is 2. Range is 0 to INT_MAX.
+        :param reset: After how many frames the detection process will start over
+        :return: Autocrop values as list
+        '''
+        self.log(1, 'Get autocrop values ...')
+        job = self.jobs.getCurrentJob()
+        file = job.getSrcFilePathLong()
+        cmd = 'ffmpeg -ss %s -i "%s" -t 00:00:00.1 -vf cropdetect=%d:%d:%d:%d -f null - 2>&1 | awk \'/crop/ { print $NF }\' | tail -1' % (self.playerTimeCurrent, file, limit, round, skip, reset)
+        result = subprocess.run([cmd], stdout=subprocess.PIPE, shell=True)
+        crop = re.findall(r'\d+', str(result.stdout))
+        self.log(1, crop)
+        return crop
+
     def autoRenameTargetFilename(self):
         '''
         Checks if the target file exists and renames the job target filename with a counter in it
@@ -2695,6 +2738,8 @@ if os.path.exists(test_input_path) and os.path.isdir(test_input_path):
     test_file = 'decoding_issues.m4v'
     test_file = 'noaudio.mp4'
     test_file = 'test_interlace.avi'
+    test_file = 'test_borders2.mp4'
+    test_file = 'test_borders.mp4'
     window.newFile('%s/%s' % (test_input_path, test_file))
 # Debug End
 app.exec_()
