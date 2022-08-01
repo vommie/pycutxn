@@ -17,6 +17,7 @@ from libs.mpv import *
 
 from classes.PlayerControl import PlayerControl
 from classes.DirsUI import DirsUI
+from classes.HashUI import HashUI
 from classes.TagsFilterUI import TagsFilterUI
 from classes.SettingsUI import SettingsUI
 from classes.LogUi import LogUi
@@ -73,6 +74,7 @@ class MainUi(QtWidgets.QMainWindow):
         # Init member variables
         self.dirsUI = DirsUI(self)
         self.knownUI = KnownUI(self)
+        self.hashUI = HashUI(self)
         self.tagsFilterUI = TagsFilterUI(self)
         self.settingsUI = SettingsUI(self)
         self.db = DB(self.config.getTaggerDBPath(), self.log)
@@ -1716,6 +1718,7 @@ class MainUi(QtWidgets.QMainWindow):
         ui = KnownUI(self)
         ui.setFilesList(matches)
         ui.setLabel('The current file\'s basename already exists in the target directory:')
+        ui.setIcon('')
         ui.setTitle('Current file found in target dir')
 
         self.playerControl.pause(True)
@@ -2373,6 +2376,24 @@ class MainUi(QtWidgets.QMainWindow):
         if not os.path.isfile(filePathLong): return hash
         BUF_SIZE = 65536
         md5 = hashlib.md5()
+        # Hash with progress bar
+        fileSize = os.path.getsize(filePathLong)
+        isBigFile = fileSize /1024 / 1024 > 200
+        if isBigFile:
+            self.hashUI.progressBar.setMaximum(int(fileSize/1000))
+            self.hashUI.show()
+        with open(filePathLong, 'rb') as f:
+            for chunk in iter(lambda: f.read(BUF_SIZE), b""):
+                md5.update(chunk)
+                if isBigFile:
+                    self.hashUI.progressBar.setValue(self.hashUI.progressBar.value() + int(len(chunk)/1000))
+                    QtWidgets.QApplication.processEvents()
+        if isBigFile:
+            self.hashUI.close()
+            self.hashUI.progressBar.setValue(0)
+        return md5.hexdigest()
+
+        # Hash without progress bar
         with open(filePathLong, 'rb') as f:
             while True:
                 data = f.read(BUF_SIZE)

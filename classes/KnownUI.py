@@ -22,6 +22,9 @@ class KnownUI(QtWidgets.QDialog):
     def setLabel(self, label):
         self.labelInfo.setText(label)
 
+    def setIcon(self, icon):
+        self.labelIcon.setText(icon)
+
     def setTitle(self, title):
         self.setWindowTitle(title)
 
