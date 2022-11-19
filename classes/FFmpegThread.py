@@ -18,7 +18,10 @@ class FFmpegThread(QThread):
         QThread.__init__(self)
 
     def __del__(self):
-        self.wait()
+        try:
+            self.wait()
+        except:
+            pass
 
     def run(self):
         abort = False
