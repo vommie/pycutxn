@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1208</width>
-    <height>834</height>
+    <height>844</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -372,9 +372,17 @@
     <addaction name="actionOpenAppDir"/>
     <addaction name="actionOpenAppData"/>
    </widget>
+   <widget class="QMenu" name="menuModes">
+    <property name="title">
+     <string>Modes</string>
+    </property>
+    <addaction name="actionModeEdit"/>
+    <addaction name="actionModeTag"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_View"/>
    <addaction name="menuDebug"/>
+   <addaction name="menuModes"/>
   </widget>
   <widget class="QDockWidget" name="dockExport">
    <property name="sizePolicy">
@@ -3656,6 +3664,16 @@ QRadioButton::unchecked:hover {
   <action name="actionRestorePanels">
    <property name="text">
     <string>Restore hidden panels</string>
+   </property>
+  </action>
+  <action name="actionModeEdit">
+   <property name="text">
+    <string>Edit</string>
+   </property>
+  </action>
+  <action name="actionModeTag">
+   <property name="text">
+    <string>Tag &amp;&amp; Rate</string>
    </property>
   </action>
  </widget>

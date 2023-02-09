@@ -36,8 +36,6 @@ from PyQt5.QtCore import Qt, pyqtSlot, QCoreApplication
 from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
 import res  # pyrcc5 -o res.py res/res.qrc
 
-import ffmpeg
-
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         self.rootDir = os.path.dirname(os.path.realpath(__file__))
