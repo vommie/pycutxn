@@ -691,10 +691,10 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onPlayerPause(self, action, state):
         if not self.frameStep:
-        if state:
-            self.btnPause.setText('契')
-        else:
-            self.btnPause.setText('')
+            if state:
+                self.btnPause.setText('契')
+            else:
+                self.btnPause.setText('')
         self.frameStep = False
 
     def onPlayerTimePos(self, action, timestamp):
