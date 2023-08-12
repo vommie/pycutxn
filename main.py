@@ -325,6 +325,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.actionStateResume.triggered.connect(self.onQueueCtxActioStateResume)
             self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
             self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
+            self.actionKillFfmpeg.triggered.connect(self.onActionKillFfmpeg)
             # Tagger
             self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
             self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
@@ -690,10 +691,10 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onPlayerPause(self, action, state):
         if not self.frameStep:
-            if state:
-                self.btnPause.setText('契')
-            else:
-                self.btnPause.setText('')
+        if state:
+            self.btnPause.setText('契')
+        else:
+            self.btnPause.setText('')
         self.frameStep = False
 
     def onPlayerTimePos(self, action, timestamp):
@@ -702,8 +703,9 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         if not timestamp: return
         try:
-            self.playerTimeCurrentMs = timestamp
             time = Functions.timestampToHMS(timestamp)
+            print(f'last: {self.playerTimeCurrentMs}, now: {timestamp}, nowhms: {time}')
+            self.playerTimeCurrentMs = timestamp
             self.playerTimeCurrent = time
             self.setLabelPlayerTimeCurr(time)
             if not self.isSliderPlayerPressed(): self.setSliderPlayerPosFromTimestamp(timestamp)
@@ -1173,6 +1175,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.dockLogs.show()
         self.dockCodecs.show()
 
+    def onActionKillFfmpeg(self):
+        self.killAllFFmpegProcesses()
+
     def onMsgBoxExtraBtnOverwriteFile(self):
         '''Opens a file saved in variable self.overwriteFile'''
         if self.overwriteFile:
@@ -1213,18 +1218,30 @@ class MainUi(QtWidgets.QMainWindow):
         if not len(line) == 2:
             return
         if line[0] == 'speed':
-            try: self.labelRenderSpeed.setText('%.2fx' % float(line[1][:-1]))
+            try:
+                v = float(line[1][:-1])
+                if(v) < 0: return
+                self.labelRenderSpeed.setText('%.2fx' % v)
             except: pass
         elif line[0] == 'fps':
-            try: self.labelRenderFPS.setText('%.2f %s' % (float(line[1]), line[0]))
+            try:
+                v = float(line[1])
+                if(v) < 0: return
+                self.labelRenderFPS.setText('%.2f %s' % (v, line[0]))
             except: pass
         elif line[0] == 'total_size':
-            try: self.labelRenderSize.setText('%.2f MiB' % float(int(line[1])/1000000))
+            try:
+                v = int(line[1])
+                if(v) < 0: return
+                self.labelRenderSize.setText('%.2f MiB' % float(v/1000000))
             except: pass
         elif line[0] == 'out_time':
-            try: self.labelRenderTime.setText(line[1][:-3])
+            try:
+                if line[1][:-3][0] == '-': return
+                self.labelRenderTime.setText(line[1][:-3])
             except: pass
         elif line[0] == 'out_time_ms':
+            if int(line[1]) < 0: return
             currentSecond = int(int(line[1])/10000)
             totalSeconds = int(totalSeconds * 100)
             if currentSecond > totalSeconds:
@@ -2774,7 +2791,19 @@ class MainUi(QtWidgets.QMainWindow):
             os.kill(self.ffmpegProcess.pid, signal.SIGKILL)
             self.ffmpegKilled = True
 
-
+    def killAllFFmpegProcesses(self):
+        p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        killed = []
+        for line in out.splitlines():
+            if b'ffmpeg' in line:
+                pid = int(line.split(None, 1)[0])
+                os.kill(pid, signal.SIGKILL)
+                killed.append(str(pid))
+        msg = '{} ffmpeg process killed'.format(len(killed))
+        if len(killed) > 0:
+            msg = '{m}: {i}'.format(m=msg if len(killed) < 2 else msg.replace('process', 'processes'), i=','.join(killed))
+        self.log(1, msg)
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()

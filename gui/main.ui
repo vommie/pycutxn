@@ -371,6 +371,7 @@
     <addaction name="actionEditJobsFile"/>
     <addaction name="actionOpenAppDir"/>
     <addaction name="actionOpenAppData"/>
+    <addaction name="actionKillFfmpeg"/>
    </widget>
    <widget class="QMenu" name="menuModes">
     <property name="title">
@@ -3674,6 +3675,11 @@ QRadioButton::unchecked:hover {
   <action name="actionModeTag">
    <property name="text">
     <string>Tag &amp;&amp; Rate</string>
+   </property>
+  </action>
+  <action name="actionKillFfmpeg">
+   <property name="text">
+    <string>Kill all ffmpeg processes</string>
    </property>
   </action>
  </widget>
