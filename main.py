@@ -321,6 +321,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.actionRestorePanels.triggered.connect(self.onActionRestorePanels)
             self.actionPlayFile.triggered.connect(self.onQueueCtxActionPlayFile)
             self.actionOpenFolder.triggered.connect(self.onQueueCtxActionOpenFolder)
+            self.actionMoveTop.triggered.connect(self.onQueueCtxActionMoveTop)
+            self.actionMoveBottom.triggered.connect(self.onQueueCtxActionMoveBottom)
             self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
             self.actionStateResume.triggered.connect(self.onQueueCtxActioStateResume)
             self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
@@ -704,7 +706,6 @@ class MainUi(QtWidgets.QMainWindow):
         if not timestamp: return
         try:
             time = Functions.timestampToHMS(timestamp)
-            print(f'last: {self.playerTimeCurrentMs}, now: {timestamp}, nowhms: {time}')
             self.playerTimeCurrentMs = timestamp
             self.playerTimeCurrent = time
             self.setLabelPlayerTimeCurr(time)
@@ -1054,7 +1055,10 @@ class MainUi(QtWidgets.QMainWindow):
             if state == 3 or state == 1:
                 menu.addAction(self.actionStateReset)
             menu.addSeparator()
+            menu.addAction(self.actionMoveTop)
+            menu.addAction(self.actionMoveBottom)
             if state != 0:
+                menu.addSeparator()
                 menu.addAction(self.actionShowLog)
         point = self.tableQueue.mapToGlobal(point)
         menu.popup(point)
@@ -1076,6 +1080,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onQueueCtxActionShowLog(self):
         self.queueShowLog()
+
+    def onQueueCtxActionMoveTop(self):
+        pass # Todo
+
+    def onQueueCtxActionMoveBottom(self):
+        pass # Todo
 
     def onBtnFilterCropDownClicked(self):
         index = self.getIndexOfLayoutInFiltersGrid(self.layoutFilterCrop)
@@ -1718,6 +1728,9 @@ class MainUi(QtWidgets.QMainWindow):
         :return: False if no existing files were found, True if the user got the warning dialog
         '''
         path = currentJob.getTgtDirName()
+        if not os.path.isdir(path):
+            self.log(1, f'Path does not exist: "{path}"')
+            return
         fileName = currentJob.getTgtFileName()
         sep = currentJob.getTgtFileSep()
         count = currentJob.getTgtFileCount()

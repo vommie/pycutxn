@@ -59,10 +59,9 @@ class Functions:
     def timestampToHMS(timestamp):
         '''Converts a timestamp like 12.3234 to HMLS like 0:00:12.323'''
         timeSplit = str(timestamp).split('.', 1)
-        # BUG: .5 wird zu .005 statt 500
         timeMs = timeSplit[1]
         if len(timeMs) == 1: timeMs = '%s00' % timeSplit[1]
-        elif len(timeMs) == 2: timeMs = '0%s0' % timeSplit[1]
+        elif len(timeMs) == 2: timeMs = '%s0' % timeSplit[1]
         else: timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
         time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
         return time

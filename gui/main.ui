@@ -3682,6 +3682,19 @@ QRadioButton::unchecked:hover {
     <string>Kill all ffmpeg processes</string>
    </property>
   </action>
+  <action name="actionMoveTop">
+   <property name="text">
+    <string>Move to top</string>
+   </property>
+   <property name="toolTip">
+    <string>Move job to top</string>
+   </property>
+  </action>
+  <action name="actionMoveBottom">
+   <property name="text">
+    <string>Move to bottom</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../res/res.qrc"/>
