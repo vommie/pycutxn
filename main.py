@@ -349,7 +349,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,xv,x11,', loglevel='fatal', keep_open='yes')
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,xv,x11,', loglevel='fatal', keep_open='yes', input_cursor=False)
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
