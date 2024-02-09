@@ -30,7 +30,7 @@ from classes.DB import DB
 from classes.PlayerSlider import PlayerSlider
 from classes.TimerMessageBox import TimerMessageBox
 
-from PyQt5 import uic, QtGui, QtWidgets
+from PyQt5 import uic, QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
 from PyQt5.QtCore import Qt, pyqtSlot, QCoreApplication
 from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
@@ -48,6 +48,53 @@ class MainUi(QtWidgets.QMainWindow):
         self.initGuiEvents()
         self.initPlayer()
         self.show()
+        self.draggableWidgets = [self.sliderPlayer, self.dockExport, self.dockTagger]
+        self.preventDragging()
+
+    def preventDragging(self):
+        '''Prevents almost all gui elements from being dragged except for those in the draggableWidgets list'''
+        for obj in self.findChildren(QtWidgets.QWidget):
+            if obj not in self.draggableWidgets:  # Änderung hier
+                obj.installEventFilter(self)
+
+    # def eventFilter(self, source, event):
+    #     mousePressed = False
+    #     try: mousePressed = (event.buttons() == QtCore.Qt.LeftButton)
+    #     except: pass
+    #     if not mousePressed: self.cursorShape = self.cursor().shape()
+    #     print(self.cursorShape)
+    #     if event.type() == QtCore.QEvent.MouseMove:
+    #         if mousePressed:
+    #             resizing = self.cursorShape in {QtCore.Qt.SizeHorCursor,
+    #                                     QtCore.Qt.SizeVerCursor,
+    #                                     QtCore.Qt.SizeBDiagCursor,
+    #                                     QtCore.Qt.SizeFDiagCursor,
+    #                                     QtCore.Qt.SizeAllCursor,
+    #                                     QtCore.Qt.SplitHCursor,
+    #                                     QtCore.Qt.SplitVCursor,
+    #                                     QtCore.Qt.OpenHandCursor,
+    #                                     QtCore.Qt.ClosedHandCursor}
+    #             if isinstance(source, QtWidgets.QDockWidget) or resizing:
+    #                 return False
+    #         return True
+    #     return super(MainUi, self).eventFilter(source, event)
+
+    def eventFilter(self, source, event):
+        if event.type() == QtCore.QEvent.MouseMove:
+            leftMouseButtonPressed = (event.buttons() == QtCore.Qt.LeftButton)
+            cursorShape = self.cursor().shape()
+            resizing = cursorShape in {QtCore.Qt.SizeHorCursor,
+                                    QtCore.Qt.SizeVerCursor,
+                                    QtCore.Qt.SizeBDiagCursor,
+                                    QtCore.Qt.SizeFDiagCursor,
+                                    QtCore.Qt.SizeAllCursor,
+                                    QtCore.Qt.SplitHCursor,
+                                    QtCore.Qt.SplitVCursor,
+                                    QtCore.Qt.OpenHandCursor,
+                                    QtCore.Qt.ClosedHandCursor}
+            if leftMouseButtonPressed and not resizing and source not in self.draggableWidgets:
+                return True
+        return super(MainUi, self).eventFilter(source, event)
 
     def initMembers(self):
         self.config = Config()
@@ -2753,7 +2800,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'Get autocrop values ...')
         job = self.jobs.getCurrentJob()
         file = job.getSrcFilePathLong()
-        cmd = 'ffmpeg -ss %s -i "%s" -t 00:00:00.1 -vf cropdetect=%d:%d:%d:%d -f null - 2>&1 | awk \'/crop/ { print $NF }\' | tail -1' % (self.playerTimeCurrent, file, limit, round, skip, reset)
+        # Prevent current timestamp from being same or bigger than video duration
+        time_format = '%H:%M:%S.%f'
+        time = self.playerTimeCurrent if datetime.datetime.strptime(self.playerTimeCurrent, time_format) <= datetime.datetime.strptime(self.videoProps['durationHMS'], time_format) else (datetime.datetime.strptime(self.videoProps['durationHMS'], time_format) - datetime.timedelta(milliseconds=100)).strftime(time_format)
+        cmd = 'ffmpeg -ss %s -i "%s" -t 00:00:00.1 -vf cropdetect=%d:%d:%d:%d -f null - 2>&1 | awk \'/crop/ { print $NF }\' | tail -1' % (time, file, limit, round, skip, reset)
         result = subprocess.run([cmd], stdout=subprocess.PIPE, shell=True)
         crop = re.findall(r'\d+', str(result.stdout))
         self.log(1, crop)
@@ -2817,6 +2867,8 @@ class MainUi(QtWidgets.QMainWindow):
         if len(killed) > 0:
             msg = '{m}: {i}'.format(m=msg if len(killed) < 2 else msg.replace('process', 'processes'), i=','.join(killed))
         self.log(1, msg)
+
+
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
