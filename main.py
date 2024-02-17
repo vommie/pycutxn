@@ -132,6 +132,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerTimeCurrentMs = 0
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
+        self.hashFileExt = 'hash'
         self.resetVideoProps()
         self.overwriteFile = False # File path to a target file the current session would overwrite on save
         self.sectionTimeStart = self.timeFormat
@@ -2093,6 +2094,14 @@ class MainUi(QtWidgets.QMainWindow):
                 jobID = self.tableQueue.item(iRow, 0).text()
                 state = self.tableQueue.item(iRow, 2).text()
                 if(state != self.jobStates[1]): continue
+                # Delete hash file
+                job = self.jobs.getJob(jobID)
+                srcPath = job.getSrcFilePathLong()
+                hashFilePath = self.videoPathToHashPath(srcPath)
+                if(os.path.isfile(hashFilePath)):
+                    os.remove(hashFilePath)
+                    self.log(1, f"Removed hash file: {hashFilePath}", 0)
+                # Remove job
                 self.jobs.removeJob(jobID)
                 self.tableQueue.removeRow(iRow)
                 self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
@@ -2400,6 +2409,21 @@ class MainUi(QtWidgets.QMainWindow):
         elif widthIsOdd: msg = 'Width of video source file is odd.'
         if msg != '': self.showMsgBox(msg, infoText='This can lead to encoding errors. Please crop or resize the video to a size dividable by 2.\n\nVideo size: %s x %s' % (videoProps.get('width'), videoProps.get('height')), icon='warning')
 
+    def readHashFromFile(self,filePath):
+        hashFilePath = self.videoPathToHashPath(filePath)
+        self.log(1, f'Looking for hash file "{hashFilePath}" from "{filePath}"', 0)
+        if os.path.exists(hashFilePath):
+            self.log(1, f'Looking for hash in file "{hashFilePath}"', 0)
+            with open(hashFilePath, 'r') as f:
+                hashContent = f.read().strip()
+                if re.match(r'^[a-fA-F0-9]{32}$', hashContent):
+                    self.log(1, f'Found hash for current file in "{hashFilePath}"', 0)
+                    return hashContent
+        return False
+
+    def videoPathToHashPath(self,filePath):
+        return f"{os.path.dirname(filePath)}/.{os.path.basename(filePath)}.{self.hashFileExt}"
+
     def isCurrentFileKnown(self):
         '''
         Checks if the currently source file was already opened in PyCut in the past
@@ -2407,7 +2431,9 @@ class MainUi(QtWidgets.QMainWindow):
         :return: HashID and Date if the file is known, else False, False.
         '''
         job = self.jobs.getCurrentJob()
-        hash = self.hashFile(job.getSrcFilePathLong())
+
+        hash = self.readHashFromFile(job.getSrcFilePathLong())
+        if not hash: hash = self.hashFile(job.getSrcFilePathLong())
         if not hash:
             msg = 'Error: The source file cannot be hashed.'
             self.log(1, msg, 1)
