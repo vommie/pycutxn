@@ -132,7 +132,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerTimeCurrentMs = 0
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
-        self.hashFileExt = 'hash'
+        self.hashFileExt = 'md5'
         self.resetVideoProps()
         self.overwriteFile = False # File path to a target file the current session would overwrite on save
         self.sectionTimeStart = self.timeFormat
