@@ -19,7 +19,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidgetSettings">
        <property name="currentIndex">
-        <number>4</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tabGeneral">
         <attribute name="title">
@@ -77,6 +77,16 @@
           <widget class="QCheckBox" name="checkBoxPlayerAutoPlay">
            <property name="text">
             <string>Auto play video</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBoxMuteVideoEnd">
+           <property name="toolTip">
+            <string>Mutes the last second(s) of a video. This is useful on some systems to prevent cracking sound.</string>
+           </property>
+           <property name="text">
+            <string>Mute the very end of a video</string>
            </property>
           </widget>
          </item>

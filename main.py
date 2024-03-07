@@ -98,8 +98,6 @@ class MainUi(QtWidgets.QMainWindow):
         # Init member variables
         self.dirsUI = DirsUI(self)
         self.knownUI = KnownUI(self)
-        self.knownUI.labelIcon.setStyleSheet("color: #00FF00;")
-        self.foundUI = KnownUI(self)
         self.hashUI = HashUI(self)
         self.ratingUI = RatingUI(self)
         self.tagsFilterUI = TagsFilterUI(self)
@@ -112,8 +110,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.timeFormat = '0:00:0.000'
         self.playerTimeCurrent = self.timeFormat
         self.playerTimeCurrentMs = 0
+        self.playerTimeTotalS = 0
         self.frameStep = False
         self.jobsSwapping = False # Prevents crash when printing progress while jobs in queue getting switched
+        self.endMuteActive = False # Hold state if the muting of the last second(s) is active
         self.hashFileExt = 'md5'
         self.resetVideoProps()
         self.overwriteFile = False # File path to a target file the current session would overwrite on save
@@ -418,7 +418,6 @@ class MainUi(QtWidgets.QMainWindow):
                 self.jobs.newCurrentJob(videoFilePath)
                 job = self.jobs.getCurrentJob()
                 self.setCurrTgtDir()
-                self.showWarningForKnownFile()
             self.setWindowTitle('%s (%s) - pyCut' % (job.getSrcFileNameLong(), job.getSrcDirName()))
             self.log(1, 'Source path: "%s".' % videoFilePath)
             # Get Video Props
@@ -441,6 +440,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.setSliderPlayerPosFromTimestamp(0)
             self.setLabelPlayerTimeCurr(self.timeFormat)
             self.setLabelPlayerTimeTotal(self.videoProps.get('durationHMS'))
+            self.playerTimeTotalS = Functions.HMSToTimestamp(self.videoProps.get('durationHMS'))
             self.setFilterBtnStates()
             self.loadSections(job)
             # Load video file
@@ -451,19 +451,29 @@ class MainUi(QtWidgets.QMainWindow):
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
-            if self.isBaseFileExistsInTgtDirWarningActive(): self.warnIfOpenedFileCouldExist(job)
-            self.arrange_known_uis()
+
+            self.handleKnownWarnings(job)
         except Exception as e:
             msg = 'Error: Cannot load new file.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
             # TODO: Reset GUI / reset to defaultjob
 
-    def arrange_known_uis(self):
-        '''Arrange windows for known or found file next to each other'''
-        if self.knownUI.isVisible() and self.foundUI.isVisible():
-            self.foundUI.move(int(self.foundUI.x() - (self.foundUI.width() / 2)), self.foundUI.y())
-            self.knownUI.move(self.foundUI.x() + self.foundUI.width(), self.foundUI.y())
+    def handleKnownWarnings(self, job):
+        hashID = False
+        detailText = ''
+        if self.isFileIsKnownWarningIsActive() and self.isTaggerEnabled():
+            hashID, dateTime = self.isCurrentFileKnown()
+            detailText=f'Hash ID: {hashID}, Date: {dateTime}'
+        if hashID:
+            self.log(1, 'Current source file was already opened in the past. (HashID: "%s", Date: %s)' % (hashID, dateTime))
+        targetMatches = self.isCurrentFileNameInTargetDir(job)
+        if hashID and targetMatches:
+            self.showWarningForExistingTargetAndKnownFile(detailText=detailText, matches=targetMatches)
+        elif hashID:
+            self.showWarningForKnownFile(detailText=detailText)
+        elif targetMatches:
+            self.showWarningForExistingTargetFile(targetMatches)
 
     def loadFilterCrop(self, job):
         try:
@@ -747,6 +757,14 @@ class MainUi(QtWidgets.QMainWindow):
             self.playerTimeCurrentMs = timestamp
             self.playerTimeCurrent = time
             self.setLabelPlayerTimeCurr(time)
+            if self.playerTimeTotalS - timestamp < 1:
+                if self.config.getPlayerMuteVideoEnd():
+                    if not self.playerControl.player.mute:
+                        self.endMuteActive = True
+                        self.playerControl.player.mute = True
+            elif self.playerControl.player.mute and not self.config.getPlayerIsMuted():
+                self.endMuteActive = False
+                self.playerControl.player.mute = False
             if not self.isSliderPlayerPressed(): self.setSliderPlayerPosFromTimestamp(timestamp)
         except Exception as e:
             self.log(1, 'Error: Cannot set player time to time label. %s' % e, 1)
@@ -883,7 +901,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.setCurrTgtDir()
         self.config.setAppTgtDirName(text)
         self.setBtnExportSaveState()
-        if self.isBaseFileExistsInTgtDirWarningActive(): self.warnIfOpenedFileCouldExist(self.jobs.getCurrentJob())
+        if self.isBaseFileExistsInTgtDirWarningActive():
+            targetMatches = self.isCurrentFileNameInTargetDir(self.jobs.getCurrentJob())
+            if targetMatches:
+                self.showWarningForExistingTargetFile(targetMatches)
 
     def onBtnFilterCropClicked(self):
         job = self.jobs.getCurrentJob()
@@ -1762,12 +1783,12 @@ class MainUi(QtWidgets.QMainWindow):
             self.overWriteFile = False
         return overwrite
 
-    def warnIfOpenedFileCouldExist(self, currentJob) -> bool:
+    def isCurrentFileNameInTargetDir(self, currentJob) -> bool:
         '''
-        If the current basename exists for files in the current target directory, the user gets warned with a file list.
+        Checks if the current basename exists for files in the current target directory
 
         :param currentJob: The current job.
-        :return: False if no existing files were found, True if the user got the warning dialog
+        :return: False if no existing files were found, else an Array of found file paths
         '''
         path = currentJob.getTgtDirName()
         if not os.path.isdir(path):
@@ -1781,18 +1802,9 @@ class MainUi(QtWidgets.QMainWindow):
         for file in os.listdir(path):
             if file.lower().startswith(searchName.lower()):
                 matches.append('{p}/{f}'.format(p=path, f=file))
-
         if not matches:
             return False
-
-        self.foundUI.setFilesList(matches)
-        self.foundUI.setLabel('The current file\'s basename already exists in the target directory:')
-        self.foundUI.setIcon('')
-        self.foundUI.setTitle('Current file found in target dir')
-
-        self.playerControl.pause(True)
-        self.foundUI.show()
-        return True
+        return matches
 
     def overwriteTgtFileIfExistsInQueue(self, currentJob) -> bool:
         '''
@@ -2372,19 +2384,48 @@ class MainUi(QtWidgets.QMainWindow):
         if path and os.path.isdir(path):
             shutil.rmtree(path)
 
-    def showWarningForKnownFile(self):
+    def showWarningForKnownFile(self, detailText=''):
         '''Shows a dialog if the currently opened file was already opened in the past'''
-        if not self.isFileIsKnownWarningIsActive(): return
-        if not self.isTaggerEnabled(): return
-        hashID, dateTime = self.isCurrentFileKnown()
-        if hashID and dateTime:
-            self.log(1, 'Current source file was already opened in the past. (HashID: "%s", Date: %s)' % (hashID, dateTime))
-            knownFiles = self.getFileListFromCurrentHashID()
-            if knownFiles:
-                self.knownUI.setFilesList(knownFiles)
-                self.knownUI.show()
-            else:
-                self.showMsgBox('File was already opened before.', infoText='No target renderings are known.', detailText='Date: %s\nHash ID:%s' % (dateTime, hashID))
+        knownFiles = self.getFileListFromCurrentHashID()
+        if knownFiles:
+            self.knownUI.setFilesListToKnown(knownFiles)
+            self.knownUI.setLabel('The source file is already known and were edited to following the files:')
+            self.knownUI.resize(540, 280)
+        else:
+            self.knownUI.setLabel('The source file is already known but no edits are protocolized.')
+            self.knownUI.resize(440, 110)
+        self.knownUI.setIcon('', color='#00FF00')
+        self.knownUI.setTitle('Known File')
+        self.playerControl.pause(True)
+        self.knownUI.exec_()
+
+    def showWarningForExistingTargetFile(self, matches) -> bool:
+        '''
+        Shows
+
+        :param matches: Array of file paths to show in list
+        '''
+        self.knownUI.setFilesListToFound(matches)
+        self.knownUI.setLabel('The current file\'s basename already exists in the target directory:')
+        self.knownUI.setIcon(text='')
+        self.knownUI.setTitle('Current file found in target dir')
+        self.knownUI.resize(700, 340)
+        self.playerControl.pause(True)
+        self.knownUI.exec_()
+
+    def showWarningForExistingTargetAndKnownFile(self, detailText, matches):
+        knownFiles = self.getFileListFromCurrentHashID()
+        if knownFiles:
+            self.knownUI.setFilesListToKnown(knownFiles)
+            self.knownUI.setLabel(f"Source file is already known and it's filename exists in target dir.\nDetails: {detailText}")
+        else:
+            self.knownUI.setLabel('The source file is already known and it\'s filename exists in target dir:')
+        if matches: self.knownUI.setFilesListToFound(matches)
+        self.knownUI.setIcon('', color='#00FF00')
+        self.knownUI.setTitle('Known File and Filename exists in target')
+        self.knownUI.resize(700, 340)
+        self.playerControl.pause(True)
+        self.knownUI.exec_()
 
     def showWarningForOddVideoSourceSize(self, videoProps):
         '''

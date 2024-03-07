@@ -17,6 +17,7 @@ class SettingsUI(QtWidgets.QDialog):
         self.checkBoxPauseQOnStart.setChecked(self.parent.config.getAppPauseQueueOnStartWhenWaitingJobs())
         # Player
         self.checkBoxPlayerAutoPlay.setChecked(self.parent.config.getPlayerAutoPlay())
+        self.checkBoxMuteVideoEnd.setChecked(self.parent.config.getPlayerMuteVideoEnd())
         # Database
         self.lineEditDBPath.setText(self.parent.config.getTaggerDBPath())
         # Render
@@ -43,6 +44,7 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setAppPauseQueueOnStartWhenWaitingJobs(self.checkBoxPauseQOnStart.isChecked())
         # Player
         self.parent.config.setPlayerAutoPlay(self.checkBoxPlayerAutoPlay.isChecked())
+        self.parent.config.setPlayerMuteVideoEnd(self.checkBoxMuteVideoEnd.isChecked())
         # Database
         self.parent.config.setTaggerDBPath(self.lineEditDBPath.text()) # TODO: Reload Tagger when path changes
         # Render

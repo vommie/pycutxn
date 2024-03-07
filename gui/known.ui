@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>528</width>
-    <height>321</height>
+    <width>606</width>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,14 +54,46 @@
     </layout>
    </item>
    <item>
-    <widget class="QListWidget" name="listWidgetFiles">
-     <property name="editTriggers">
-      <set>QAbstractItemView::DoubleClicked</set>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="layoutColTitles">
+     <item>
+      <widget class="QLabel" name="labelFound">
+       <property name="text">
+        <string>Filename in Target Dir:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelTarget">
+       <property name="text">
+        <string>Known Files:</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="layoutLists">
+     <item>
+      <widget class="QListWidget" name="listWidgetFilesFound">
+       <property name="editTriggers">
+        <set>QAbstractItemView::DoubleClicked</set>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="listWidgetFilesKnown">
+       <property name="editTriggers">
+        <set>QAbstractItemView::DoubleClicked</set>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" name="layoutBtns">

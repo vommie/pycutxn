@@ -94,6 +94,9 @@ class Config:
     def getPlayerAutoPlay(self) -> bool:
         return self.settings.value('player/autoPlay', True, type=bool)
 
+    def getPlayerMuteVideoEnd(self) -> bool:
+        return self.settings.value('player/muteVideoEnd', True, type=bool)
+
     def getPlayerBgColor(self) -> str:
         return self.settings.value('player/bgColor', '0.0', type=str)
 
@@ -196,6 +199,9 @@ class Config:
 
     def setPlayerAutoPlay(self, state : bool) -> None:
         self.settings.setValue('player/autoPlay', state)
+
+    def setPlayerMuteVideoEnd(self, state : bool) -> None:
+        self.settings.setValue('player/muteVideoEnd', state)
 
     def setPlayerSliderFactor(self, factor : int) -> None:
         self.settings.setValue('player/sliderFactor', factor)
