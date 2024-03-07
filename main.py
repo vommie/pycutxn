@@ -21,6 +21,7 @@ from classes.HashUI import HashUI
 from classes.TagsFilterUI import TagsFilterUI
 from classes.SettingsUI import SettingsUI
 from classes.LogUi import LogUi
+from classes.RatingUI import RatingUI
 from classes.KnownUI import KnownUI
 from classes.Functions import Functions
 from classes.Config import Config
@@ -48,36 +49,14 @@ class MainUi(QtWidgets.QMainWindow):
         self.initGuiEvents()
         self.initPlayer()
         self.show()
-        self.draggableWidgets = [self.sliderPlayer, self.dockExport, self.dockTagger]
         self.preventDragging()
 
     def preventDragging(self):
-        '''Prevents almost all gui elements from being dragged except for those in the draggableWidgets list'''
+        '''Prevents almost all gui elements from being dragged except for those in the nonDraggable list'''
+        self.nonDraggable = [ self.renderFrame, self.groupBoxSections, self.dockQueue, self.dockTagger, self.centralwidget ]
         for obj in self.findChildren(QtWidgets.QWidget):
-            if obj not in self.draggableWidgets:  # Änderung hier
+            if obj in self.nonDraggable:
                 obj.installEventFilter(self)
-
-    # def eventFilter(self, source, event):
-    #     mousePressed = False
-    #     try: mousePressed = (event.buttons() == QtCore.Qt.LeftButton)
-    #     except: pass
-    #     if not mousePressed: self.cursorShape = self.cursor().shape()
-    #     print(self.cursorShape)
-    #     if event.type() == QtCore.QEvent.MouseMove:
-    #         if mousePressed:
-    #             resizing = self.cursorShape in {QtCore.Qt.SizeHorCursor,
-    #                                     QtCore.Qt.SizeVerCursor,
-    #                                     QtCore.Qt.SizeBDiagCursor,
-    #                                     QtCore.Qt.SizeFDiagCursor,
-    #                                     QtCore.Qt.SizeAllCursor,
-    #                                     QtCore.Qt.SplitHCursor,
-    #                                     QtCore.Qt.SplitVCursor,
-    #                                     QtCore.Qt.OpenHandCursor,
-    #                                     QtCore.Qt.ClosedHandCursor}
-    #             if isinstance(source, QtWidgets.QDockWidget) or resizing:
-    #                 return False
-    #         return True
-    #     return super(MainUi, self).eventFilter(source, event)
 
     def eventFilter(self, source, event):
         if event.type() == QtCore.QEvent.MouseMove:
@@ -92,7 +71,7 @@ class MainUi(QtWidgets.QMainWindow):
                                     QtCore.Qt.SplitVCursor,
                                     QtCore.Qt.OpenHandCursor,
                                     QtCore.Qt.ClosedHandCursor}
-            if leftMouseButtonPressed and not resizing and source not in self.draggableWidgets:
+            if leftMouseButtonPressed and not resizing and source in self.nonDraggable:
                 return True
         return super(MainUi, self).eventFilter(source, event)
 
@@ -119,7 +98,10 @@ class MainUi(QtWidgets.QMainWindow):
         # Init member variables
         self.dirsUI = DirsUI(self)
         self.knownUI = KnownUI(self)
+        self.knownUI.labelIcon.setStyleSheet("color: #00FF00;")
+        self.foundUI = KnownUI(self)
         self.hashUI = HashUI(self)
+        self.ratingUI = RatingUI(self)
         self.tagsFilterUI = TagsFilterUI(self)
         self.settingsUI = SettingsUI(self)
         self.db = DB(self.config.getTaggerDBPath(), self.log)
@@ -397,7 +379,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,xv,x11,', loglevel='fatal', keep_open='yes', input_cursor=False)
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,xv,x11,', loglevel='fatal', keep_open='yes', input_cursor=True)
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
@@ -458,6 +440,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.playerTimeCurrent = self.timeFormat
             self.setSliderPlayerPosFromTimestamp(0)
             self.setLabelPlayerTimeCurr(self.timeFormat)
+            self.setLabelPlayerTimeTotal(self.videoProps.get('durationHMS'))
             self.setFilterBtnStates()
             self.loadSections(job)
             # Load video file
@@ -469,11 +452,18 @@ class MainUi(QtWidgets.QMainWindow):
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
             if self.isBaseFileExistsInTgtDirWarningActive(): self.warnIfOpenedFileCouldExist(job)
+            self.arrange_known_uis()
         except Exception as e:
             msg = 'Error: Cannot load new file.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
             # TODO: Reset GUI / reset to defaultjob
+
+    def arrange_known_uis(self):
+        '''Arrange windows for known or found file next to each other'''
+        if self.knownUI.isVisible() and self.foundUI.isVisible():
+            self.foundUI.move(int(self.foundUI.x() - (self.foundUI.width() / 2)), self.foundUI.y())
+            self.knownUI.move(self.foundUI.x() + self.foundUI.width(), self.foundUI.y())
 
     def loadFilterCrop(self, job):
         try:
@@ -783,6 +773,9 @@ class MainUi(QtWidgets.QMainWindow):
             event.ignore()
 
     def dropEvent(self, event):
+        self.setFocus(Qt.OtherFocusReason)
+        self.activateWindow()
+        self.raise_()
         if event.mimeData().hasUrls:
             event.setDropAction(Qt.CopyAction)
             event.accept()
@@ -1500,7 +1493,8 @@ class MainUi(QtWidgets.QMainWindow):
             elif not tagIDs:
                 if not self.showMsgBox('No tags are set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
             elif not rating:
-                if not self.showMsgBox('No rating is set.', btns='yesno', icon='question', infoText='Save anyways?'): return False
+                rating = self.ratingUI.customExec()
+                self.setBtnRating(rating)
         return True
 
     def saveCurrentTagsAndRating(self):
@@ -1791,14 +1785,13 @@ class MainUi(QtWidgets.QMainWindow):
         if not matches:
             return False
 
-        ui = KnownUI(self)
-        ui.setFilesList(matches)
-        ui.setLabel('The current file\'s basename already exists in the target directory:')
-        ui.setIcon('')
-        ui.setTitle('Current file found in target dir')
+        self.foundUI.setFilesList(matches)
+        self.foundUI.setLabel('The current file\'s basename already exists in the target directory:')
+        self.foundUI.setIcon('')
+        self.foundUI.setTitle('Current file found in target dir')
 
         self.playerControl.pause(True)
-        ui.show()
+        self.foundUI.show()
         return True
 
     def overwriteTgtFileIfExistsInQueue(self, currentJob) -> bool:
@@ -2531,16 +2524,20 @@ class MainUi(QtWidgets.QMainWindow):
     def seekFromPlayerSlider(self, value):
         '''Seeks an absolute position based on a player slider value'''
         percentage = (value / self.sliderPlayer.maximum()) * 100
-        if percentage <= 0:
-            self.setLabelPlayerTimeCurr('0:00:00.000')
-            self.setSliderPlayerPosFromTimestamp(0)
-            self.playerTimeCurrent = '0:00:00.000'
-        elif percentage >= 100:
-            self.sliderPlayer.setValue(self.sliderPlayer.maximum())
-            self.playerControl.seek(self.videoProps.get('durationHMS'), 'absolute', 'exact')
-            self.playerTimeCurrent = self.videoProps.get('durationHMS')
-        else:
-            self.playerControl.seek(percentage, 'absolute-percent')
+        try:
+            if percentage <= 0:
+                self.setLabelPlayerTimeCurr('0:00:00.000')
+                self.setSliderPlayerPosFromTimestamp(0)
+                self.playerTimeCurrent = '0:00:00.000'
+            elif percentage >= 100:
+                self.sliderPlayer.setValue(self.sliderPlayer.maximum())
+                self.playerControl.seek(self.videoProps.get('durationHMS'), 'absolute', 'exact')
+                self.playerTimeCurrent = self.videoProps.get('durationHMS')
+            else:
+                    self.playerControl.seek(percentage, 'absolute-percent')
+        except SystemError as e:
+            msg = 'Error: Cannot seek played file. Is any video loaded?'
+            self.log(1, msg, 1, traceback=traceback.format_exc())
 
     def setSliderPlayerPosFromTimestamp(self, timestamp):
         '''
@@ -2562,6 +2559,13 @@ class MainUi(QtWidgets.QMainWindow):
         :param: HMS.ms string
         '''
         self.labelPlayerTimeCurr.setText(timeHMS)
+
+    def setLabelPlayerTimeTotal(self, timeHMS):
+        '''Sets the total time label for the player
+
+        :param: HMS.ms string
+        '''
+        self.labelPlayerTimeTotal.setText(timeHMS)
 
     def setCurrentSectionInSlider(self):
         '''Sets the current section time range visually in the player slider'''

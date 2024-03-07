@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>337</width>
+    <height>35</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Set Rating</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="layoutRatingBtns">
+     <property name="spacing">
+      <number>2</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetMinimumSize</enum>
+     </property>
+     <property name="leftMargin">
+      <number>1</number>
+     </property>
+     <property name="rightMargin">
+      <number>1</number>
+     </property>
+     <item>
+      <widget class="QRadioButton" name="radioButton_rate0">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>21</height>
+        </size>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QRadioButton {
+	spacing: 0px;
+	border: 1px solid rgb(171, 171, 171);
+	padding-right: 5px;
+}
+
+QRadioButton::indicator {
+	margin-left: -5px;
+	width: 0px;
+	height: 0px;
+	subcontrol-position: center;
+	background: transparent;
+}
+
+QRadioButton::checked {
+	background-color: rgb(221, 221, 221);
+	color: rgb(0, 0, 0);
+}
+
+QRadioButton::indicator::unchecked {
+   image: none;
+}
+
+QRadioButton::indicator:unchecked:hover {
+	image: none;
+}
+
+QRadioButton::indicator:unchecked:pressed {
+    image: none;
+}
+
+QRadioButton::indicator::checked {
+    image: none;
+}
+
+QRadioButton::indicator:checked:hover {
+    image: none;
+}
+
+QRadioButton::indicator:checked:pressed {
+    image: none;
+}
+
+QRadioButton::unchecked:hover {
+	background-color: rgb(251, 251, 251);
+	color: rgb(0, 0, 0);
+}</string>
+       </property>
+       <property name="text">
+        <string>0</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButton_rate1">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>21</height>
+        </size>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QRadioButton {
+	spacing: 0px;
+	border: 1px solid rgb(171, 171, 171);
+	padding-right: 5px;
+}
+
+QRadioButton::indicator {
+	margin-left: -5px;
+	width: 0px;
+	height: 0px;
+	subcontrol-position: center;
+	background: transparent;
+}
+
+QRadioButton::checked {
+	background-color: rgb(238, 170, 170);
+	color: rgb(0, 0, 0);
+}
+
+QRadioButton::indicator::unchecked {
+   image: none;
+}
+
+QRadioButton::indicator:unchecked:hover {
+	image: none;
+}
+
+QRadioButton::indicator:unchecked:pressed {
+    image: none;
+}
+
+QRadioButton::indicator::checked {
+    image: none;
+}
+
+QRadioButton::indicator:checked:hover {
+    image: none;
+}
+
+QRadioButton::indicator:checked:pressed {
+    image: none;
+}
+
+QRadioButton::unchecked:hover {
+	background-color: rgb(255, 190, 190);
+	color: rgb(0, 0, 0);
+}</string>
+       </property>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButton_rate2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>21</height>
+        </size>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QRadioButton {
+	spacing: 0px;
+	border: 1px solid rgb(171, 171, 171);
+	padding-right: 5px;
+}
+
+QRadioButton::indicator {
+	margin-left: -5px;
+	width: 0px;
+	height: 0px;
+	subcontrol-position: center;
+	background: transparent;
+}
+
+QRadioButton::checked {
+	background-color: rgb(255, 204, 136);
+	color: rgb(0, 0, 0);
+}
+
+QRadioButton::indicator::unchecked {
+   image: none;
+}
+
+QRadioButton::indicator:unchecked:hover {
+	image: none;
+}
+
+QRadioButton::indicator:unchecked:pressed {
+    image: none;
+}
+
+QRadioButton::indicator::checked {
+    image: none;
+}
+
+QRadioButton::indicator:checked:hover {
+    image: none;
+}
+
+QRadioButton::indicator:checked:pressed {
+    image: none;
+}
+
+QRadioButton::unchecked:hover {
+	background-color: rgb(255, 224, 156);
+	color: rgb(0, 0, 0);
+}</string>
+       </property>
+       <property name="text">
+        <string>2</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButton_rate3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>21</height>
+        </size>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QRadioButton {
+	spacing: 0px;
+	border: 1px solid rgb(171, 171, 171);
+	padding-right: 5px;
+}
+
+QRadioButton::indicator {
+	margin-left: -5px;
+	width: 0px;
+	height: 0px;
+	subcontrol-position: center;
+	background: transparent;
+}
+
+QRadioButton::checked {
+	background-color: rgb(136, 238, 136);
+	color: rgb(0, 0, 0);
+}
+
+QRadioButton::indicator::unchecked {
+   image: none;
+}
+
+QRadioButton::indicator:unchecked:hover {
+	image: none;
+}
+
+QRadioButton::indicator:unchecked:pressed {
+    image: none;
+}
+
+QRadioButton::indicator::checked {
+    image: none;
+}
+
+QRadioButton::indicator:checked:hover {
+    image: none;
+}
+
+QRadioButton::indicator:checked:pressed {
+    image: none;
+}
+
+QRadioButton::unchecked:hover {
+	background-color: rgb(156, 255, 156);
+	color: rgb(0, 0, 0);
+}</string>
+       </property>
+       <property name="text">
+        <string>3</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButton_rate4">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>21</height>
+        </size>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QRadioButton {
+	spacing: 0px;
+	border: 1px solid rgb(171, 171, 171);
+	padding-right: 5px;
+}
+
+QRadioButton::indicator {
+	margin-left: -5px;
+	width: 0px;
+	height: 0px;
+	subcontrol-position: center;
+	background: transparent;
+}
+
+QRadioButton::checked {
+	background-color: rgb(102, 136, 238);
+	color: rgb(0, 0, 0);
+}
+
+QRadioButton::indicator::unchecked {
+   image: none;
+}
+
+QRadioButton::indicator:unchecked:hover {
+	image: none;
+}
+
+QRadioButton::indicator:unchecked:pressed {
+    image: none;
+}
+
+QRadioButton::indicator::checked {
+    image: none;
+}
+
+QRadioButton::indicator:checked:hover {
+    image: none;
+}
+
+QRadioButton::indicator:checked:pressed {
+    image: none;
+}
+
+QRadioButton::unchecked:hover {
+	background-color: rgb(122, 156, 255);
+	color: rgb(0, 0, 0);
+}</string>
+       </property>
+       <property name="text">
+        <string>4</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButton_rate5">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>21</height>
+        </size>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QRadioButton {
+	spacing: 0px;
+	border: 1px solid rgb(171, 171, 171);
+	padding-right: 5px;
+}
+
+QRadioButton::indicator {
+	margin-left: -5px;
+	width: 0px;
+	height: 0px;
+	subcontrol-position: center;
+	background: transparent;
+}
+
+QRadioButton::checked {
+	background-color: rgb(204, 136, 238);
+	color: rgb(0, 0, 0);
+}
+
+QRadioButton::indicator::unchecked {
+   image: none;
+}
+
+QRadioButton::indicator:unchecked:hover {
+	image: none;
+}
+
+QRadioButton::indicator:unchecked:pressed {
+    image: none;
+}
+
+QRadioButton::indicator::checked {
+    image: none;
+}
+
+QRadioButton::indicator:checked:hover {
+    image: none;
+}
+
+QRadioButton::indicator:checked:pressed {
+    image: none;
+}
+
+QRadioButton::unchecked:hover {
+	background-color: rgb(224, 156, 255);
+	color: rgb(0, 0, 0);
+}</string>
+       </property>
+       <property name="text">
+        <string>5</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../res/res.qrc"/>
+ </resources>
+ <connections/>
+</ui>

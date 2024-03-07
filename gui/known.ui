@@ -33,9 +33,6 @@
          <pointsize>48</pointsize>
         </font>
        </property>
-       <property name="styleSheet">
-        <string notr="true">color: #00ff00;</string>
-       </property>
        <property name="text">
         <string></string>
        </property>
