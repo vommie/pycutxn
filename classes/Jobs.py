@@ -22,6 +22,7 @@ class Jobs:
             if not os.path.exists(self.jobsFilePath):
                 self.saveJobs()
             else:
+                print('UHHH')
                 with open(self.jobsFilePath) as jsonFile:
                     try:
                         jobsProps = json.load(jsonFile)

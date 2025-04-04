@@ -1,5 +1,5 @@
 import sys
-import ffmpeg
+import ffmpeg # pip3 install ffmpeg-python
 import time
 import json
 

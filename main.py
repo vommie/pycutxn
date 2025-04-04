@@ -11,6 +11,7 @@ import shutil
 import hashlib
 import locale
 import math
+import traceback
 
 from libs.mpv import *
 from libs.mpv import *
@@ -32,7 +33,7 @@ from classes.PlayerSlider import PlayerSlider
 from classes.TimerMessageBox import TimerMessageBox
 
 from PyQt5 import uic, QtGui, QtWidgets, QtCore
-from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem
+from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem, QMainWindow, QDialog
 from PyQt5.QtCore import Qt, pyqtSlot, QCoreApplication
 from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
 import res  # pyrcc5 -o res.py res/res.qrc
@@ -402,7 +403,6 @@ class MainUi(QtWidgets.QMainWindow):
         try:
             self.log(1, '---New File-----------------------------------')
             self.log(3, '---New File -----------------------------------')
-            prevFilters = self.jobs.getCurrentJob().getFilters()
             self.playerControl.pause(True)
             self.checkDBConnectivity()
             if not videoFilePath:
@@ -418,6 +418,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.jobs.newCurrentJob(videoFilePath)
                 job = self.jobs.getCurrentJob()
                 self.setCurrTgtDir()
+            prevFilters = self.jobs.getCurrentJob().getFilters()
             self.setWindowTitle('%s (%s) - pyCut' % (job.getSrcFileNameLong(), job.getSrcDirName()))
             self.log(1, 'Source path: "%s".' % videoFilePath)
             # Get Video Props
@@ -447,7 +448,7 @@ class MainUi(QtWidgets.QMainWindow):
             if self.videoProps:
                 audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Audio Normalization
                 self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart, af=audioFilter)
-                self.playerControl.player['background'] = self.config.getPlayerBgColor()
+                # self.playerControl.player['background'] = self.config.getPlayerBgColor() TODO: Fix BG Color (causes error since updates)
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
@@ -913,6 +914,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnFilterAutoCropClicked(self):
         crop = self.get_autocrop_vlaues(24)
+        if not crop: return
         t = int(crop[3])
         r = self.videoProps.get('width') - int(crop[0]) - int(crop[2])
         b = self.videoProps.get('height') - int(crop[1]) - int(crop[3])
@@ -1313,6 +1315,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.labelRenderTime.setText(line[1][:-3])
             except: pass
         elif line[0] == 'out_time_ms':
+            if not line[0].isdigit(): return
             if int(line[1]) < 0: return
             currentSecond = int(int(line[1])/10000)
             totalSeconds = int(totalSeconds * 100)
@@ -1791,6 +1794,7 @@ class MainUi(QtWidgets.QMainWindow):
         :return: False if no existing files were found, else an Array of found file paths
         '''
         path = currentJob.getTgtDirName()
+        if not path: return False
         if not os.path.isdir(path):
             self.log(1, f'Path does not exist: "{path}"')
             return
@@ -2387,16 +2391,19 @@ class MainUi(QtWidgets.QMainWindow):
     def showWarningForKnownFile(self, detailText=''):
         '''Shows a dialog if the currently opened file was already opened in the past'''
         knownFiles = self.getFileListFromCurrentHashID()
+        w = 440
+        h = 110
         if knownFiles:
             self.knownUI.setFilesListToKnown(knownFiles)
             self.knownUI.setLabel('The source file is already known and were edited to following the files:')
-            self.knownUI.resize(540, 280)
+            w = 540
+            h = 280
         else:
             self.knownUI.setLabel('The source file is already known but no edits are protocolized.')
-            self.knownUI.resize(440, 110)
         self.knownUI.setIcon('', color='#00FF00')
         self.knownUI.setTitle('Known File')
         self.playerControl.pause(True)
+        self.knownUI.resize(w, h)
         self.knownUI.exec_()
 
     def showWarningForExistingTargetFile(self, matches) -> bool:
@@ -2409,7 +2416,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.knownUI.setLabel('The current file\'s basename already exists in the target directory:')
         self.knownUI.setIcon(text='')
         self.knownUI.setTitle('Current file found in target dir')
-        self.knownUI.resize(700, 340)
         self.playerControl.pause(True)
         self.knownUI.exec_()
 

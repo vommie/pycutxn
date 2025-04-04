@@ -70,7 +70,9 @@ class KnownUI(QDialog):
         self.setIcon('')
 
     def onAccepted(self):
+        print("ACCEPTED")
         self.reset()
 
     def closeEvent(self, event):
+        print("ACCEPTED")
         self.reset()
