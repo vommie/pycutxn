@@ -53,3 +53,8 @@ docs/_build/
 jobs.json
 config.json
 *.bak
+
+schema.txt
+scripts.txt
+crawler.py
+schema.py
