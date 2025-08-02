@@ -14,7 +14,6 @@ import math
 import traceback
 
 from libs.mpv import *
-from libs.mpv import *
 
 from classes.PlayerControl import PlayerControl
 from classes.DirsUI import DirsUI
@@ -380,7 +379,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,xv,x11,', loglevel='fatal', keep_open='yes', input_cursor=True)
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,wayland,xv,x11', loglevel='fatal', keep_open='yes', input_cursor=True)
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
