@@ -30,6 +30,7 @@ from classes.FFmpegThread import FFmpegThread
 from classes.DB import DB
 from classes.PlayerSlider import PlayerSlider
 from classes.TimerMessageBox import TimerMessageBox
+from classes.EditDBUI import EditDBUI
 
 from PyQt5 import uic, QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem, QMainWindow, QDialog
@@ -43,6 +44,7 @@ class MainUi(QtWidgets.QMainWindow):
         _id = QtGui.QFontDatabase.addApplicationFont('%s/res/font_droid_sans_mono_nerd.otf' % self.rootDir) # Init Nerd Fronts Font for Icons
         super(MainUi, self).__init__()
         uic.loadUi('%s/gui/main.ui' % self.rootDir, self)
+        self.actionEditDBEntry = QtWidgets.QAction('Edit DB entry', self)
         self.initMembers()
         self.initGui()
         self.initShortcuts()
@@ -343,6 +345,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnQueueSleep.clicked.connect(self.onBtnQueueSleepClicked)
             self.btnQueueShutdown.clicked.connect(self.onBtnQueueShutdownClicked)
             # Actions
+            self.actionEditDBEntry.triggered.connect(self.onQueueCtxActionEditDBEntry)
             self.actionSettings.triggered.connect(self.onActionSettings)
             self.actionQuit.triggered.connect(self.onActionQuit)
             self.actionEditJobsFile.triggered.connect(self.onActionEditJobsFile)
@@ -1123,6 +1126,8 @@ class MainUi(QtWidgets.QMainWindow):
             if state != 0:
                 menu.addSeparator()
                 menu.addAction(self.actionShowLog)
+        menu.addSeparator()
+        menu.addAction(self.actionEditDBEntry)
         point = self.tableQueue.mapToGlobal(point)
         menu.popup(point)
 
@@ -1222,6 +1227,26 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnTaggerWarningClicked(self):
         self.config.setTaggerIsWarningActive(not self.config.getTaggerIsWarningActive())
+
+    def onQueueCtxActionEditDBEntry(self):
+        if not self.isTaggerEnabled():
+            self.showMsgBox('Tagger/DB function is not available.', icon='warning')
+            return
+
+        jobID, iRow = self.queueGetJobIDFromRow()
+        job = self.jobs.getJob(jobID)
+        dialog = EditDBUI(self, job)
+        source_widget = self.dockTagger
+        source_size = source_widget.size()
+
+        dialog.resize(source_size)
+        result = dialog.exec_()
+
+        if result == QDialog.Accepted and self.historyMode:
+            currentJob = self.jobs.getCurrentJob()
+            if currentJob.getTgtFilePathLong() == job.getTgtFilePathLong():
+                self.log(1, "Refreshing Tag & Rate panel to reflect DB changes.")
+                self.setTagsAndRatingToTree(forSource=False)
 
     def onActionSettings(self):
         self.settingsUI.show()
@@ -2463,6 +2488,7 @@ class MainUi(QtWidgets.QMainWindow):
     def videoPathToHashPath(self,filePath):
         return f"{os.path.dirname(filePath)}/.{os.path.basename(filePath)}.{self.hashFileExt}"
 
+
     def isCurrentFileKnown(self):
         '''
         Checks if the currently source file was already opened in PyCut in the past
@@ -2472,12 +2498,20 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.getCurrentJob()
 
         hash = self.readHashFromFile(job.getSrcFilePathLong())
-        if not hash: hash = self.hashFile(job.getSrcFilePathLong())
         if not hash:
+            hash = self.hashFile(job.getSrcFilePathLong())
+
+        if hash is None:
+            self.log(1, "Hashing was cancelled by the user.")
+            job.setHashID(f"cancelled_{datetime.datetime.now().timestamp()}")
+            return False, False
+
+        if hash is False:
             msg = 'Error: The source file cannot be hashed.'
             self.log(1, msg, 1)
             self.showMsgBox(msg, infoText='It is not known if this file was not edited in the past with PyCut.', icon='warning')
             return False, False
+
         try:
             hashID, dateTime = self.db.getHashData(hash)
             if not hashID:
@@ -2512,35 +2546,45 @@ class MainUi(QtWidgets.QMainWindow):
         return []
 
     def hashFile(self, filePathLong):
-        hash = False
-        if not os.path.isfile(filePathLong): return hash
+        if not os.path.isfile(filePathLong):
+            self.log(1, f"Hash target file not found: {filePathLong}", 1)
+            return False
+
         BUF_SIZE = 65536
         md5 = hashlib.md5()
-        # Hash with progress bar
         fileSize = os.path.getsize(filePathLong)
-        isBigFile = fileSize /1024 / 1024 > 200
+        isBigFile = fileSize / 1024 / 1024 > 200
+
         if isBigFile:
-            self.hashUI.progressBar.setMaximum(int(fileSize/1000))
+            self.hashUI.reset()
+            self.hashUI.progressBar.setMaximum(int(fileSize / 1000))
             self.hashUI.show()
-        with open(filePathLong, 'rb') as f:
-            for chunk in iter(lambda: f.read(BUF_SIZE), b""):
-                md5.update(chunk)
-                if isBigFile:
-                    self.hashUI.progressBar.setValue(self.hashUI.progressBar.value() + int(len(chunk)/1000))
-                    QtWidgets.QApplication.processEvents()
+
+        cancelled = False
+        try:
+            with open(filePathLong, 'rb') as f:
+                for chunk in iter(lambda: f.read(BUF_SIZE), b""):
+                    if isBigFile and self.hashUI.cancelled:
+                        cancelled = True
+                        break
+
+                    md5.update(chunk)
+
+                    if isBigFile:
+                        self.hashUI.progressBar.setValue(self.hashUI.progressBar.value() + int(len(chunk) / 1000))
+                        QtWidgets.QApplication.processEvents()
+        except (IOError, OSError) as e:
+            self.log(1, f"Error reading file for hashing: {e}", 1)
+            if isBigFile:
+                self.hashUI.close()
+            return False
+
         if isBigFile:
             self.hashUI.close()
-            self.hashUI.progressBar.setValue(0)
-        return md5.hexdigest()
+        if cancelled:
+            return None
 
-        # Hash without progress bar
-        with open(filePathLong, 'rb') as f:
-            while True:
-                data = f.read(BUF_SIZE)
-                if not data: break
-                md5.update(data)
-        hash = md5.hexdigest()
-        return hash
+        return md5.hexdigest()
 
     def sanitizeSeek(self, value):
         '''
