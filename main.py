@@ -31,6 +31,7 @@ from classes.DB import DB
 from classes.PlayerSlider import PlayerSlider
 from classes.TimerMessageBox import TimerMessageBox
 from classes.EditDBUI import EditDBUI
+from classes.CropOverlay import CropOverlay
 
 from PyQt5 import uic, QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem, QMainWindow, QDialog
@@ -123,6 +124,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.sectionTimeEnd = self.timeFormat
         self.powerMode = False
         self.lastMsgBox = False # The lastly opened MsgBox (for use in callback functions)
+        self.cropOverlay = None
         # Filters
         self.filterAtts = {
             'crop': {
@@ -234,6 +236,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setHistoryMode(False)
         self.btnTaggerActive.setChecked(self.config.getTaggerIsActive())
         self.btnTaggerWarning.setChecked(self.config.getTaggerIsWarningActive())
+        self.cropOverlay = CropOverlay(self.renderFrame, self)
 
     def initShortcuts(self):
         self.scPause = QShortcut(QKeySequence(Qt.Key_Space), self)
@@ -382,7 +385,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,wayland,xv,x11', loglevel='fatal', keep_open='yes', input_cursor=True)
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,wayland,xv,x11', loglevel='fatal', keep_open='yes', input_cursor=False, input_default_bindings=False)
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
@@ -406,6 +409,7 @@ class MainUi(QtWidgets.QMainWindow):
         try:
             self.log(1, '---New File-----------------------------------')
             self.log(3, '---New File -----------------------------------')
+            self.cropOverlay.stop_interaction()
             self.playerControl.pause(True)
             self.checkDBConnectivity()
             if not videoFilePath:
@@ -778,6 +782,23 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI control event handlers
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.cropOverlay and self.cropOverlay.isVisible():
+            self.cropOverlay.update_geometry()
+
+    def keyPressEvent(self, event):
+        if self.isActiveWindow() and event.key() == Qt.Key_Control and not event.isAutoRepeat():
+            if self.btnFilterCrop.isChecked() and self.videoProps:
+                self.cropOverlay.start_interaction()
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if event.key() == Qt.Key_Control and not event.isAutoRepeat():
+            if self.cropOverlay.is_cropping_active:
+                self.cropOverlay.stop_interaction()
+        super().keyReleaseEvent(event)
+
     def closeEvent(self, event):
         '''Qt close event. Gets called when application closing is triggered'''
         # Todo: Check if job rendering
@@ -913,6 +934,9 @@ class MainUi(QtWidgets.QMainWindow):
     def onBtnFilterCropClicked(self):
         job = self.jobs.getCurrentJob()
         job.setFilterCropState(self.btnFilterCrop.isChecked())
+        if not self.btnFilterCrop.isChecked():
+            self.log(1, "[DEBUG] Crop button unchecked, stopping interaction.") # DEBUG LOG
+            self.cropOverlay.stop_interaction()
         self.setVideoFilter()
 
     def onBtnFilterAutoCropClicked(self):
