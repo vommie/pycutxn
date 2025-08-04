@@ -385,7 +385,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,wayland,xv,x11', loglevel='fatal', keep_open='yes', input_cursor=False, input_default_bindings=False)
+            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,wayland,xv,x11', loglevel='fatal', keep_open='yes', input_cursor=True, input_default_bindings=False)
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
@@ -394,6 +394,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
             self.playerControl.player.observe_property('volume', self.onPlayerVolume)
             self.playerControl.player.background_color = self.config.getPlayerBgColor()
+            self.playerControl.player['background'] = self.config.getPlayerBgColor() # Fallback
         except Exception as e:
             msg = 'Error: Cannot initialize the video player.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
@@ -456,6 +457,7 @@ class MainUi(QtWidgets.QMainWindow):
                 audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Audio Normalization
                 self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart, af=audioFilter)
                 self.playerControl.player.background_color = self.config.getPlayerBgColor()
+                self.playerControl.player['background'] = self.config.getPlayerBgColor() # Fallback
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)
