@@ -390,6 +390,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.playerControl.player.observe_property('pause', self.onPlayerPause)
             self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
             self.playerControl.player.observe_property('volume', self.onPlayerVolume)
+            self.playerControl.player.background_color = self.config.getPlayerBgColor()
         except Exception as e:
             msg = 'Error: Cannot initialize the video player.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
@@ -450,7 +451,7 @@ class MainUi(QtWidgets.QMainWindow):
             if self.videoProps:
                 audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Audio Normalization
                 self.playerControl.player.loadfile(videoFilePath, 'replace', start=self.sectionTimeStart, af=audioFilter)
-                # self.playerControl.player['background'] = self.config.getPlayerBgColor() TODO: Fix BG Color (causes error since updates)
+                self.playerControl.player.background_color = self.config.getPlayerBgColor()
                 if not self.config.getPlayerAutoPlay(): self.playerControl.pause(True)
                 else:  self.playerControl.pause(False)
                 self.setPlayerControlsState(True)

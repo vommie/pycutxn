@@ -98,7 +98,7 @@ class Config:
         return self.settings.value('player/muteVideoEnd', True, type=bool)
 
     def getPlayerBgColor(self) -> str:
-        return self.settings.value('player/bgColor', '0.0', type=str)
+        return self.settings.value('player/bgColor', '#444444', type=str)
 
     def getQueueIsPaused(self) -> bool:
         return self.settings.value('queue/isPaused', False, type=bool)
@@ -206,8 +206,8 @@ class Config:
     def setPlayerSliderFactor(self, factor : int) -> None:
         self.settings.setValue('player/sliderFactor', factor)
 
-    def setPlayerBgColor(self, factor : str) -> None:
-        self.settings.setValue('player/bgColor', factor)
+    def setPlayerBgColor(self, color : str) -> None:
+        self.settings.setValue('player/bgColor', color)
 
     def setQueueIsPaused(self, isPaused : bool) -> None:
         self.settings.setValue('queue/isPaused', isPaused)
