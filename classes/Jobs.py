@@ -69,7 +69,6 @@ class Jobs:
             job.setID(id)
             job.clearPropObservers()
             job.setState(0)
-            job.bindToProps(self.onJobPropsUpdated)
             self.updateJob(id, job)
             return id, job
         except Exception as e:

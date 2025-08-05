@@ -1407,6 +1407,7 @@ class MainUi(QtWidgets.QMainWindow):
         if errorMsg != '':
             job.setLog(errorMsg)
         job.setState(state)
+        self.jobs.saveJobs()
         if self.btnQueueKill.isEnabled(): self.btnQueueKill.setEnabled(False)
         # Update queue table with job state
         id = job.getID()
@@ -1419,6 +1420,7 @@ class MainUi(QtWidgets.QMainWindow):
         job = atts[0]
         totalSeconds = atts[1]
         job.setState(4)
+        self.jobs.saveJobs()
         self.ffmpegProcess = atts[2]
         self.updateQueueJobState(job.getID(), 4)
         if not self.progressBarRender.isEnabled(): self.progressBarRender.setEnabled(True)
@@ -2197,6 +2199,7 @@ class MainUi(QtWidgets.QMainWindow):
         jobID, iRow = self.queueGetJobIDFromRow()
         job = self.jobs.getJob(jobID)
         job.setState(state)
+        self.jobs.saveJobs()
         itemState = QTableWidgetItem(self.jobStates[state])
         self.tableQueue.setItem(iRow, 2, itemState)
         self.runNextWaitJob()
@@ -2263,6 +2266,7 @@ class MainUi(QtWidgets.QMainWindow):
         # # Swap job positions
         job1.setPosition(job2Pos)
         job2.setPosition(job1Pos)
+        self.jobs.saveJobs()
         self.jobsSwapping = False
 
     def queuePlayFile(self):
