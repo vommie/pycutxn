@@ -34,6 +34,10 @@ class Jobs:
     # Current job
 
     def newCurrentJob(self, videoFilePath=False, job=False):
+        old_job = self.jobs.get('default')
+        if old_job:
+            old_job.unbindFromProps(self.onJobPropsUpdated)
+
         if videoFilePath and not job:
             job = Job('default', srcFilePath=videoFilePath)
         elif not videoFilePath and job: # Load job as new current session

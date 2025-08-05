@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QListWidgetItem
 from PyQt5.QtGui import QFont, QPalette
 import copy
 import traceback
+from collections import defaultdict
 
 class EditDBUI(QDialog):
     def __init__(self, parent, job):
@@ -13,8 +14,11 @@ class EditDBUI(QDialog):
 
         # Deep copy tagsTree to avoid side effects on main window's data
         self.tagsTree = [{k: v for k, v in tag.items() if k != 'item'} for tag in self.parent.tagsTree]
-        self.tagsTreeItemPrefix = ''
         self.tagsTreeSpaceChar = ' '
+
+        self._tags_by_parent = defaultdict(list)
+        for i, tag in enumerate(self.tagsTree):
+            self._tags_by_parent[tag['parentID']].append(i)
 
         self.initGuiEvents()
         self.setTagsTreeStyle()
@@ -25,7 +29,8 @@ class EditDBUI(QDialog):
         self.buttonBox.accepted.connect(self.onAccepted)
 
     def loadData(self):
-        self.buildTagsTree(-1)
+        self._build_tags_tree_recursive(-1, '')
+
         job = self.job
         db = self.parent.db
 
@@ -78,24 +83,23 @@ class EditDBUI(QDialog):
             self.parent.log(1, msg, 1, traceback=traceback.format_exc())
             self.parent.showMsgBox(msg, detailText=str(e), icon='critical')
 
-    def buildTagsTree(self, currTagID):
-        if currTagID != -1:
-            self.tagsTreeItemPrefix = '%s%s' % (self.tagsTreeSpaceChar, self.tagsTreeItemPrefix)
+    def _build_tags_tree_recursive(self, parent_id, prefix):
+        child_indices = self._tags_by_parent.get(parent_id, [])
 
-        for i, tag in enumerate(self.tagsTree):
-            if tag['parentID'] == currTagID:
-                item = QListWidgetItem('%s%s' % (self.tagsTreeItemPrefix, tag['label']))
-                item.setToolTip('TagID: %s' % tag['tagID'])
-                fontWeight = -1
-                if tag['parentID'] == -1: fontWeight = QFont.Bold
-                item.setFont(QFont('Noto Sans', 8, weight=fontWeight))
-                self.listWidgetTagsTree.addItem(item)
-                item.setHidden(self.parent.tagOrParentTagsHaveFilter(self.parent.tagsTree[i]))
-                self.buildTagsTree(tag['tagID'])
-                self.tagsTree[i]['item'] = item
+        for i in child_indices:
+            tag = self.tagsTree[i]
+            item = QListWidgetItem(f'{prefix}{tag["label"]}')
+            item.setToolTip(f'TagID: {tag["tagID"]}')
 
-        if currTagID != -1:
-            self.tagsTreeItemPrefix = self.tagsTreeItemPrefix[1:]
+            fontWeight = QFont.Bold if tag['parentID'] == -1 else -1
+            item.setFont(QFont('Noto Sans', 8, weight=fontWeight))
+
+            self.listWidgetTagsTree.addItem(item)
+            item.setHidden(self.parent.tagOrParentTagsHaveFilter(tag))
+
+            self.tagsTree[i]['item'] = item
+
+            self._build_tags_tree_recursive(tag['tagID'], f'{prefix}{self.tagsTreeSpaceChar}')
 
     def getSelectedTagIDsFromTagsTree(self):
         tagIDs = []

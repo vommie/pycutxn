@@ -1,4 +1,5 @@
 import os
+import traceback
 
 class Job():
 
@@ -447,3 +448,7 @@ class Job():
     def clearSections(self):
         self._props.update({'sections': []})
         self.propValueChanged()
+
+    def unbindFromProps(self, callback):
+        if callback in self._propsObservers:
+            self._propsObservers.remove(callback)
