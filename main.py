@@ -1368,7 +1368,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.labelRenderTime.setText(line[1][:-3])
             except: pass
         elif line[0] == 'out_time_ms':
-            if not line[0].isdigit(): return
+            if not line[1].isdigit(): return
             if int(line[1]) < 0: return
             currentSecond = int(int(line[1])/10000)
             totalSeconds = int(totalSeconds * 100)
