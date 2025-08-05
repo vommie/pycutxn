@@ -30,15 +30,15 @@ class FFmpegThread(QThread):
         srcPath = job.getSrcFilePathLong()
         tgtPath = job.getTgtFilePathLong()
         if not os.path.isfile(srcPath):
-            self.ffmpegExit.emit([job, 1, '', 'Input file "%s" does not exist.' % srcPath, deshakeFile])
+            self.ffmpegExit.emit([job, 1, b'', ('Input file "%s" does not exist.' % srcPath).encode('utf-8'), deshakeFile])
             return
         # Probe file
-        out = ''
+        out = b''
         code = 0
-        err = ''
+        err = b''
         videoProps = Functions.getVideoProperties(srcPath)
         if not videoProps:
-            self.ffmpegExit.emit([job, 1, '', 'Probing the target file failed.', deshakeFile])
+            self.ffmpegExit.emit([job, 1, b'', 'Probing the target file failed.'.encode('utf-8'), deshakeFile])
             return
         # Set FFmpeg options
         in_file = ffmpeg.input(srcPath)
@@ -119,16 +119,16 @@ class FFmpegThread(QThread):
             # Concatenate sections
             if videoProps.get('hasAudio'):
                 joined = ffmpeg.concat(*mapping, v=1, a=1).node
-                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='error', color_primaries='bt709', colorspace='bt709', color_trc='bt709')
+                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='verbose', color_primaries='bt709', colorspace='bt709', color_trc='bt709')
             else:
                 joined = ffmpeg.concat(*mapping, v=1).node
-                output = ffmpeg.output(joined[0], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='quiet', color_primaries='bt709', colorspace='bt709', color_trc='bt709')
+                output = ffmpeg.output(joined[0], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='verbose', color_primaries='bt709', colorspace='bt709', color_trc='bt709')
 
             # Run ffmpeg
             try:
                 args = ' '.join(output.get_args())
                 print(f'ffmpeg args: {args}')
-                process = output.run_async(overwrite_output=True, pipe_stdout=True)
+                process = output.run_async(overwrite_output=True, pipe_stdout=True, pipe_stderr=True)
                 self.ffmpegStart.emit([job, totalSeconds, process])
                 # Handle stdout (progress information), by passing it to callback functions
                 for line in process.stdout:
@@ -141,5 +141,5 @@ class FFmpegThread(QThread):
             except Exception as e:
                 print(traceback.format_exc())
                 code = 1
-                err = str(e)
+                err = str(e).encode('utf-8')
         self.ffmpegExit.emit([job, code, out, err, deshakeFile])

@@ -1386,29 +1386,46 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'FFmpeg exited.')
         self.ffmpegProcess = False
         job, code, output, error, deshakeFile = atts
+
         errorMsg = ''
-        # if error: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(error))
-        # if error and output: errorMsg = '%s\n\n' % errorMsg
-        # if output: errorMsg = '%sFFmpeg Output:\n%s' % (errorMsg, str(output))
+        if self.ffmpegKilled:
+            self.ffmpegKilled = False
+            errorMsg = 'ffmpeg killed while rendering by the user.\n\n'
+
+        # Decode and combine stdout and stderr for the log
+        log_content = []
+        if output:
+            try:
+                log_content.append(f"FFmpeg stdout:\n{output.decode('utf-8', errors='ignore')}")
+            except Exception:
+                log_content.append(f"FFmpeg stdout (raw):\n{str(output)}")
+
+        if error:
+            try:
+                log_content.append(f"FFmpeg stderr:\n{error.decode('utf-8', errors='ignore')}")
+            except Exception:
+                log_content.append(f"FFmpeg stderr (raw):\n{str(error)}")
+
+        errorMsg += "\n\n".join(log_content)
+
         job.setFilterDeshakeFile(deshakeFile)
         if self.progressBarRender.isEnabled():
             self.progressBarRender.setValue(0)
             self.progressBarRender.setEnabled(False)
         if self.widgetRenderDetails.isEnabled():
             self.resetRenderDetails()
-        state = job.getState()
-        if code == 0:
-            state = 1
-        else:
-            if self.ffmpegKilled:
-                self.ffmpegKilled = False
-                errorMsg = 'ffmpeg killed while rendering by the user.\n\n%s' % errorMsg
+
+        state = 1 if code == 0 else 3
+        if self.ffmpegKilled:
             state = 3
-        if errorMsg != '':
+
+        if errorMsg.strip():
             job.setLog(errorMsg)
+
         job.setState(state)
         self.jobs.saveJobs()
         if self.btnQueueKill.isEnabled(): self.btnQueueKill.setEnabled(False)
+
         # Update queue table with job state
         id = job.getID()
         self.updateQueueJobState(id, state)
