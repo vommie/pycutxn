@@ -25,7 +25,7 @@ from classes.RatingUI import RatingUI
 from classes.KnownUI import KnownUI
 from classes.Functions import Functions
 from classes.Config import Config
-from classes.Jobs import Jobs
+from classes.JobsDB import JobsDB
 from classes.FFmpegThread import FFmpegThread
 from classes.DB import DB
 from classes.PlayerSlider import PlayerSlider
@@ -83,9 +83,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.iconFontName = 'DroidSansMono Nerd Font Mono'
         self.jobsFilePath = self.config.getJobsFilePath()
         try:
-            self.jobs = Jobs(self.jobsFilePath)
+            self.jobs = JobsDB(self.jobsFilePath)
         except Exception as e:
-            msg = 'Error: Cannot initialize jobs.'
+            msg = 'Error: Cannot initialize jobs database.'
             self.log(1, msg, 1)
             self.showMsgBox(msg, detailText=str(e), icon='critical')
         self.jobStates = {
@@ -180,23 +180,20 @@ class MainUi(QtWidgets.QMainWindow):
         self.setBtnFiltersPreviewIcon()
         waitingJobs = False
         # Queue Jobs
-        if len(self.jobs.jobs.items()) > 1:
-            for id, job in self.jobs.jobs.items():
-                try:
-                    int(id) # Skip 'default' job
-                    state = job.getState()
-                    if state == 0:
-                        waitingJobs = True
-                    elif state == 4:
-                        job.setLog('Job had state "Rendering" when the program started.')
-                        job.setState(3)
-                        state = 3
-                    elif state == 5:
-                        job.setLog('Job had state "Paused" when the program started.')
-                        job.setState(3)
-                        state = 3
-                    self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-                except: pass
+        if self.jobs.jobs:
+            for job in self.jobs.get_sorted_jobs():
+                state = job.getState()
+                if state == 0:
+                    waitingJobs = True
+                elif state == 4:
+                    job.setLog('Job had state "Rendering" when the program started.')
+                    job.setState(3)
+                    state = 3
+                elif state == 5:
+                    job.setLog('Job had state "Paused" when the program started.')
+                    job.setState(3)
+                    state = 3
+                self.queueAddRow(job.getID(), job.getTgtFileNameLong(), self.getJobStateString(state))
         else:
             self.deleteDeshakeDir()
         self.setBtnQueueDeleteAllState()
@@ -351,7 +348,6 @@ class MainUi(QtWidgets.QMainWindow):
             self.actionEditDBEntry.triggered.connect(self.onQueueCtxActionEditDBEntry)
             self.actionSettings.triggered.connect(self.onActionSettings)
             self.actionQuit.triggered.connect(self.onActionQuit)
-            self.actionEditJobsFile.triggered.connect(self.onActionEditJobsFile)
             self.actionOpenAppDir.triggered.connect(self.onActionOpenAppDir)
             self.actionOpenAppData.triggered.connect(self.onActionOpenAppData)
             self.actionRestorePanels.triggered.connect(self.onActionRestorePanels)
@@ -416,18 +412,18 @@ class MainUi(QtWidgets.QMainWindow):
             self.checkDBConnectivity()
             if not videoFilePath:
                 self.log(1, 'Loading job from queue ...')
-                self.jobs.newCurrentJob(False, self.jobs.getJob(self.queueGetJobIDFromRow()[0]))
-                job = self.jobs.getCurrentJob()
+                self.jobs.new_current_job(False, self.jobs.get_job(self.queueGetJobIDFromRow()[0]))
+                job = self.jobs.get_current_job()
                 videoFilePath = job.getSrcFilePathLong()
                 self.setTagsAndRatingToTree(False)
                 self.loadTargetDirName(job)
                 self.setHistoryMode(True)
             else:
                 self.log(1, 'Init new job from file ...')
-                self.jobs.newCurrentJob(videoFilePath)
-                job = self.jobs.getCurrentJob()
+                self.jobs.new_current_job(videoFilePath)
+                job = self.jobs.get_current_job()
                 self.setCurrTgtDir()
-            prevFilters = self.jobs.getCurrentJob().getFilters()
+            prevFilters = self.jobs.get_current_job().getFilters()
             self.setWindowTitle('%s (%s) - pyCut' % (job.getSrcFileNameLong(), job.getSrcDirName()))
             self.log(1, 'Source path: "%s".' % videoFilePath)
             # Get Video Props
@@ -580,7 +576,7 @@ class MainUi(QtWidgets.QMainWindow):
             if not self.warnWhenNoTagsOrRating():
                 self.log(1, 'Saving aborted by user.')
                 return False
-            currentJob = self.jobs.getCurrentJob()
+            currentJob = self.jobs.get_current_job()
             currentJob.setTgtFileExt('.%s' % self.config.getRenderContainer())
             currentJob.setRenderSettingVideoCodec(self.config.getRenderVideoCodec())
             currentJob.setRenderSettingCRF(self.config.getRenderCRF())
@@ -610,12 +606,15 @@ class MainUi(QtWidgets.QMainWindow):
         try:
             job = False
             try:
-                id, job = self.jobs.saveCurrentJob()
+                job = self.jobs.save_current_job()
+                if not job: raise Exception("Failed to save job to database.")
+
                 if not job.getSections() and self.config.getSectionsAutoCreate():
                     if not self.autoCreateSectionForJob(job): return False
+
                 state = job.getState()
-                iRow = self.queueAddRow(id, job.getTgtFileNameLong(), self.getJobStateString(state))
-                job.setPosition(iRow)
+                iRow = self.queueAddRow(job.getID(), job.getTgtFileNameLong(), self.getJobStateString(state))
+                # Position wird bereits in save_current_job gesetzt
                 self.runNextWaitJob()
             except Exception as e:
                 msg = 'Error: Cannot add session to job queue.'
@@ -716,14 +715,10 @@ class MainUi(QtWidgets.QMainWindow):
 
     def getNextJobByStateID(self, stateID):
         try:
-            job = False
-            jobItems = self.tableQueue.findItems(self.getJobStateString(stateID), Qt.MatchExactly)
-            if(jobItems):
-                iRow = self.tableQueue.row(jobItems[0])
-                jobItem = self.tableQueue.item(iRow, 0)
-                jobIndex = jobItem.text()
-                job = self.jobs.getJob(jobIndex)
-            return job
+            for job in self.jobs.get_sorted_jobs():
+                if job.getState() == stateID:
+                    return job
+            return None
         except Exception as e:
             msg = 'Error: Cannot get the next job by ID.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
@@ -872,18 +867,18 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnSectionAddClicked(self):
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
-        self.jobs.getCurrentJob().addSection(self.sectionTimeStart, self.sectionTimeEnd)
+        self.jobs.get_current_job().addSection(self.sectionTimeStart, self.sectionTimeEnd)
 
     def onBtnSectionDeleteClicked(self):
         self.sectionDeleteSelectedRow()
 
     def onBtnSectionUpClicked(self):
         move = Functions.moveTableRow(self.tableSections, -1)
-        self.jobs.getCurrentJob().moveSection(move.get('from'), move.get('to'))
+        self.jobs.get_current_job().moveSection(move.get('from'), move.get('to'))
 
     def onBtnSectionDownClicked(self):
         move = Functions.moveTableRow(self.tableSections, 1)
-        self.jobs.getCurrentJob().moveSection(move.get('from'), move.get('to'))
+        self.jobs.get_current_job().moveSection(move.get('from'), move.get('to'))
 
     def onBtnCurrentSectionStart(self):
         if self.sectionTimeStart != self.playerTimeCurrent: self.playerControl.seek(self.sectionTimeStart, 'absolute')
@@ -902,12 +897,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.playerControl.seek(timeStr, 'absolute')
 
     def onLineEditTgtFileNameChanged(self, text):
-        self.jobs.getCurrentJob().setTgtFileName(text)
+        self.jobs.get_current_job().setTgtFileName(text)
         self.setBtnExportSaveState()
 
     def onBoxFileCountChanged(self, text):
         try:
-            self.jobs.getCurrentJob().setTgtFileCount(text)
+            self.jobs.get_current_job().setTgtFileCount(text)
         except Exception as e:
             msg = 'Error: increase file count.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
@@ -931,12 +926,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.config.setAppTgtDirName(text)
         self.setBtnExportSaveState()
         if self.isBaseFileExistsInTgtDirWarningActive():
-            targetMatches = self.isCurrentFileNameInTargetDir(self.jobs.getCurrentJob())
+            targetMatches = self.isCurrentFileNameInTargetDir(self.jobs.get_current_job())
             if targetMatches:
                 self.showWarningForExistingTargetFile(targetMatches)
 
     def onBtnFilterCropClicked(self):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterCropState(self.btnFilterCrop.isChecked())
         if not self.btnFilterCrop.isChecked():
             self.log(1, "[DEBUG] Crop button unchecked, stopping interaction.") # DEBUG LOG
@@ -969,39 +964,39 @@ class MainUi(QtWidgets.QMainWindow):
             if not self.btnFilterCrop.isChecked(): self.btnFilterCrop.setChecked(True)
 
     def onBoxFilterCropTChanged(self, px):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterCropT(px)
         self.setVideoFilter()
 
     def onBoxFilterCropRChanged(self, px):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterCropR(px)
         self.setVideoFilter()
 
     def onBoxFilterCropBChanged(self, px):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterCropB(px)
         self.setVideoFilter()
 
     def onBoxFilterCropLChanged(self, px):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterCropL(px)
         self.setVideoFilter()
 
     def onBtnFilterDeinterlaceClicked(self):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterDeinterlaceState(self.btnFilterDeinterlace.isChecked())
         job.setFilterDeinterlaceDeinterlacer(self.comboBoxFilterDeinterlaceDeinterlacer.currentText())
         self.setVideoFilter()
 
     def onComboBoxFilterDeinterlaceDeinterlacerChanged(self, text):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterDeinterlaceDeinterlacer(text)
         self.config.setFiltersDeinterlacer(text)
         self.setVideoFilter()
 
     def onBtnFilterResizeClicked(self):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterResizeState(self.btnFilterResize.isChecked())
         if self.boxFilterResizeW.value() == 0:
             self.boxFilterResizeW.setValue(self.videoProps.get('width'))
@@ -1010,12 +1005,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.setVideoFilter()
 
     def onBoxFilterResizeWChanged(self, text):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterResizeWidth(text)
         self.setVideoFilter()
 
     def onBoxFilterResizeHChanged(self, text):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterResizeHeight(text)
         self.setVideoFilter()
 
@@ -1026,11 +1021,11 @@ class MainUi(QtWidgets.QMainWindow):
         self.boxFilterResizeH.setValue(math.ceil((self.boxFilterResizeW.value() / (4/3)) / 2.) * 2)
 
     def onBtnFilterDeshake(self):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterDeshakeState(self.btnFilterDeshake.isChecked())
 
     def onBtnFilterRotateLeft(self):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         if self.btnFilterRotateLeft.isChecked():
             job.setFilterRotate(-90)
         else:
@@ -1041,7 +1036,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setCropFieldsByRotation()
 
     def onBtnFilterRotateRight(self):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         if self.btnFilterRotateRight.isChecked():
             job.setFilterRotate(90)
         else:
@@ -1052,7 +1047,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.setCropFieldsByRotation()
 
     def onBtnFilterRotate180(self):
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         if self.btnFilterRotate180.isChecked():
             job.setFilterRotate(180)
         else:
@@ -1110,10 +1105,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.queueDeleteSelectedRow()
 
     def onBtnQueueUpClicked(self):
-        self.swapJobs(Functions.moveTableRow(self.tableQueue, -1))
+        self.swapJobs(-1)
 
     def onBtnQueueDownClicked(self):
-        self.swapJobs(Functions.moveTableRow(self.tableQueue, 1))
+        self.swapJobs(1)
 
     def onBtnQueuePauseClicked(self):
         self.toggleQueuePause()
@@ -1263,7 +1258,7 @@ class MainUi(QtWidgets.QMainWindow):
             return
 
         jobID, iRow = self.queueGetJobIDFromRow()
-        job = self.jobs.getJob(jobID)
+        job = self.jobs.get_job(jobID)
         dialog = EditDBUI(self, job)
         source_widget = self.dockTagger
         source_size = source_widget.size()
@@ -1272,7 +1267,7 @@ class MainUi(QtWidgets.QMainWindow):
         result = dialog.exec_()
 
         if result == QDialog.Accepted and self.historyMode:
-            currentJob = self.jobs.getCurrentJob()
+            currentJob = self.jobs.get_current_job()
             if currentJob.getTgtFilePathLong() == job.getTgtFilePathLong():
                 self.log(1, "Refreshing Tag & Rate panel to reflect DB changes.")
                 self.setTagsAndRatingToTree(forSource=False)
@@ -1282,10 +1277,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onActionQuit(self):
         QCoreApplication.quit()
-
-    def onActionEditJobsFile(self):
-        opener = Functions.getCurrentSysOpener()
-        subprocess.call([opener, self.jobs.jobsFilePath])
 
     def onActionOpenAppDir(self):
         opener = Functions.getCurrentSysOpener()
@@ -1423,7 +1414,6 @@ class MainUi(QtWidgets.QMainWindow):
             job.setLog(errorMsg)
 
         job.setState(state)
-        self.jobs.saveJobs()
         if self.btnQueueKill.isEnabled(): self.btnQueueKill.setEnabled(False)
 
         # Update queue table with job state
@@ -1437,7 +1427,6 @@ class MainUi(QtWidgets.QMainWindow):
         job = atts[0]
         totalSeconds = atts[1]
         job.setState(4)
-        self.jobs.saveJobs()
         self.ffmpegProcess = atts[2]
         self.updateQueueJobState(job.getID(), 4)
         if not self.progressBarRender.isEnabled(): self.progressBarRender.setEnabled(True)
@@ -1547,7 +1536,7 @@ class MainUi(QtWidgets.QMainWindow):
         :param forSource: Get the tags and ratings for the source filename if True, else get them from the target filename.
         '''
         if not self.isTaggerEnabled: return False
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         try:
             if forSource: folderID = self.db.getFolderID(job.getSrcDirName())
             else: folderID = self.db.getFolderID(job.getTgtDirName())
@@ -1602,7 +1591,7 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         if not self.isTaggerEnabled(): return False
         self.log(1, 'Save Tags and Rating to DB ...')
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         try:
             folderID = self.db.getFolderID(job.getTgtDirName())
             if not folderID: folderID = self.db.insertPath(job.getTgtDirName())
@@ -1905,7 +1894,7 @@ class MainUi(QtWidgets.QMainWindow):
                 msg = 'Error: Cannot get JobID from job queue. JobID: %s' % jobID
                 self.log(1, msg, 1)
                 return False
-            job = self.jobs.getJob(jobID)
+            job = self.jobs.get_job(jobID)
             if job.getTgtFilePathLong() == currTgtFile:
                 jobs.append(job)
                 detailText = '%s\nID: %s' % (detailText, jobID)
@@ -1939,7 +1928,7 @@ class MainUi(QtWidgets.QMainWindow):
     def sectionDeleteSelectedRow(self):
         rowIndex = self.tableSections.currentRow()
         self.tableSections.removeRow(rowIndex)
-        self.jobs.getCurrentJob().removeSection(rowIndex)
+        self.jobs.get_current_job().removeSection(rowIndex)
         if(rowIndex > 0):
             self.tableSections.setCurrentCell(rowIndex-1, 0)
         self.setSectionBtnStates()
@@ -1954,7 +1943,7 @@ class MainUi(QtWidgets.QMainWindow):
         for i in range(self.tableSections.rowCount()):
             self.tableSections.removeRow(0)
         if clearCurrentJob:
-            job = self.jobs.getCurrentJob()
+            job = self.jobs.get_current_job()
             job.clearSections()
         if clearCurrentSection:
             self.setSectionTimeStart(self.timeFormat)
@@ -1980,7 +1969,7 @@ class MainUi(QtWidgets.QMainWindow):
     def queueAddRow(self, id, filename, state):
         iRow = self.tableQueue.rowCount()
         self.tableQueue.insertRow(iRow)
-        itemID = QTableWidgetItem(id)
+        itemID = QTableWidgetItem(str(id))
         itemFilename = QTableWidgetItem(filename)
         itemFilename.setToolTip(filename)
         itemState = QTableWidgetItem(state)
@@ -2121,23 +2110,23 @@ class MainUi(QtWidgets.QMainWindow):
     def queueDeleteSelectedRow(self):
         jobID, iRow = self.queueGetJobIDFromRow()
         try:
-            job = self.jobs.getJob(jobID)
+            job = self.jobs.get_job(jobID)
             if job.getState() == 4:
                 self.showMsgBox('Cannot delete job while it is rendering.', infoText='Abort the job first, then delete it.', icon='warning')
                 return
             self.log(1, 'Remove Job with ID %s' % jobID)
-            self.jobs.removeJob(jobID)
+            self.jobs.remove_job(jobID)
+            self.tableQueue.removeRow(iRow)
+            self.setBtnQueueDeleteAllState()
+            if(iRow > 0): self.tableQueue.setCurrentCell(iRow-1, 0)
+            elif(iRow == 0):
+                if not self.jobs.jobs: self.deleteDeshakeDir()
+            self.setQueueBtnStates()
         except Exception as e:
             msg = 'Error: Cannot remove Job.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
             return False
-        self.tableQueue.removeRow(iRow)
-        self.setBtnQueueDeleteAllState()
-        if(iRow > 0): self.tableQueue.setCurrentCell(iRow-1, 0)
-        elif(iRow == 0):
-            if len(self.jobs.jobs.items()) == 1: self.deleteDeshakeDir()
-        self.setQueueBtnStates()
 
     def queueRemoveRowByJob(self, job):
         '''
@@ -2153,11 +2142,11 @@ class MainUi(QtWidgets.QMainWindow):
                 if job.getState() == 4:
                     self.showMsgBox('One of the jobs is currently rendering and is not removed.', infoText='Abort the job manually, then delete it.', icon='warning')
                     return False
-                self.jobs.removeJob(jobID)
+                self.jobs.remove_job(jobID)
                 self.tableQueue.removeRow(iRow)
                 self.setBtnQueueDeleteAllState()
                 self.setQueueBtnStates()
-                self.tableQueue.setCurrentCell(iRow-1)
+                self.tableQueue.setCurrentCell(iRow-1, 0)
                 self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
                 return True
         except Exception as e:
@@ -2171,31 +2160,39 @@ class MainUi(QtWidgets.QMainWindow):
         Removes all rows with finished jobs
         '''
         try:
-            for iRow in reversed(range(self.tableQueue.rowCount())):
-                jobID = self.tableQueue.item(iRow, 0).text()
+            job_ids_to_remove = []
+            for iRow in range(self.tableQueue.rowCount()):
                 state = self.tableQueue.item(iRow, 2).text()
-                if(state != self.jobStates[1]): continue
-                # Delete hash file
-                job = self.jobs.getJob(jobID)
+                if state == self.jobStates[1]:
+                    jobID = self.tableQueue.item(iRow, 0).text()
+                    job_ids_to_remove.append(jobID)
+
+            for jobID in job_ids_to_remove:
+                job = self.jobs.get_job(jobID)
                 srcPath = job.getSrcFilePathLong()
                 hashFilePath = self.videoPathToHashPath(srcPath)
                 if(os.path.isfile(hashFilePath)):
                     os.remove(hashFilePath)
                     self.log(1, f"Removed hash file: {hashFilePath}", 0)
-                # Remove job
-                self.jobs.removeJob(jobID)
-                self.tableQueue.removeRow(iRow)
+                self.jobs.remove_job(jobID)
                 self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
+
+            # GUI in einer separaten Schleife aktualisieren
+            for iRow in reversed(range(self.tableQueue.rowCount())):
+                jobID = self.tableQueue.item(iRow, 0).text()
+                if jobID in job_ids_to_remove:
+                    self.tableQueue.removeRow(iRow)
+
         except Exception as e:
             msg = 'Error: Cannot remove all finished jobs in queue.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
             return False
-        try:
-            self.btnQueueDeleteAll.setEnabled(False)
-            self.tableQueue.setCurrentCell(self.tableQueue.rowCount()-1)
-            self.setQueueBtnStates()
-        except: pass
+
+        self.setBtnQueueDeleteAllState()
+        if self.tableQueue.rowCount() > 0:
+            self.tableQueue.setCurrentCell(self.tableQueue.rowCount()-1, 0)
+        self.setQueueBtnStates()
 
     def queueGetJobIDFromRow(self, iRow = False):
         if iRow is False:
@@ -2214,9 +2211,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def queueSetState(self, state):
         jobID, iRow = self.queueGetJobIDFromRow()
-        job = self.jobs.getJob(jobID)
-        job.setState(state)
-        self.jobs.saveJobs()
+        job = self.jobs.get_job(jobID)
+        job.setState(state) # Löst DB-Update aus
         itemState = QTableWidgetItem(self.jobStates[state])
         self.tableQueue.setItem(iRow, 2, itemState)
         self.runNextWaitJob()
@@ -2271,43 +2267,50 @@ class MainUi(QtWidgets.QMainWindow):
                 stateItem.setText(self.getJobStateString(state))
                 break
 
-    def swapJobs(self, move):
+    def swapJobs(self, direction):
         self.jobsSwapping = True
-        # Get both jobs to swap
-        job1ID = self.queueGetJobIDFromRow(move['from'])[0]
-        job1 = self.jobs.getJob(job1ID)
-        job1Pos = job1.getPosition()
-        job2ID = self.queueGetJobIDFromRow(move['to'])[0]
-        job2 = self.jobs.getJob(job2ID)
-        job2Pos = job2.getPosition()
-        # # Swap job positions
-        job1.setPosition(job2Pos)
-        job2.setPosition(job1Pos)
-        self.jobs.saveJobs()
+
+        currentRow = self.tableQueue.currentRow()
+        if currentRow < 0: return
+
+        targetRow = currentRow + direction
+        if not (0 <= targetRow < self.tableQueue.rowCount()): return
+
+        job1_id, _ = self.queueGetJobIDFromRow(currentRow)
+        job2_id, _ = self.queueGetJobIDFromRow(targetRow)
+
+        job1 = self.jobs.get_job(job1_id)
+        job2 = self.jobs.get_job(job2_id)
+
+        self.jobs.swap_jobs(job1, job2)
+
+        # GUI aktualisieren
+        Functions.moveTableRow(self.tableQueue, direction)
+
         self.jobsSwapping = False
+
 
     def queuePlayFile(self):
         jobID = self.queueGetJobIDFromRow()[0]
-        job = self.jobs.getJob(jobID)
+        job = self.jobs.get_job(jobID)
         filePathLong = job.getTgtFilePathLong()
         opener = Functions.getCurrentSysOpener()
         subprocess.call([opener, filePathLong])
 
     def queueOpenFolder(self):
         jobID = self.queueGetJobIDFromRow()[0]
-        job = self.jobs.getJob(jobID)
+        job = self.jobs.get_job(jobID)
         dir = job.getTgtDirName()
         opener = Functions.getCurrentSysOpener()
         subprocess.call([opener, dir])
 
     def queueShowLog(self):
         jobID = self.queueGetJobIDFromRow()[0]
-        job = self.jobs.getJob(jobID)
+        job = self.jobs.get_job(jobID)
         log = job.getLog()
         if not log:
             self.showMsgBox('There is nothing logged.')
             return
-        # Todo: handle if no log is set
         self.logUi.setTitle('Log for Job %s' % jobID)
         self.logUi.setLogText(log.replace('\\n', '\n'))
         self.logUi.show()
@@ -2371,7 +2374,7 @@ class MainUi(QtWidgets.QMainWindow):
             if index < rowCount-1: atts['btnDown'].setEnabled(True)
             else: atts['btnDown'].setEnabled(False)
             filterPositions.update({index: key})
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         job.setFilterPositions(filterPositions)
         self.setVideoFilter()
         self.setCropFieldsByRotation()
@@ -2439,7 +2442,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def setCurrTgtDir(self):
         path = self.cmbTgtDirs.currentData()
-        self.jobs.getCurrentJob().setTgtDirName(path)
+        self.jobs.get_current_job().setTgtDirName(path)
 
     def setTgtDirByData(self, path):
         if self.cmbTgtDirs.currentData == path:
@@ -2545,7 +2548,7 @@ class MainUi(QtWidgets.QMainWindow):
 
         :return: HashID and Date if the file is known, else False, False.
         '''
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
 
         hash = self.readHashFromFile(job.getSrcFilePathLong())
         if not hash:
@@ -2588,7 +2591,7 @@ class MainUi(QtWidgets.QMainWindow):
 
         :return: Array with file paths. If none are found, empty array.
         '''
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         hashID = job.getHashID()
         if not hashID: return []
         filePaths = self.db.getFileListByHashID(hashID)
@@ -2709,7 +2712,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def setCurrentSectionInSlider(self):
         '''Sets the current section time range visually in the player slider'''
-
         gradient = 'qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:1, stop:0 BGCOLOR, stop:START1 BGCOLOR, stop:START2 MARKERCOLOR, stop:START3 MARKERCOLOR, stop:START4 CONNCOLOR, stop:END1 CONNCOLOR, stop:END2 MARKERCOLOR, stop:END3 MARKERCOLOR, stop:END4 BGCOLOR, stop:1 BGCOLOR)'
 
         startPos = (Functions.HMSToTimestamp(self.sectionTimeStart, True) / self.videoProps.get('durationMs'))
@@ -2749,7 +2751,7 @@ class MainUi(QtWidgets.QMainWindow):
         # TODO: When rotate, change video X, Y, width and height accordingly, so very filter applies correctly if reordered (also on export!)
         filters = []
         if self.btnFiltersPreview.isChecked():
-            filterPositions = self.jobs.getCurrentJob().getFilterPositions()
+            filterPositions = self.jobs.get_current_job().getFilterPositions()
             vW = self.videoProps.get('width')
             vH = self.videoProps.get('height')
             for position in sorted(filterPositions.keys()):
@@ -2904,7 +2906,6 @@ class MainUi(QtWidgets.QMainWindow):
             result = messagebox.exec_()
             if not result or result == QMessageBox.Abort: return False
             os.system('shutdown now -h')
-            # os.system("shutdown /s /t 1")
         self.disablePowerMode()
 
     def setCropFieldsByRotation(self):
@@ -2912,7 +2913,7 @@ class MainUi(QtWidgets.QMainWindow):
         Change the icon and tooltip of all crop fields based on the rotation
         '''
         # Check if crop filter is before rotate filter
-        filterPositions = self.jobs.getCurrentJob().getFilterPositions()
+        filterPositions = self.jobs.get_current_job().getFilterPositions()
         isCropBeforeRotate = True
         for position in sorted(filterPositions.keys()):
             filter = filterPositions.get(position)
@@ -2968,7 +2969,7 @@ class MainUi(QtWidgets.QMainWindow):
         :return: Autocrop values as list
         '''
         self.log(1, 'Get autocrop values ...')
-        job = self.jobs.getCurrentJob()
+        job = self.jobs.get_current_job()
         file = job.getSrcFilePathLong()
         # Prevent current timestamp from being same or bigger than video duration
         time_format = '%H:%M:%S.%f'
@@ -2984,7 +2985,7 @@ class MainUi(QtWidgets.QMainWindow):
         Checks if the target file exists and renames the job target filename with a counter in it
         '''
         try:
-            job = self.jobs.getCurrentJob()
+            job = self.jobs.get_current_job()
             originalName = job.getTgtFileName()
             for i in range(1, 1000):
                 if os.path.isfile(job.getTgtFilePathLong()):
