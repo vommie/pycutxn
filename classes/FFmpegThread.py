@@ -119,10 +119,53 @@ class FFmpegThread(QThread):
             # Concatenate sections
             if videoProps.get('hasAudio'):
                 joined = ffmpeg.concat(*mapping, v=1, a=1).node
-                output = ffmpeg.output(joined[0], joined[1], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), acodec=job.getRenderSettingAudioCodec(), audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='verbose', color_primaries='bt709', colorspace='bt709', color_trc='bt709')
+                output = ffmpeg.output(
+                    joined[0],
+                    joined[1],
+                    tgtPath,
+                    progress="pipe:",
+
+                    # Video Codec Settings
+                    vcodec=job.getRenderSettingVideoCodec(),
+                    crf=str(job.getRenderSettingCRF()),
+                    preset=job.getRenderSettingPreset(),
+
+                    # Audio Codec Settings
+                    acodec=job.getRenderSettingAudioCodec(),
+                    audio_bitrate='%sk' % job.getRenderSettingAudioBitrate(),
+
+                    # Color space settings
+                    color_primaries='bt709',
+                    colorspace='bt709',
+                    color_trc='bt709',
+
+                    # Error settings
+                    err_detect='crccheck+bitstream+buffer+ignore_err', # Ignore all errors
+                    vsync='vfr', # Keep timestamps to pass "Past duration" errors.
+                    loglevel='error'
+                )
             else:
                 joined = ffmpeg.concat(*mapping, v=1).node
-                output = ffmpeg.output(joined[0], tgtPath, progress="pipe:", vcodec=job.getRenderSettingVideoCodec(), crf=str(job.getRenderSettingCRF()), preset=job.getRenderSettingPreset(), err_detect='ignore_err', loglevel='verbose', color_primaries='bt709', colorspace='bt709', color_trc='bt709')
+                output = ffmpeg.output(
+                    joined[0],
+                    tgtPath,
+                    progress="pipe:",
+
+                    # Video Codec Settings
+                    vcodec=job.getRenderSettingVideoCodec(),
+                    crf=str(job.getRenderSettingCRF()),
+                    preset=job.getRenderSettingPreset(),
+
+                    # Color space settings (beibehalten)
+                    color_primaries='bt709',
+                    colorspace='bt709',
+                    color_trc='bt709',
+
+                    # Error settings
+                    err_detect='crccheck+bitstream+buffer+ignore_err', # Ignore all errors
+                    vsync='vfr', # Keep timestamps to pass "Past duration" errors.
+                    loglevel='error'
+                )
 
             # Run ffmpeg
             try:
