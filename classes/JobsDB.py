@@ -206,6 +206,35 @@ class JobsDB:
             self.conn.rollback()
             raise Exception(f"Failed to remove job {job_id} from database: {e}")
 
+    def remove_jobs_by_state(self, state: int) -> list[str]:
+        job_ids_to_remove = []
+        try:
+            cursor = self.conn.cursor()
+
+            cursor.execute("SELECT id FROM jobs WHERE state = ?", (state,))
+            rows = cursor.fetchall()
+            job_ids_to_remove = [str(row['id']) for row in rows]
+
+            if not job_ids_to_remove:
+                return []
+
+            for job_id in job_ids_to_remove:
+                self.delete_deshake_file(job_id)
+
+            cursor.execute("DELETE FROM jobs WHERE state = ?", (state,))
+            self.conn.commit()
+
+            for job_id in job_ids_to_remove:
+                if job_id in self.jobs:
+                    del self.jobs[job_id]
+
+            self.reindex_positions()
+
+            return job_ids_to_remove
+        except sqlite3.Error as e:
+            self.conn.rollback()
+            raise Exception(f"Failed to remove jobs with state {state} from database: {e}")
+
     def swap_jobs(self, job1, job2):
         """Tauscht die Positionen von zwei Jobs in der Datenbank."""
         pos1 = job1.getPosition()

@@ -2160,34 +2160,43 @@ class MainUi(QtWidgets.QMainWindow):
         Removes all rows with finished jobs
         '''
         try:
-            job_ids_to_remove = []
-            for iRow in range(self.tableQueue.rowCount()):
-                state = self.tableQueue.item(iRow, 2).text()
-                if state == self.jobStates[1]:
-                    jobID = self.tableQueue.item(iRow, 0).text()
-                    job_ids_to_remove.append(jobID)
+            finished_jobs = []
+            for job in self.jobs.get_sorted_jobs():
+                if job.getState() == 1:
+                    finished_jobs.append(job)
 
-            for jobID in job_ids_to_remove:
-                job = self.jobs.get_job(jobID)
+            if not finished_jobs:
+                self.log(1, "No finished jobs found to remove.")
+                return
+
+            self.log(1, f"Found {len(finished_jobs)} finished jobs to remove. Processing related files...")
+
+            for job in finished_jobs:
                 srcPath = job.getSrcFilePathLong()
                 hashFilePath = self.videoPathToHashPath(srcPath)
-                if(os.path.isfile(hashFilePath)):
+                if os.path.isfile(hashFilePath):
                     os.remove(hashFilePath)
                     self.log(1, f"Removed hash file: {hashFilePath}", 0)
-                self.jobs.remove_job(jobID)
-                self.log(1, 'Removed job with ID "%s" from jobs queue.' % jobID)
 
-            # GUI in einer separaten Schleife aktualisieren
+            deleted_ids = self.jobs.remove_jobs_by_state(1)
+
+            if not deleted_ids:
+                self.log(1, "JobsDB reported no jobs were deleted, skipping GUI update.")
+                return
+
+            self.log(1, f"Bulk removed {len(deleted_ids)} jobs from the database. Updating GUI...")
+
             for iRow in reversed(range(self.tableQueue.rowCount())):
-                jobID = self.tableQueue.item(iRow, 0).text()
-                if jobID in job_ids_to_remove:
+                jobID_in_table = self.tableQueue.item(iRow, 0).text()
+                if jobID_in_table in deleted_ids:
                     self.tableQueue.removeRow(iRow)
+            self.log(1, "Queue GUI updated successfully.")
 
         except Exception as e:
             msg = 'Error: Cannot remove all finished jobs in queue.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
-            return False
+            return
 
         self.setBtnQueueDeleteAllState()
         if self.tableQueue.rowCount() > 0:
