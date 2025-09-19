@@ -392,18 +392,13 @@ class MainUi(QtWidgets.QMainWindow):
             exit(1)
 
     def restore_layout_state(self):
-        self.log(1, "Restoring window geometry and layout state...")
         try:
             geometry = self.config.getAppGeometry()
             if geometry:
                 self.restoreGeometry(geometry)
-            else:
-                self.log(1, "No saved geometry found, using default.")
             state = self.config.getAppState()
             if state:
                 self.restoreState(state)
-            else:
-                self.log(1, "No saved window state found, using default.")
         except Exception as e:
             self.log(1, "Could not restore layout state.", 1, traceback=traceback.format_exc())
 
