@@ -35,7 +35,7 @@ from classes.CropOverlay import CropOverlay
 
 from PyQt5 import uic, QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem, QMainWindow, QDialog
-from PyQt5.QtCore import Qt, pyqtSlot, QCoreApplication
+from PyQt5.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer
 from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
 import res  # pyrcc5 -o res.py res/res.qrc
 
@@ -52,6 +52,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.initPlayer()
         self.show()
         self.preventDragging()
+        QTimer.singleShot(0, self.restore_layout_state)
 
     def preventDragging(self):
         '''Prevents almost all gui elements from being dragged except for those in the nonDraggable list'''
@@ -155,10 +156,6 @@ class MainUi(QtWidgets.QMainWindow):
         }
 
     def initGui(self):
-        geometry = self.config.getAppGeometry()
-        if geometry: self.restoreGeometry(geometry)
-        state = self.config.getAppState()
-        if state: self.restoreState(state)
         # Other
         self.toolTipBtnExportSave = self.btnExportSave.toolTip()
         self.resetRenderDetails()
@@ -393,6 +390,22 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, infoText='Exit application', detailText=traceback.format_exc(), icon='critical')
             exit(1)
+
+    def restore_layout_state(self):
+        self.log(1, "Restoring window geometry and layout state...")
+        try:
+            geometry = self.config.getAppGeometry()
+            if geometry:
+                self.restoreGeometry(geometry)
+            else:
+                self.log(1, "No saved geometry found, using default.")
+            state = self.config.getAppState()
+            if state:
+                self.restoreState(state)
+            else:
+                self.log(1, "No saved window state found, using default.")
+        except Exception as e:
+            self.log(1, "Could not restore layout state.", 1, traceback=traceback.format_exc())
 
     def initPlayer(self):
         try:
