@@ -1408,10 +1408,6 @@ class MainUi(QtWidgets.QMainWindow):
         jobID, iRow = self.queueGetJobIDFromRow()
         job = self.jobs.get_job(jobID)
         dialog = EditDBUI(self, job)
-        source_widget = self.dockTagger
-        source_size = source_widget.size()
-
-        dialog.resize(source_size)
         result = dialog.exec_()
 
         if result == QDialog.Accepted and self.historyMode:

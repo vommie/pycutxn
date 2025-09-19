@@ -79,6 +79,9 @@ class Config:
     def getDialogLogGeometry(self):
         return self.settings.value('dialogLog/geometry')
 
+    def getDialogEditDBGeometry(self):
+        return self.settings.value('dialogEditDB/geometry')
+
     def getPlayerVolume(self) -> int:
         return self.settings.value('player/volume', 75, type=int)
 
@@ -187,6 +190,9 @@ class Config:
 
     def setDialogLogGeometry(self, geometry) -> None:
         self.settings.setValue('dialogLog/geometry', geometry)
+
+    def setDialogEditDBGeometry(self, geometry) -> None:
+        self.settings.setValue('dialogEditDB/geometry', geometry)
 
     def setPlayerVolume(self, volume : int) -> None:
         self.settings.setValue('player/volume', volume)

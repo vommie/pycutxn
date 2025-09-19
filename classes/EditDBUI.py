@@ -25,6 +25,14 @@ class EditDBUI(QDialog):
         self.loadData()
         self.setWindowTitle(f"Edit DB: {job.getTgtFileNameLong()}")
 
+        geometry = self.parent.config.getDialogEditDBGeometry()
+        if geometry and self.restoreGeometry(geometry):
+            pass
+        else:
+            source_widget = self.parent.dockTagger
+            self.resize(source_widget.size())
+
+
     def initGuiEvents(self):
         self.buttonBox.accepted.connect(self.onAccepted)
 
@@ -82,6 +90,11 @@ class EditDBUI(QDialog):
             msg = 'Error updating DB entry.'
             self.parent.log(1, msg, 1, traceback=traceback.format_exc())
             self.parent.showMsgBox(msg, detailText=str(e), icon='critical')
+
+    def done(self, result):
+        """Saves the dialog's geometry before it closes."""
+        self.parent.config.setDialogEditDBGeometry(self.saveGeometry())
+        super(EditDBUI, self).done(result)
 
     def _build_tags_tree_recursive(self, parent_id, prefix):
         child_indices = self._tags_by_parent.get(parent_id, [])
