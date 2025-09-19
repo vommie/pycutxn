@@ -256,6 +256,18 @@ class JobsDB:
         self.on_job_props_updated(job1.getID(), job1.getProps())
         self.on_job_props_updated(job2.getID(), job2.getProps())
 
+    def reorder_jobs(self, job_ids_in_new_order: list[str]):
+        try:
+            cursor = self.conn.cursor()
+            for new_pos, job_id in enumerate(job_ids_in_new_order):
+                cursor.execute("UPDATE jobs SET position = ? WHERE id = ?", (new_pos, int(job_id)))
+            self.conn.commit()
+
+            self.load_all_jobs()
+        except sqlite3.Error as e:
+            self.conn.rollback()
+            raise Exception(f"Failed to reorder jobs in database: {e}")
+
     def delete_deshake_file(self, job_id):
         job = self.get_job(job_id)
         if not job: return

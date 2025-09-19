@@ -332,7 +332,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnFilterDeshakeDown.clicked.connect(self.onBtnFilterDeshakeDownClicked)
             self.btnFilterDeshakeUp.clicked.connect(self.onBtnFilterDeshakeUpClicked)
             # Queue
-            self.tableQueue.currentCellChanged.connect(self.onTableQueueCurrCellChanged)
+            self.tableQueue.selectionModel().selectionChanged.connect(self.onQueueSelectionChanged)
             self.tableQueue.cellDoubleClicked.connect(self.onTableQueueCellDblClicked)
             self.tableQueue.cellChanged.connect(self.onTableQueueCellChanged)
             self.btnQueueDelete.clicked.connect(self.onBtnQueueDeleteClicked)
@@ -1089,7 +1089,7 @@ class MainUi(QtWidgets.QMainWindow):
     def onSliderPlayerValueChanged(self, value):
         if self.isSliderPlayerPressed(): self.seekFromPlayerSlider(value)
 
-    def onTableQueueCurrCellChanged(self, row, col):
+    def onQueueSelectionChanged(self):
         self.setQueueBtnStates()
 
     def onTableQueueCellDblClicked(self, row, col):
@@ -1105,13 +1105,13 @@ class MainUi(QtWidgets.QMainWindow):
         if iCol == 2: self.setBtnQueueDeleteAllState()
 
     def onBtnQueueDeleteClicked(self):
-        self.queueDeleteSelectedRow()
+        self.queueDeleteSelectedRows()
 
     def onBtnQueueUpClicked(self):
-        self.swapJobs(-1)
+        self.moveSelectedJobs(-1)
 
     def onBtnQueueDownClicked(self):
-        self.swapJobs(1)
+        self.moveSelectedJobs(1)
 
     def onBtnQueuePauseClicked(self):
         self.toggleQueuePause()
@@ -1132,14 +1132,20 @@ class MainUi(QtWidgets.QMainWindow):
         self.togglePowerMode('shutdown', state)
 
     def onQueueContextMenu(self, point):
-        menu = QtWidgets.QMenu(self)
-        self.actionPlayFile.setEnabled(True)
-        self.actionShowLog.setEnabled(True)
+        selected_rows = self.tableQueue.selectionModel().selectedRows()
+        num_selected = len(selected_rows)
 
-        if self.tableQueue.itemAt(point):
+        if num_selected == 0:
+            return
+
+        menu = QtWidgets.QMenu(self)
+
+        if num_selected == 1:
+            self.actionPlayFile.setEnabled(True)
+            self.actionShowLog.setEnabled(True)
             state = self.queueGetCurrentState()
 
-            if state == 4:
+            if state == 4: # Rendering
                 self.actionPlayFile.setEnabled(False)
                 menu.addAction(self.actionPlayFile)
                 menu.addAction(self.actionOpenFolder)
@@ -1151,17 +1157,16 @@ class MainUi(QtWidgets.QMainWindow):
                 menu.addSeparator()
                 self.actionShowLog.setEnabled(False)
                 menu.addAction(self.actionShowLog)
-
             else:
-                if state == 1:
+                if state == 1: # Finished
                     menu.addAction(self.actionPlayFile)
                 menu.addAction(self.actionOpenFolder)
                 menu.addSeparator()
-                if state == 0:
+                if state == 0: # Waiting
                     menu.addAction(self.actionStatePostpone)
-                if state == 2:
+                if state == 2: # Pending
                     menu.addAction(self.actionStateResume)
-                if state == 3 or state == 1:
+                if state == 3 or state == 1: # Error or Finished
                     menu.addAction(self.actionStateReset)
                 menu.addSeparator()
                 menu.addAction(self.actionMoveTop)
@@ -1169,11 +1174,121 @@ class MainUi(QtWidgets.QMainWindow):
                 if state != 0 and state != 4:
                     menu.addSeparator()
                     menu.addAction(self.actionShowLog)
-
             menu.addSeparator()
             menu.addAction(self.actionEditDBEntry)
-            point = self.tableQueue.mapToGlobal(point)
-            menu.popup(point)
+
+        else: # Multiple jobs selected
+            selected_jobs = self.getSelectedJobs()
+
+            actionOpenFolders = QtWidgets.QAction('Open folders', self)
+            actionOpenFolders.triggered.connect(self.onQueueCtxActionOpenFolders)
+            menu.addAction(actionOpenFolders)
+
+            menu.addSeparator()
+
+            # Reset Jobs Action
+            resettable_jobs = [j for j in selected_jobs if j.getState() in [1, 3]]
+            count_resettable = len(resettable_jobs)
+            actionReset = QtWidgets.QAction('Reset Jobs', self)
+            if count_resettable > 0:
+                actionReset.setText(f'Reset {count_resettable} Jobs')
+                actionReset.triggered.connect(lambda: self.onQueueCtxActionResetJobs(resettable_jobs))
+            else:
+                actionReset.setEnabled(False)
+            menu.addAction(actionReset)
+
+            # Cancel Jobs Action
+            cancellable_jobs = [j for j in selected_jobs if j.getState() == 4]
+            count_cancellable = len(cancellable_jobs)
+            actionCancel = QtWidgets.QAction('Cancel Jobs', self)
+            if count_cancellable > 0:
+                actionCancel.setText(f'Cancel {count_cancellable} Jobs')
+                actionCancel.triggered.connect(lambda: self.onQueueCtxActionCancelJobs(cancellable_jobs))
+            else:
+                actionCancel.setEnabled(False)
+            menu.addAction(actionCancel)
+
+            # Resume Jobs Action
+            resumable_jobs = [j for j in selected_jobs if j.getState() == 2]
+            count_resumable = len(resumable_jobs)
+            actionResume = QtWidgets.QAction('Resume Jobs', self)
+            if count_resumable > 0:
+                actionResume.setText(f'Resume {count_resumable} Jobs')
+                actionResume.triggered.connect(lambda: self.onQueueCtxActionResumeJobs(resumable_jobs))
+            else:
+                actionResume.setEnabled(False)
+            menu.addAction(actionResume)
+
+            menu.addSeparator()
+
+            actionMoveTop = QtWidgets.QAction('Move to top', self)
+            actionMoveTop.triggered.connect(self.onQueueCtxActionMoveTopMulti)
+            menu.addAction(actionMoveTop)
+
+            actionMoveBottom = QtWidgets.QAction('Move to bottom', self)
+            actionMoveBottom.triggered.connect(self.onQueueCtxActionMoveBottomMulti)
+            menu.addAction(actionMoveBottom)
+
+        point = self.tableQueue.mapToGlobal(point)
+        menu.popup(point)
+
+    def onQueueCtxActionOpenFolders(self):
+        selected_jobs = self.getSelectedJobs()
+        unique_dirs = set(job.getTgtDirName() for job in selected_jobs)
+        opener = Functions.getCurrentSysOpener()
+        for folder in unique_dirs:
+            if os.path.isdir(folder):
+                subprocess.call([opener, folder])
+
+    def onQueueCtxActionResetJobs(self, jobs_to_reset):
+        for job in jobs_to_reset:
+            self.queueSetStateByJob(job, 0)
+
+    def onQueueCtxActionCancelJobs(self, jobs_to_cancel):
+        if any(job.getState() == 4 for job in jobs_to_cancel):
+            self.onBtnQueueKillClicked()
+
+    def onQueueCtxActionResumeJobs(self, jobs_to_resume):
+        for job in jobs_to_resume:
+            self.queueSetStateByJob(job, 0)
+
+    def refreshQueueTable(self):
+        current_selection_ids = {job.getID() for job in self.getSelectedJobs()}
+
+        self.tableQueue.setRowCount(0)
+        for job in self.jobs.get_sorted_jobs():
+            self.queueAddRow(job.getID(), job.getTgtFileNameLong(), self.getJobStateString(job.getState()))
+
+        for i in range(self.tableQueue.rowCount()):
+            job_id = self.tableQueue.item(i, 0).text()
+            if job_id in current_selection_ids:
+                self.tableQueue.selectRow(i)
+
+    def onQueueCtxActionMoveTopMulti(self):
+        all_jobs_sorted = self.jobs.get_sorted_jobs()
+        selected_jobs = sorted(self.getSelectedJobs(), key=lambda j: j.getPosition())
+
+        selected_ids = {job.getID() for job in selected_jobs}
+        unselected_jobs = [job for job in all_jobs_sorted if job.getID() not in selected_ids]
+
+        new_order_jobs = selected_jobs + unselected_jobs
+        new_order_ids = [job.getID() for job in new_order_jobs]
+
+        self.jobs.reorder_jobs(new_order_ids)
+        self.refreshQueueTable()
+
+    def onQueueCtxActionMoveBottomMulti(self):
+        all_jobs_sorted = self.jobs.get_sorted_jobs()
+        selected_jobs = sorted(self.getSelectedJobs(), key=lambda j: j.getPosition())
+
+        selected_ids = {job.getID() for job in selected_jobs}
+        unselected_jobs = [job for job in all_jobs_sorted if job.getID() not in selected_ids]
+
+        new_order_jobs = unselected_jobs + selected_jobs
+        new_order_ids = [job.getID() for job in new_order_jobs]
+
+        self.jobs.reorder_jobs(new_order_ids)
+        self.refreshQueueTable()
 
     def onQueueCtxActionPlayFile(self):
         self.queuePlayFile()
@@ -1182,13 +1297,19 @@ class MainUi(QtWidgets.QMainWindow):
         self.queueOpenFolder()
 
     def onQueueCtxActionStatePostpone(self):
-        self.queueSetState(2)
+        jobID, iRow = self.queueGetJobIDFromRow()
+        job = self.jobs.get_job(jobID)
+        self.queueSetStateByJob(job, 2)
 
     def onQueueCtxActioStateResume(self):
-        self.queueSetState(0)
+        jobID, iRow = self.queueGetJobIDFromRow()
+        job = self.jobs.get_job(jobID)
+        self.queueSetStateByJob(job, 0)
 
     def onQueueCtxActioStateReset(self):
-        self.queueSetState(0)
+        jobID, iRow = self.queueGetJobIDFromRow()
+        job = self.jobs.get_job(jobID)
+        self.queueSetStateByJob(job, 0)
 
     def onQueueCtxActionCancelJob(self):
         # Robust check to ensure the job is still rendering when the action is triggered
@@ -1718,7 +1839,7 @@ class MainUi(QtWidgets.QMainWindow):
             for tag in self.tagsTree:
                 if tag['tagID'] == tagID:
                     tag['item'].setSelected(True)
-                    if tag['filter']: hiddenTags.append('"%s" (TagID "%s")' % (tag['label'], tag['tagID']))
+                    if 'filter' in tag and tag['filter']: hiddenTags.append('"%s" (TagID "%s")' % (tag['label'], tag['tagID']))
                     selected.append(tag['item'].text().replace(self.tagsTreeSpaceChar, ''))
         if tagIDs: self.log(1, 'Selecting tags: %s' % ', '.join(selected))
         if hiddenTags:
@@ -2110,23 +2231,31 @@ class MainUi(QtWidgets.QMainWindow):
                 self.btnSectionDown.setEnabled(False)
 
     def setQueueBtnStates(self):
-        rowCount = self.tableQueue.rowCount()
-        iRow = self.tableQueue.currentRow()
-        if rowCount == 0:
+        selected_rows = self.tableQueue.selectionModel().selectedRows()
+        num_selected = len(selected_rows)
+
+        if num_selected == 0:
             self.btnQueueUp.setEnabled(False)
             self.btnQueueDown.setEnabled(False)
             self.btnQueueDelete.setEnabled(False)
             self.btnQueueLoad.setEnabled(False)
-        else:
+        elif num_selected == 1:
             self.btnQueueDelete.setEnabled(True)
             self.btnQueueLoad.setEnabled(True)
-            if iRow == 0:
+            iRow = selected_rows[0].row()
+            rowCount = self.tableQueue.rowCount()
+            self.btnQueueUp.setEnabled(iRow > 0)
+            self.btnQueueDown.setEnabled(iRow < rowCount - 1)
+        else: # num_selected > 1
+            self.btnQueueDelete.setEnabled(True)
+            self.btnQueueLoad.setEnabled(False)
+            indices = sorted([index.row() for index in selected_rows])
+            is_contiguous = (indices[-1] - indices[0] + 1 == len(indices))
+            if is_contiguous:
+                self.btnQueueUp.setEnabled(indices[0] > 0)
+                self.btnQueueDown.setEnabled(indices[-1] < self.tableQueue.rowCount() - 1)
+            else: # Cannot move non-contiguous blocks
                 self.btnQueueUp.setEnabled(False)
-            else:
-                self.btnQueueUp.setEnabled(True)
-            if iRow < rowCount-1:
-                self.btnQueueDown.setEnabled(True)
-            else:
                 self.btnQueueDown.setEnabled(False)
 
     def setBtnExportSaveState(self):
@@ -2135,26 +2264,37 @@ class MainUi(QtWidgets.QMainWindow):
         else:
             if self.btnExportSave.isEnabled(): self.btnExportSave.setEnabled(False)
 
-    def queueDeleteSelectedRow(self):
-        jobID, iRow = self.queueGetJobIDFromRow()
-        try:
+    def queueDeleteSelectedRows(self):
+        selected_rows = self.tableQueue.selectionModel().selectedRows()
+        if not selected_rows:
+            return
+
+        jobs_to_delete = []
+        rows_to_delete = []
+
+        for index in sorted(selected_rows, key=lambda i: i.row(), reverse=True):
+            row = index.row()
+            jobID, _ = self.queueGetJobIDFromRow(row)
             job = self.jobs.get_job(jobID)
             if job.getState() == 4:
-                self.showMsgBox('Cannot delete job while it is rendering.', infoText='Abort the job first, then delete it.', icon='warning')
-                return
-            self.log(1, 'Remove Job with ID %s' % jobID)
-            self.jobs.remove_job(jobID)
-            self.tableQueue.removeRow(iRow)
-            self.setBtnQueueDeleteAllState()
-            if(iRow > 0): self.tableQueue.setCurrentCell(iRow-1, 0)
-            elif(iRow == 0):
-                if not self.jobs.jobs: self.deleteDeshakeDir()
-            self.setQueueBtnStates()
-        except Exception as e:
-            msg = 'Error: Cannot remove Job.'
-            self.log(1, msg, 1, traceback=traceback.format_exc())
-            self.showMsgBox(msg, btns="ok", icon="warning", detailText=traceback.format_exc())
-            return False
+                self.showMsgBox(f'Cannot delete job {jobID} while it is rendering.',
+                                infoText='Abort the job first, then delete it.', icon='warning')
+                continue
+            jobs_to_delete.append(job)
+            rows_to_delete.append(row)
+
+        if not jobs_to_delete:
+            return
+
+        for job in jobs_to_delete:
+            self.log(1, 'Remove Job with ID %s' % job.getID())
+            self.jobs.remove_job(job.getID())
+
+        for row in rows_to_delete:
+            self.tableQueue.removeRow(row)
+
+        self.setBtnQueueDeleteAllState()
+        self.setQueueBtnStates()
 
     def queueRemoveRowByJob(self, job):
         '''
@@ -2231,27 +2371,34 @@ class MainUi(QtWidgets.QMainWindow):
             self.tableQueue.setCurrentCell(self.tableQueue.rowCount()-1, 0)
         self.setQueueBtnStates()
 
-    def queueGetJobIDFromRow(self, iRow = False):
-        if iRow is False:
+    def getSelectedJobs(self):
+        selected_jobs = []
+        selected_rows = self.tableQueue.selectionModel().selectedRows()
+        for index in selected_rows:
+            job_id, _ = self.queueGetJobIDFromRow(index.row())
+            job = self.jobs.get_job(job_id)
+            if job:
+                selected_jobs.append(job)
+        return selected_jobs
+
+    def queueGetJobIDFromRow(self, iRow = None):
+        if iRow is None:
             iRow = self.tableQueue.currentRow()
         itemID = self.tableQueue.item(iRow, 0)
         jobID = itemID.text()
         return jobID, iRow
 
-    def queueGetCurrentState(self, iRow = False):
-        if iRow is False:
+    def queueGetCurrentState(self, iRow = None):
+        if iRow is None:
             iRow = self.tableQueue.currentRow()
         itemState = self.tableQueue.item(iRow, 2)
         stateStr = itemState.text()
         state = self.jobStateStrToID(stateStr)
         return state
 
-    def queueSetState(self, state):
-        jobID, iRow = self.queueGetJobIDFromRow()
-        job = self.jobs.get_job(jobID)
-        job.setState(state) # Löst DB-Update aus
-        itemState = QTableWidgetItem(self.jobStates[state])
-        self.tableQueue.setItem(iRow, 2, itemState)
+    def queueSetStateByJob(self, job, state):
+        job.setState(state)
+        self.updateQueueJobState(job.getID(), state)
         self.runNextWaitJob()
 
     def setBtnQueueDeleteAllState(self):
@@ -2326,6 +2473,41 @@ class MainUi(QtWidgets.QMainWindow):
 
         self.jobsSwapping = False
 
+    def moveSelectedJobs(self, direction):
+        selection_model = self.tableQueue.selectionModel()
+        selected_rows = sorted([index.row() for index in selection_model.selectedRows()])
+
+        if not selected_rows:
+            return
+
+        if direction == -1 and selected_rows[0] == 0:
+            return
+        if direction == 1 and selected_rows[-1] == self.tableQueue.rowCount() - 1:
+            return
+
+        self.jobsSwapping = True
+
+        rows_to_move = selected_rows if direction == -1 else reversed(selected_rows)
+
+        for row in rows_to_move:
+            target_row = row + direction
+
+            job1_id, _ = self.queueGetJobIDFromRow(row)
+            job2_id, _ = self.queueGetJobIDFromRow(target_row)
+            job1 = self.jobs.get_job(job1_id)
+            job2 = self.jobs.get_job(job2_id)
+            self.jobs.swap_jobs(job1, job2)
+
+            Functions.moveTableRow(self.tableQueue, direction, start_row=row)
+
+        self.jobsSwapping = False
+
+        selection_model.clearSelection()
+        for row in selected_rows:
+            selection_model.select(
+                self.tableQueue.model().index(row + direction, 0),
+                QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Rows
+            )
 
     def queuePlayFile(self):
         jobID = self.queueGetJobIDFromRow()[0]
