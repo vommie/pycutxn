@@ -132,6 +132,10 @@ class JobsDB:
 
         self.current_job = new_job
 
+    def create_empty_current_job(self):
+        """Erstellt einen leeren 'default' Job, um einen validen Startzustand zu garantieren."""
+        self.current_job = Job('default')
+
     def get_current_job(self):
         return self.current_job
 

@@ -58,3 +58,5 @@ schema.txt
 scripts.txt
 crawler.py
 schema.py
+
+.vscode

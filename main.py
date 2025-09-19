@@ -84,6 +84,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.jobsFilePath = self.config.getJobsFilePath()
         try:
             self.jobs = JobsDB(self.jobsFilePath)
+            self.jobs.create_empty_current_job()
         except Exception as e:
             msg = 'Error: Cannot initialize jobs database.'
             self.log(1, msg, 1)
