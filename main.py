@@ -45,7 +45,6 @@ class MainUi(QtWidgets.QMainWindow):
         _id = QtGui.QFontDatabase.addApplicationFont('%s/res/font_droid_sans_mono_nerd.otf' % self.rootDir) # Init Nerd Fronts Font for Icons
         super(MainUi, self).__init__()
         uic.loadUi('%s/gui/main.ui' % self.rootDir, self)
-        self.actionEditDBEntry = QtWidgets.QAction('Edit DB entry', self)
         self.initMembers()
         self.initGui()
         self.initShortcuts()
@@ -346,6 +345,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnQueueSleep.clicked.connect(self.onBtnQueueSleepClicked)
             self.btnQueueShutdown.clicked.connect(self.onBtnQueueShutdownClicked)
             # Actions
+            self.actionEditDBEntry = QtWidgets.QAction('Edit DB entry', self)
+            self.actionStateCancel = QtWidgets.QAction('Cancel Job', self)
             self.actionEditDBEntry.triggered.connect(self.onQueueCtxActionEditDBEntry)
             self.actionSettings.triggered.connect(self.onActionSettings)
             self.actionQuit.triggered.connect(self.onActionQuit)
@@ -359,6 +360,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.actionStatePostpone.triggered.connect(self.onQueueCtxActionStatePostpone)
             self.actionStateResume.triggered.connect(self.onQueueCtxActioStateResume)
             self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
+            self.actionStateCancel.triggered.connect(self.onQueueCtxActionCancelJob)
             self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
             self.actionKillFfmpeg.triggered.connect(self.onActionKillFfmpeg)
             # Tagger
@@ -1131,30 +1133,47 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onQueueContextMenu(self, point):
         menu = QtWidgets.QMenu(self)
+        self.actionPlayFile.setEnabled(True)
+        self.actionShowLog.setEnabled(True)
+
         if self.tableQueue.itemAt(point):
             state = self.queueGetCurrentState()
+
             if state == 4:
-                return
-            if state == 1:
+                self.actionPlayFile.setEnabled(False)
                 menu.addAction(self.actionPlayFile)
-            menu.addAction(self.actionOpenFolder)
-            menu.addSeparator()
-            if state == 0:
-                menu.addAction(self.actionStatePostpone)
-            if state == 2:
-                menu.addAction(self.actionStateResume)
-            if state == 3 or state == 1:
-                menu.addAction(self.actionStateReset)
-            menu.addSeparator()
-            menu.addAction(self.actionMoveTop)
-            menu.addAction(self.actionMoveBottom)
-            if state != 0:
+                menu.addAction(self.actionOpenFolder)
                 menu.addSeparator()
+                menu.addAction(self.actionStateCancel)
+                menu.addSeparator()
+                menu.addAction(self.actionMoveTop)
+                menu.addAction(self.actionMoveBottom)
+                menu.addSeparator()
+                self.actionShowLog.setEnabled(False)
                 menu.addAction(self.actionShowLog)
-        menu.addSeparator()
-        menu.addAction(self.actionEditDBEntry)
-        point = self.tableQueue.mapToGlobal(point)
-        menu.popup(point)
+
+            else:
+                if state == 1:
+                    menu.addAction(self.actionPlayFile)
+                menu.addAction(self.actionOpenFolder)
+                menu.addSeparator()
+                if state == 0:
+                    menu.addAction(self.actionStatePostpone)
+                if state == 2:
+                    menu.addAction(self.actionStateResume)
+                if state == 3 or state == 1:
+                    menu.addAction(self.actionStateReset)
+                menu.addSeparator()
+                menu.addAction(self.actionMoveTop)
+                menu.addAction(self.actionMoveBottom)
+                if state != 0 and state != 4:
+                    menu.addSeparator()
+                    menu.addAction(self.actionShowLog)
+
+            menu.addSeparator()
+            menu.addAction(self.actionEditDBEntry)
+            point = self.tableQueue.mapToGlobal(point)
+            menu.popup(point)
 
     def onQueueCtxActionPlayFile(self):
         self.queuePlayFile()
@@ -1170,6 +1189,13 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onQueueCtxActioStateReset(self):
         self.queueSetState(0)
+
+    def onQueueCtxActionCancelJob(self):
+        # Robust check to ensure the job is still rendering when the action is triggered
+        if self.queueGetCurrentState() == 4:
+            self.onBtnQueueKillClicked()
+        else:
+            self.log(1, "Cancel Job action triggered, but job is no longer rendering.")
 
     def onQueueCtxActionShowLog(self):
         self.queueShowLog()
@@ -1780,7 +1806,8 @@ class MainUi(QtWidgets.QMainWindow):
             tag = tagsTree[i]
             if tag['tagID'] in filterTagIDs:
                 tagsTree[i]['filter'] = True
-            else: tagsTree[i]['filter'] = False
+            else:
+                tagsTree[i]['filter'] = False
         return tagsTree
 
     def checkDBConnectivity(self):
