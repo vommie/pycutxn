@@ -20,13 +20,6 @@ class SettingsUI(QtWidgets.QDialog):
         self.checkBoxMuteVideoEnd.setChecked(self.parent.config.getPlayerMuteVideoEnd())
         # Database
         self.lineEditDBPath.setText(self.parent.config.getTaggerDBPath())
-        # Render
-        self.comboBoxVideoCodec.setCurrentText(self.parent.config.getRenderVideoCodec())
-        self.spinBoxCRF.setValue(self.parent.config.getRenderCRF())
-        self.comboBoxContainer.setCurrentText(self.parent.config.getRenderContainer())
-        self.comboBoxPreset.setCurrentText(self.parent.config.getRenderPreset())
-        self.comboBoxAudioCodec.setCurrentText(self.parent.config.getRenderAudioCodec())
-        self.spinBoxAudioBitrate.setValue(self.parent.config.getRenderAudioBitrate())
         # Warnings
         self.checkBoxWarnTgtTgt.setChecked(self.parent.config.getAppWarnTgtFileExistsInTgtDir())
         self.checkBoxWarnBaseFileExists.setChecked(self.parent.config.getAppWarnBaseFileExistsInTgtDir())
@@ -47,13 +40,6 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setPlayerMuteVideoEnd(self.checkBoxMuteVideoEnd.isChecked())
         # Database
         self.parent.config.setTaggerDBPath(self.lineEditDBPath.text()) # TODO: Reload Tagger when path changes
-        # Render
-        self.parent.config.setRenderVideoCodec(str(self.comboBoxVideoCodec.currentText()))
-        self.parent.config.setRenderCRF(int(self.spinBoxCRF.value()))
-        self.parent.config.setRenderContainer(str(self.comboBoxContainer.currentText()))
-        self.parent.config.setRenderPreset(str(self.comboBoxPreset.currentText()))
-        self.parent.config.setRenderAudioCodec(str(self.comboBoxAudioCodec.currentText()))
-        self.parent.config.setRenderAudioBitrate(int(self.spinBoxAudioBitrate.value()))
         # Warnings
         self.parent.config.setAppWarnTgtFileExistsInTgtDir(self.checkBoxWarnTgtTgt.isChecked())
         self.parent.config.setAppWarnBaseFileExistsInTgtDir(self.checkBoxWarnBaseFileExists.isChecked())

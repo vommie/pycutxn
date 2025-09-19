@@ -178,6 +178,14 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnSectionAutoRemove.setChecked(self.config.getSectionsAutoRemove())
         self.btnFiltersPreview.setChecked(self.config.getFiltersPreview())
         self.setBtnFiltersPreviewIcon()
+        # Render Settings
+        self.comboBoxVideoCodec.setCurrentText(self.config.getRenderVideoCodec())
+        self.spinBoxCRF.setValue(self.config.getRenderCRF())
+        self.comboBoxContainer.setCurrentText(self.config.getRenderContainer())
+        self.comboBoxPreset.setCurrentText(self.config.getRenderPreset())
+        self.comboBoxAudioCodec.setCurrentText(self.config.getRenderAudioCodec())
+        self.spinBoxAudioBitrate.setValue(self.config.getRenderAudioBitrate())
+        # Tagger
         waitingJobs = False
         # Queue Jobs
         if self.jobs.jobs:
@@ -373,6 +381,13 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnTaggerWarning.clicked.connect(self.onBtnTaggerWarningClicked)
             self.btnTaggerFilter.clicked.connect(self.onBtnTaggerFilterClicked)
             self.btnLastRating.clicked.connect(self.onBtnLastRatingClicked)
+            # Render
+            self.comboBoxVideoCodec.currentTextChanged.connect(lambda text: self.config.setRenderVideoCodec(text))
+            self.spinBoxCRF.valueChanged.connect(lambda val: self.config.setRenderCRF(val))
+            self.comboBoxContainer.currentTextChanged.connect(lambda text: self.config.setRenderContainer(text))
+            self.comboBoxPreset.currentTextChanged.connect(lambda text: self.config.setRenderPreset(text))
+            self.comboBoxAudioCodec.currentTextChanged.connect(lambda text: self.config.setRenderAudioCodec(text))
+            self.spinBoxAudioBitrate.valueChanged.connect(lambda val: self.config.setRenderAudioBitrate(val))
         except Exception as e:
             msg = 'Error: Cannot set all GUI events.'
             self.log(1, msg, 1, traceback=traceback.format_exc())

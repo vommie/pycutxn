@@ -2112,6 +2112,236 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockRender">
+   <property name="windowTitle">
+    <string>Render</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContentsRender">
+    <layout class="QVBoxLayout" name="verticalLayout_Render">
+     <item>
+      <widget class="QGroupBox" name="groupBoxVideo">
+       <property name="title">
+        <string>Video</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_Video">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_VCodec">
+          <item>
+           <widget class="QLabel" name="label_VCodec">
+            <property name="text">
+             <string>Codec</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBoxVideoCodec">
+            <item>
+             <property name="text">
+              <string>libx265</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>libx264</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_CRF">
+          <item>
+           <widget class="QLabel" name="label_CRF">
+            <property name="text">
+             <string>CRF</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinBoxCRF">
+            <property name="value">
+             <number>21</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_Container">
+          <item>
+           <widget class="QLabel" name="label_Container">
+            <property name="text">
+             <string>Container</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBoxContainer">
+            <item>
+             <property name="text">
+              <string>mkv</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>mp4</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_Preset">
+          <item>
+           <widget class="QLabel" name="label_Preset">
+            <property name="text">
+             <string>Preset</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBoxPreset">
+            <item>
+             <property name="text">
+              <string>ultrafast</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>superfast</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>veryfast</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>faster</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>fast</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>medium</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>slow</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>slower</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>veryslow</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>placebo</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBoxAudio">
+       <property name="title">
+        <string>Audio</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_Audio">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_ACodec">
+          <item>
+           <widget class="QLabel" name="label_ACodec">
+            <property name="text">
+             <string>Codec</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBoxAudioCodec">
+            <item>
+             <property name="text">
+              <string>aac</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>libmp3lame</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>libvorbis</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_ABitrate">
+          <item>
+           <widget class="QLabel" name="label_ABitrate">
+            <property name="text">
+             <string>Audio Bitrate</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinBoxAudioBitrate">
+            <property name="maximum">
+             <number>99999</number>
+            </property>
+            <property name="singleStep">
+             <number>2</number>
+            </property>
+            <property name="value">
+             <number>128</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer_Render">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <widget class="QDockWidget" name="dockTagger">
    <property name="enabled">
     <bool>false</bool>
