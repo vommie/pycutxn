@@ -52,7 +52,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.initPlayer()
         self.show()
         self.preventDragging()
-        QTimer.singleShot(0, self.restore_layout_state)
 
     def preventDragging(self):
         '''Prevents almost all gui elements from being dragged except for those in the nonDraggable list'''
@@ -79,6 +78,7 @@ class MainUi(QtWidgets.QMainWindow):
         return super(MainUi, self).eventFilter(source, event)
 
     def initMembers(self):
+        self.is_first_show = True
         self.config = Config()
         self.iconFontName = 'DroidSansMono Nerd Font Mono'
         self.jobsFilePath = self.config.getJobsFilePath()
@@ -390,6 +390,12 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, infoText='Exit application', detailText=traceback.format_exc(), icon='critical')
             exit(1)
+
+    def showEvent(self, event):
+        super(MainUi, self).showEvent(event)
+        if self.is_first_show:
+            self.restore_layout_state()
+            self.is_first_show = False
 
     def restore_layout_state(self):
         try:
