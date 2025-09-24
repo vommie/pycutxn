@@ -428,6 +428,12 @@
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockContentExport">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <property name="spacing">
       <number>0</number>
@@ -3159,6 +3165,12 @@ QRadioButton::unchecked:hover {
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockContentQueue">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
     <layout class="QVBoxLayout" name="verticalLayout_8">
      <property name="spacing">
       <number>0</number>
