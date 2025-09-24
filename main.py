@@ -56,7 +56,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def preventDragging(self):
         '''Prevents almost all gui elements from being dragged except for those in the nonDraggable list'''
-        self.nonDraggable = [ self.renderFrame, self.groupBoxSections, self.dockQueue, self.dockTagger, self.centralwidget ]
+        self.nonDraggable = [ self.renderFrame, self.groupBoxSections, self.centralwidget ]
         for obj in self.findChildren(QtWidgets.QWidget):
             if obj in self.nonDraggable:
                 obj.installEventFilter(self)
