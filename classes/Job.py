@@ -8,11 +8,12 @@ class Job():
     def __init__(self, id, srcFilePath = False, props = False):
         self._propsObservers = []
         self.id = id
-        if srcFilePath:
-            self.initProps()
-            self.initPaths(srcFilePath)
         if props:
             self._props = props
+        else:
+            self.initProps()
+            if srcFilePath:
+                self.initPaths(srcFilePath)
 
     def initProps(self):
         self._props = {
