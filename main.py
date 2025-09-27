@@ -837,6 +837,16 @@ class MainUi(QtWidgets.QMainWindow):
             if not self.showMsgBox('A job is currently rendering.', infoText='Really quit?', btns='yesno', icon='question'):
                 event.ignore()
                 return
+
+        if hasattr(self, 'playerControl') and self.playerControl.player:
+            try:
+                self.log(1, "Terminating MPV player instance...")
+                self.playerControl.player.terminate()
+                if self.playerControl.player._event_thread:
+                    self.playerControl.player._event_thread.join(timeout=2)
+            except Exception as e:
+                self.log(1, f"Error terminating MPV player: {e}", 1)
+
         self.config.setAppGeometry(self.saveGeometry())
         self.config.setAppState(self.saveState())
 
