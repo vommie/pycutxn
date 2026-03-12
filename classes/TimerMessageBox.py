@@ -1,14 +1,14 @@
 import sys
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6 import QtCore
+from PyQt6 import QtGui
+from PyQt6.QtWidgets import QMessageBox
 
 class TimerMessageBox(QMessageBox):
     def __init__(self, timeout=3, title="", text="", parent=None):
         self.text = text
         super(TimerMessageBox, self).__init__(parent)
-        self.setIcon(QMessageBox.Warning)
-        self.setStandardButtons(QMessageBox.Ok | QMessageBox.Abort)
+        self.setIcon(QMessageBox.Icon.Warning)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Abort)
         self.setWindowTitle(title)
         self.time_to_wait = timeout
         self.setText(self.text + "\n\n{0} seconds remaining ...".format(timeout))

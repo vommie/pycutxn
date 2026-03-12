@@ -33,11 +33,12 @@ from classes.TimerMessageBox import TimerMessageBox
 from classes.EditDBUI import EditDBUI
 from classes.CropOverlay import CropOverlay
 
-from PyQt5 import uic, QtGui, QtWidgets, QtCore
-from PyQt5.QtWidgets import QListWidgetItem, QShortcut, QLayout, QMessageBox, QTableWidgetItem, QMainWindow, QDialog
-from PyQt5.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer
-from PyQt5.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor
-import res  # pyrcc5 -o res.py res/res.qrc
+from PyQt6 import uic, QtGui, QtWidgets, QtCore
+from PyQt6.QtWidgets import QListWidgetItem, QLayout, QMessageBox, QTableWidgetItem, QMainWindow, QDialog
+from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer
+from PyQt6.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor, QAction, QShortcut
+
+import res  # pyrcc5 -o res.py res/res.qrc (Unter Qt6: rcc -g python res/res.qrc > res.py)
 
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -61,18 +62,18 @@ class MainUi(QtWidgets.QMainWindow):
                 obj.installEventFilter(self)
 
     def eventFilter(self, source, event):
-        if event.type() == QtCore.QEvent.MouseMove:
-            leftMouseButtonPressed = (event.buttons() == QtCore.Qt.LeftButton)
+        if event.type() == QtCore.QEvent.Type.MouseMove:
+            leftMouseButtonPressed = (event.buttons() == QtCore.Qt.MouseButton.LeftButton)
             cursorShape = self.cursor().shape()
-            resizing = cursorShape in {QtCore.Qt.SizeHorCursor,
-                                    QtCore.Qt.SizeVerCursor,
-                                    QtCore.Qt.SizeBDiagCursor,
-                                    QtCore.Qt.SizeFDiagCursor,
-                                    QtCore.Qt.SizeAllCursor,
-                                    QtCore.Qt.SplitHCursor,
-                                    QtCore.Qt.SplitVCursor,
-                                    QtCore.Qt.OpenHandCursor,
-                                    QtCore.Qt.ClosedHandCursor}
+            resizing = cursorShape in {QtCore.Qt.CursorShape.SizeHorCursor,
+                                    QtCore.Qt.CursorShape.SizeVerCursor,
+                                    QtCore.Qt.CursorShape.SizeBDiagCursor,
+                                    QtCore.Qt.CursorShape.SizeFDiagCursor,
+                                    QtCore.Qt.CursorShape.SizeAllCursor,
+                                    QtCore.Qt.CursorShape.SplitHCursor,
+                                    QtCore.Qt.CursorShape.SplitVCursor,
+                                    QtCore.Qt.CursorShape.OpenHandCursor,
+                                    QtCore.Qt.CursorShape.ClosedHandCursor}
             if leftMouseButtonPressed and not resizing and source in self.nonDraggable:
                 return True
         return super(MainUi, self).eventFilter(source, event)
@@ -161,13 +162,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.resetRenderDetails()
         # GUI elements options
         header = self.tableSections.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
         header.setMaximumSectionSize(10)
         header = self.tableQueue.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         # Set GUI from config
         self.updateDirs(self.config.getTargetDirs())
         self.cmbTgtDirs.setCurrentText(self.config.getAppTgtDirName())
@@ -208,12 +209,12 @@ class MainUi(QtWidgets.QMainWindow):
             self.toggleQueuePause()
         elif waitingJobs and not self.btnQueuePause.isChecked():
             self.runNextWaitJob()
-        self.tableQueue.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableQueue.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tableQueue.customContextMenuRequested.connect(self.onQueueContextMenu)
-        self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
-        self.renderFrame.setAttribute(Qt.WA_NativeWindow)
+        self.renderFrame.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors)
+        self.renderFrame.setAttribute(Qt.WidgetAttribute.WA_NativeWindow)
         # Add custom slider to control the player time position
-        self.sliderPlayer = PlayerSlider(Qt.Horizontal)
+        self.sliderPlayer = PlayerSlider(Qt.Orientation.Horizontal)
         self.framePlayerProgress.insertWidget(0, self.sliderPlayer)
         self.sliderPlayer.factor = self.config.getPlayerSliderFactor()
         self.sliderPlayer.setMinimum(0)
@@ -241,20 +242,20 @@ class MainUi(QtWidgets.QMainWindow):
         self.cropOverlay = CropOverlay(self.renderFrame, self)
 
     def initShortcuts(self):
-        self.scPause = QShortcut(QKeySequence(Qt.Key_Space), self)
-        self.scFrameStep = QShortcut(QKeySequence(Qt.Key_PageDown), self)
-        self.scFrameStepBack = QShortcut(QKeySequence(Qt.Key_PageUp), self)
-        self.scMute = QShortcut(QKeySequence(Qt.Key_M), self)
-        self.scSeekSmall = QShortcut(QKeySequence(Qt.Key_Right), self)
-        self.scSeekMedium = QShortcut(QKeySequence(Qt.SHIFT + Qt.Key_Right), self)
-        self.scSeekSmallBack = QShortcut(QKeySequence(Qt.Key_Left), self)
-        self.scSeekMediumBack = QShortcut(QKeySequence(Qt.SHIFT + Qt.Key_Left), self)
-        self.scSectionStart = QShortcut(QKeySequence(Qt.Key_Home), self)
-        self.scSectionEnd = QShortcut(QKeySequence(Qt.Key_End), self)
-        self.scSectionAdd1 = QShortcut(QKeySequence(Qt.Key_Plus), self)
-        self.scSectionAdd2 = QShortcut(QKeySequence(Qt.Key_ScrollLock), self)
-        self.scExportSave = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_S), self)
-        self.scExportSave2 = QShortcut(QKeySequence(Qt.Key_F9), self)
+        self.scPause = QShortcut(QKeySequence("Space"), self)
+        self.scFrameStep = QShortcut(QKeySequence("PageDown"), self)
+        self.scFrameStepBack = QShortcut(QKeySequence("PageUp"), self)
+        self.scMute = QShortcut(QKeySequence("M"), self)
+        self.scSeekSmall = QShortcut(QKeySequence("Right"), self)
+        self.scSeekMedium = QShortcut(QKeySequence("Shift+Right"), self)
+        self.scSeekSmallBack = QShortcut(QKeySequence("Left"), self)
+        self.scSeekMediumBack = QShortcut(QKeySequence("Shift+Left"), self)
+        self.scSectionStart = QShortcut(QKeySequence("Home"), self)
+        self.scSectionEnd = QShortcut(QKeySequence("End"), self)
+        self.scSectionAdd1 = QShortcut(QKeySequence("+"), self)
+        self.scSectionAdd2 = QShortcut(QKeySequence("ScrollLock"), self)
+        self.scExportSave = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.scExportSave2 = QShortcut(QKeySequence("F9"), self)
 
     def initGuiEvents(self):
         try:
@@ -308,7 +309,6 @@ class MainUi(QtWidgets.QMainWindow):
             self.boxFilterCropB.valueChanged.connect(self.onBoxFilterCropBChanged)
             self.boxFilterCropL.valueChanged.connect(self.onBoxFilterCropLChanged)
             self.btnAutoCrop.clicked.connect(self.onBtnFilterAutoCropClicked)
-            # self.btnFilterDeinterlace.clicked.connect(self.onBtnFilterDeinterlaceClicked)
             self.btnFilterDeinterlace.toggled.connect(self.onBtnFilterDeinterlaceClicked)
             self.comboBoxFilterDeinterlaceDeinterlacer.currentTextChanged.connect(self.onComboBoxFilterDeinterlaceDeinterlacerChanged)
             self.btnFilterResize.clicked.connect(self.onBtnFilterResizeClicked)
@@ -350,8 +350,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnQueueSleep.clicked.connect(self.onBtnQueueSleepClicked)
             self.btnQueueShutdown.clicked.connect(self.onBtnQueueShutdownClicked)
             # Actions
-            self.actionEditDBEntry = QtWidgets.QAction('Edit DB entry', self)
-            self.actionStateCancel = QtWidgets.QAction('Cancel Job', self)
+            self.actionEditDBEntry = QAction('Edit DB entry', self)
+            self.actionStateCancel = QAction('Cancel Job', self)
             self.actionEditDBEntry.triggered.connect(self.onQueueCtxActionEditDBEntry)
             self.actionSettings.triggered.connect(self.onActionSettings)
             self.actionQuit.triggered.connect(self.onActionQuit)
@@ -371,7 +371,6 @@ class MainUi(QtWidgets.QMainWindow):
             # Tagger
             self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
             self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
-            self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
             self.btnTagsLast.clicked.connect(self.onBtnTagsLastClicked)
             self.btnTagsClear.clicked.connect(self.onBtnTagsClearClicked)
             self.btnTaggerActive.clicked.connect(self.onBtnTaggerActiveClicked)
@@ -410,8 +409,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def initPlayer(self):
         try:
-            self.renderFrame.setAttribute(Qt.WA_DontCreateNativeAncestors)
-            self.renderFrame.setAttribute(Qt.WA_NativeWindow)
+            self.renderFrame.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors)
+            self.renderFrame.setAttribute(Qt.WidgetAttribute.WA_NativeWindow)
             locale.setlocale(locale.LC_NUMERIC, 'C')
             player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,wayland,xv,x11', loglevel='fatal', keep_open='yes', input_cursor=True, input_default_bindings=False)
             self.playerControl = PlayerControl(player, self.config)
@@ -497,7 +496,6 @@ class MainUi(QtWidgets.QMainWindow):
             msg = 'Error: Cannot load new file.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
-            # TODO: Reset GUI / reset to defaultjob
 
     def handleKnownWarnings(self, job):
         hashID = False
@@ -646,7 +644,6 @@ class MainUi(QtWidgets.QMainWindow):
 
                 state = job.getState()
                 iRow = self.queueAddRow(job.getID(), job.getTgtFileNameLong(), self.getJobStateString(state))
-                # Position wird bereits in save_current_job gesetzt
                 self.runNextWaitJob()
             except Exception as e:
                 msg = 'Error: Cannot add session to job queue.'
@@ -761,7 +758,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.framePlayerBtns.setEnabled(state)
         self.framePlayerProgress.setEnabled(state)
 
-    # Convert time string (0:00:0.0) to datetime object
     def timeStringToTime(self, timeStr):
         date_time_obj = datetime.datetime.strptime(timeStr, '%H:%M:%S.%f')
         return date_time_obj
@@ -819,20 +815,19 @@ class MainUi(QtWidgets.QMainWindow):
             self.cropOverlay.update_geometry()
 
     def keyPressEvent(self, event):
-        if self.isActiveWindow() and event.key() == Qt.Key_Control and not event.isAutoRepeat():
+        if self.isActiveWindow() and event.key() == Qt.Key.Key_Control and not event.isAutoRepeat():
             if self.btnFilterCrop.isChecked() and self.videoProps:
                 self.cropOverlay.start_interaction()
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
-        if event.key() == Qt.Key_Control and not event.isAutoRepeat():
+        if event.key() == Qt.Key.Key_Control and not event.isAutoRepeat():
             if self.cropOverlay.is_cropping_active:
                 self.cropOverlay.stop_interaction()
         super().keyReleaseEvent(event)
 
     def closeEvent(self, event):
         '''Qt close event. Gets called when application closing is triggered'''
-        # Todo: Check if job rendering
         if self.ffmpegProcess and self.config.getAppWarnCloseWhileRender():
             if not self.showMsgBox('A job is currently rendering.', infoText='Really quit?', btns='yesno', icon='question'):
                 event.ignore()
@@ -857,16 +852,15 @@ class MainUi(QtWidgets.QMainWindow):
             event.ignore()
 
     def dropEvent(self, event):
-        self.setFocus(Qt.OtherFocusReason)
+        self.setFocus(Qt.FocusReason.OtherFocusReason)
         self.activateWindow()
         self.raise_()
         if event.mimeData().hasUrls:
-            event.setDropAction(Qt.CopyAction)
+            event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
             links = []
             for url in event.mimeData().urls():
                 links.append(str(url.toLocalFile()))
-            # self.emit(SIGNAL("dropped"), links[0])
             self.newFile(links[0])
         else:
             event.ignore()
@@ -976,7 +970,7 @@ class MainUi(QtWidgets.QMainWindow):
         job = self.jobs.get_current_job()
         job.setFilterCropState(self.btnFilterCrop.isChecked())
         if not self.btnFilterCrop.isChecked():
-            self.log(1, "[DEBUG] Crop button unchecked, stopping interaction.") # DEBUG LOG
+            self.log(1, "[DEBUG] Crop button unchecked, stopping interaction.")
             self.cropOverlay.stop_interaction()
         self.setVideoFilter()
 
@@ -1219,7 +1213,7 @@ class MainUi(QtWidgets.QMainWindow):
         else: # Multiple jobs selected
             selected_jobs = self.getSelectedJobs()
 
-            actionOpenFolders = QtWidgets.QAction('Open folders', self)
+            actionOpenFolders = QAction('Open folders', self)
             actionOpenFolders.triggered.connect(self.onQueueCtxActionOpenFolders)
             menu.addAction(actionOpenFolders)
 
@@ -1228,7 +1222,7 @@ class MainUi(QtWidgets.QMainWindow):
             # Reset Jobs Action
             resettable_jobs = [j for j in selected_jobs if j.getState() in [1, 3]]
             count_resettable = len(resettable_jobs)
-            actionReset = QtWidgets.QAction('Reset Jobs', self)
+            actionReset = QAction('Reset Jobs', self)
             if count_resettable > 0:
                 actionReset.setText(f'Reset {count_resettable} Jobs')
                 actionReset.triggered.connect(lambda: self.onQueueCtxActionResetJobs(resettable_jobs))
@@ -1239,7 +1233,7 @@ class MainUi(QtWidgets.QMainWindow):
             # Cancel Jobs Action
             cancellable_jobs = [j for j in selected_jobs if j.getState() == 4]
             count_cancellable = len(cancellable_jobs)
-            actionCancel = QtWidgets.QAction('Cancel Jobs', self)
+            actionCancel = QAction('Cancel Jobs', self)
             if count_cancellable > 0:
                 actionCancel.setText(f'Cancel {count_cancellable} Jobs')
                 actionCancel.triggered.connect(lambda: self.onQueueCtxActionCancelJobs(cancellable_jobs))
@@ -1250,7 +1244,7 @@ class MainUi(QtWidgets.QMainWindow):
             # Resume Jobs Action
             resumable_jobs = [j for j in selected_jobs if j.getState() == 2]
             count_resumable = len(resumable_jobs)
-            actionResume = QtWidgets.QAction('Resume Jobs', self)
+            actionResume = QAction('Resume Jobs', self)
             if count_resumable > 0:
                 actionResume.setText(f'Resume {count_resumable} Jobs')
                 actionResume.triggered.connect(lambda: self.onQueueCtxActionResumeJobs(resumable_jobs))
@@ -1260,11 +1254,11 @@ class MainUi(QtWidgets.QMainWindow):
 
             menu.addSeparator()
 
-            actionMoveTop = QtWidgets.QAction('Move to top', self)
+            actionMoveTop = QAction('Move to top', self)
             actionMoveTop.triggered.connect(self.onQueueCtxActionMoveTopMulti)
             menu.addAction(actionMoveTop)
 
-            actionMoveBottom = QtWidgets.QAction('Move to bottom', self)
+            actionMoveBottom = QAction('Move to bottom', self)
             actionMoveBottom.triggered.connect(self.onQueueCtxActionMoveBottomMulti)
             menu.addAction(actionMoveBottom)
 
@@ -1447,9 +1441,9 @@ class MainUi(QtWidgets.QMainWindow):
         jobID, iRow = self.queueGetJobIDFromRow()
         job = self.jobs.get_job(jobID)
         dialog = EditDBUI(self, job)
-        result = dialog.exec_()
+        result = dialog.exec()
 
-        if result == QDialog.Accepted and self.historyMode:
+        if result == QtWidgets.QDialog.DialogCode.Accepted and self.historyMode:
             currentJob = self.jobs.get_current_job()
             if currentJob.getTgtFilePathLong() == job.getTgtFilePathLong():
                 self.log(1, "Refreshing Tag & Rate panel to reflect DB changes.")
@@ -1553,6 +1547,10 @@ class MainUi(QtWidgets.QMainWindow):
             else:
                 self.progressBarRender.setMaximum(totalSeconds)
                 self.progressBarRender.setValue(currentSecond)
+        elif line[0] == 'pass_info':
+            try:
+                self.labelRenderSpeed.setText(line[1])
+            except: pass
 
     # Event handler when ffmpeg exits rendering
     @pyqtSlot('PyQt_PyObject')
@@ -1639,36 +1637,36 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         msgBox = QMessageBox()
         self.lastMsgBox = msgBox
-        if icon == "info":  msgBox.setIcon(QMessageBox.Information)
-        elif icon == "question":  msgBox.setIcon(QMessageBox.Question)
-        elif icon == "warning":  msgBox.setIcon(QMessageBox.Warning)
-        elif icon == "critical":  msgBox.setIcon(QMessageBox.Critical)
+        if icon == "info":  msgBox.setIcon(QMessageBox.Icon.Information)
+        elif icon == "question":  msgBox.setIcon(QMessageBox.Icon.Question)
+        elif icon == "warning":  msgBox.setIcon(QMessageBox.Icon.Warning)
+        elif icon == "critical":  msgBox.setIcon(QMessageBox.Icon.Critical)
         msgBox.setText(msg)
         if infoText != '': msgBox.setInformativeText(infoText)
         msgBox.setWindowTitle(title)
         if detailText != '': msgBox.setDetailedText(detailText)
-        if btns == 'okcancel': msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        elif btns == 'save': msgBox.setStandardButtons(QMessageBox.Save)
-        elif btns == 'savecancel': msgBox.setStandardButtons(QMessageBox.Save | QMessageBox.Cancel)
-        elif btns == 'yesno': msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        elif btns == 'retry': msgBox.setStandardButtons(QMessageBox.Retry)
-        elif btns == 'retryabort': msgBox.setStandardButtons(QMessageBox.Retry | QMessageBox.Abort)
-        elif btns == 'close': msgBox.setStandardButtons(QMessageBox.Close)
-        else: msgBox.setStandardButtons(QMessageBox.Ok)
+        if btns == 'okcancel': msgBox.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+        elif btns == 'save': msgBox.setStandardButtons(QMessageBox.StandardButton.Save)
+        elif btns == 'savecancel': msgBox.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Cancel)
+        elif btns == 'yesno': msgBox.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        elif btns == 'retry': msgBox.setStandardButtons(QMessageBox.StandardButton.Retry)
+        elif btns == 'retryabort': msgBox.setStandardButtons(QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Abort)
+        elif btns == 'close': msgBox.setStandardButtons(QMessageBox.StandardButton.Close)
+        else: msgBox.setStandardButtons(QMessageBox.StandardButton.Ok)
         for extraBtn in extraBtns:
             if 'text' in extraBtn:
-                btn = msgBox.addButton(extraBtn['text'], msgBox.ActionRole)
+                btn = msgBox.addButton(extraBtn['text'], QMessageBox.ButtonRole.ActionRole)
                 btn.disconnect()
                 if 'callback' in extraBtn and extraBtn['callback']: btn.clicked.connect(extraBtn['callback'])
-        result = msgBox.exec_()
-        if(result == QMessageBox.Ok): return True
-        elif(result == QMessageBox.Cancel): return False
-        elif(result == QMessageBox.Yes): return True
-        elif(result == QMessageBox.No): return False
-        elif(result == QMessageBox.Save): return True
-        elif(result == QMessageBox.Retry): return True
-        elif(result == QMessageBox.Abort): return False
-        elif(result == QMessageBox.Close): return False
+        result = msgBox.exec()
+        if(result == QMessageBox.StandardButton.Ok): return True
+        elif(result == QMessageBox.StandardButton.Cancel): return False
+        elif(result == QMessageBox.StandardButton.Yes): return True
+        elif(result == QMessageBox.StandardButton.No): return False
+        elif(result == QMessageBox.StandardButton.Save): return True
+        elif(result == QMessageBox.StandardButton.Retry): return True
+        elif(result == QMessageBox.StandardButton.Abort): return False
+        elif(result == QMessageBox.StandardButton.Close): return False
         return False
 
     def buildTagsTree(self, currTagID):
@@ -1686,7 +1684,7 @@ class MainUi(QtWidgets.QMainWindow):
                 item = QListWidgetItem('%s%s' % (self.tagsTreeItemPrefix, tag['label']))
                 item.setToolTip('TagID: %s' % tag['tagID'])
                 fontWeight = -1
-                if tag['parentID'] == -1: fontWeight = QFont.Bold
+                if tag['parentID'] == -1: fontWeight = QFont.Weight.Bold.value
                 item.setFont(QFont('Noto Sans', 8, weight=fontWeight))
                 self.listWidgetTagsTree.addItem(item)
                 item.setHidden(self.tagOrParentTagsHaveFilter(tag))
@@ -2541,7 +2539,7 @@ class MainUi(QtWidgets.QMainWindow):
         for row in selected_rows:
             selection_model.select(
                 self.tableQueue.model().index(row + direction, 0),
-                QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Rows
+                QtCore.QItemSelectionModel.SelectionFlag.Select | QtCore.QItemSelectionModel.SelectionFlag.Rows
             )
 
     def queuePlayFile(self):
@@ -2574,18 +2572,18 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnQueuePause.setText('契')
             self.btnQueuePause.setToolTip('Resume job processing')
             self.config.setQueueIsPaused(True)
-            if self.ffmpegProcess:
-                os.kill(self.ffmpegProcess.pid, signal.SIGSTOP)
+            if hasattr(self, 'FFmpegThread') and self.FFmpegThread and self.FFmpegThread.isRunning():
+                self.FFmpegThread.pause(True)
                 job = self.getNextRenderingJob()
-                self.updateQueueJobState(job.getID(), 5)
+                if job: self.updateQueueJobState(job.getID(), 5)
         else:
             self.btnQueuePause.setText('')
             self.btnQueuePause.setToolTip('Pause job processing')
             self.config.setQueueIsPaused(False)
-            if self.ffmpegProcess:
-                os.kill(self.ffmpegProcess.pid, signal.SIGCONT)
+            if hasattr(self, 'FFmpegThread') and self.FFmpegThread and self.FFmpegThread.isRunning():
+                self.FFmpegThread.pause(False)
                 job = self.getNextPausedJob()
-                self.updateQueueJobState(job.getID(), 4)
+                if job: self.updateQueueJobState(job.getID(), 4)
             else:
                 self.runNextWaitJob()
 
@@ -2638,7 +2636,7 @@ class MainUi(QtWidgets.QMainWindow):
         rowCount = self.gridLayoutFilters.count()
         for i in range(rowCount):
             item = self.gridLayoutFilters.takeAt(0)
-            item.setSizeConstraint(QLayout.SetMinAndMaxSize)
+            item.setSizeConstraint(QLayout.SizeConstraint.SetMinAndMaxSize)
             item.setSpacing(6)
             items.append(item)
         return items
@@ -2735,7 +2733,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.knownUI.setTitle('Known File')
         self.playerControl.pause(True)
         self.knownUI.resize(w, h)
-        self.knownUI.exec_()
+        self.knownUI.exec()
 
     def showWarningForExistingTargetFile(self, matches) -> bool:
         '''
@@ -2748,7 +2746,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.knownUI.setIcon(text='')
         self.knownUI.setTitle('Current file found in target dir')
         self.playerControl.pause(True)
-        self.knownUI.exec_()
+        self.knownUI.exec()
 
     def showWarningForExistingTargetAndKnownFile(self, detailText, matches):
         knownFiles = self.getFileListFromCurrentHashID()
@@ -2762,7 +2760,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.knownUI.setTitle('Known File and Filename exists in target')
         self.knownUI.resize(700, 340)
         self.playerControl.pause(True)
-        self.knownUI.exec_()
+        self.knownUI.exec()
 
     def showWarningForOddVideoSourceSize(self, videoProps):
         '''
@@ -3152,13 +3150,13 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         if mode == 'sleep':
             messagebox = TimerMessageBox(timeout=5, title="Send to sleep", text="All jobs completed. Sending the PC to sleep mode.", parent=self)
-            result = messagebox.exec_()
-            if not result or result == QMessageBox.Abort: return False
+            result = messagebox.exec()
+            if not result or result == QMessageBox.StandardButton.Abort: return False
             os.system('systemctl suspend')
         elif mode == 'shutdown':
             messagebox = TimerMessageBox(timeout=5, title="Shutdown", text="All jobs completed. Shutting down the PC.", parent=self)
-            result = messagebox.exec_()
-            if not result or result == QMessageBox.Abort: return False
+            result = messagebox.exec()
+            if not result or result == QMessageBox.StandardButton.Abort: return False
             os.system('shutdown now -h')
         self.disablePowerMode()
 
@@ -3257,8 +3255,8 @@ class MainUi(QtWidgets.QMainWindow):
             QListWidget::item {
                 border-style: solid;
                 border-width: 1px;
-                border-color: """ + str(QPalette().color(QPalette.ToolTipBase).name()) + """;
-                background-color: """ + str(QPalette().color(QPalette.Base).name()) + """;
+                border-color: """ + str(QPalette().color(QPalette.ColorRole.ToolTipBase).name()) + """;
+                background-color: """ + str(QPalette().color(QPalette.ColorRole.Base).name()) + """;
                 margin: 0;
                 padding: 0;
                 line-height: 0;
@@ -3274,10 +3272,9 @@ class MainUi(QtWidgets.QMainWindow):
             }
         """)
 
-    def killFFmpegProcess(self):
-        if self.ffmpegProcess:
-            os.kill(self.ffmpegProcess.pid, signal.SIGKILL)
-            self.ffmpegKilled = True
+    def killAllFFmpegProcesses(self):
+        self.killFFmpegProcess()
+        self.log(1, "All PyAV rendering threads canceled.")
 
     def killAllFFmpegProcesses(self):
         p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
@@ -3309,4 +3306,4 @@ if os.path.exists(test_input_path) and os.path.isdir(test_input_path):
     test_file = 'test_borders.mp4'
     window.newFile('%s/%s' % (test_input_path, test_file))
 # Debug End
-app.exec_()
+app.exec()

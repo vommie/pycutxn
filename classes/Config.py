@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtCore import QSettings
+from PyQt6.QtCore import QSettings
 
 class Config:
 
@@ -38,7 +38,7 @@ class Config:
     # Config File Getters
 
     def getTargetDirs(self) -> list:
-        return self.settings.value('app/targetDirs', [], type=list)
+        return self.settings.value('app/targetDirs',[], type=list)
 
     def getAppTgtDirName(self) -> str:
         return self.settings.value('app/targetDirName', '', type=str)
@@ -125,9 +125,6 @@ class Config:
 
     def getFiltersPreview(self) -> str:
         return self.settings.value('filters/preview', True, type=bool)
-
-    # def getFiltersKeep(self) -> str:
-    #     return self.settings.value('filters/keep', True, type=bool)
 
     def getRenderVideoCodec(self) -> str:
         return self.settings.value('render/videoCodec', 'libx265', type=str)
@@ -232,9 +229,6 @@ class Config:
 
     def setFiltersDeinterlacer(self, deinterlacer : str) -> None:
         self.settings.setValue('filters/deinterlacer', deinterlacer)
-
-    # def setFiltersKeep(self, state : bool) -> None:
-    #     self.settings.setValue('filters/keep', state)
 
     def setFiltersPreview(self, state : bool) -> None:
         self.settings.setValue('filters/preview', state)

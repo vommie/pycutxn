@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import *
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtWidgets import *
 from .Functions import Functions
 
 class DirsUI(QtWidgets.QDialog):
@@ -9,7 +9,7 @@ class DirsUI(QtWidgets.QDialog):
         uic.loadUi('%s/gui/dirs.ui' % self.parent.rootDir, self)
         self.initGuiEvents()
         self.initGui()
-        self.dirs = []
+        self.dirs =[]
 
     def initGuiEvents(self):
         self.buttonBox.accepted.connect(self.onAccepted)
@@ -22,8 +22,8 @@ class DirsUI(QtWidgets.QDialog):
     def initGui(self):
         # GUI elements options
         header = self.tableDirs.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
         # Set GUI from config
         dirs = self.parent.config.getTargetDirs()
         for dirSet in dirs:

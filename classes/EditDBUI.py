@@ -1,6 +1,6 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QDialog, QListWidgetItem
-from PyQt5.QtGui import QFont, QPalette
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtWidgets import QDialog, QListWidgetItem
+from PyQt6.QtGui import QFont, QPalette
 import copy
 import traceback
 from collections import defaultdict
@@ -104,7 +104,7 @@ class EditDBUI(QDialog):
             item = QListWidgetItem(f'{prefix}{tag["label"]}')
             item.setToolTip(f'TagID: {tag["tagID"]}')
 
-            fontWeight = QFont.Bold if tag['parentID'] == -1 else -1
+            fontWeight = QFont.Weight.Bold.value if tag['parentID'] == -1 else -1
             item.setFont(QFont('Noto Sans', 8, weight=fontWeight))
 
             self.listWidgetTagsTree.addItem(item)
@@ -155,8 +155,8 @@ class EditDBUI(QDialog):
             QListWidget::item {
                 border-style: solid;
                 border-width: 1px;
-                border-color: """ + str(QPalette().color(QPalette.ToolTipBase).name()) + """;
-                background-color: """ + str(QPalette().color(QPalette.Base).name()) + """;
+                border-color: """ + str(QPalette().color(QPalette.ColorRole.ToolTipBase).name()) + """;
+                background-color: """ + str(QPalette().color(QPalette.ColorRole.Base).name()) + """;
                 margin: 0;
                 padding: 0;
                 line-height: 0;

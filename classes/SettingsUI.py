@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QFileDialog
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtWidgets import QFileDialog
 from os.path import isdir, expanduser, isfile
 
 class SettingsUI(QtWidgets.QDialog):

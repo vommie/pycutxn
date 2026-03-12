@@ -1,5 +1,4 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QDialog
+from PyQt6 import QtWidgets, uic
 
 class HashUI(QtWidgets.QDialog):
     def __init__(self, parent):

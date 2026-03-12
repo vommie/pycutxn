@@ -1,5 +1,5 @@
 import sys
-import ffmpeg # pip3 install ffmpeg-python
+import av
 import time
 import json
 
@@ -81,37 +81,47 @@ class Functions:
     @staticmethod
     def getVideoProperties(videoFilePath):
         props = {}
-        videoInfo = ffmpeg.probe(videoFilePath, cmd='ffprobe')
-        videoStream = next((stream for stream in videoInfo['streams'] if stream['codec_type'] == 'video'), None)
-        audioStream = next((stream for stream in videoInfo['streams'] if stream['codec_type'] == 'audio'), None)
-        format = videoInfo['format']
         try:
-            # Get dimensions
-            width = int(videoStream['width'])
-            height = int(videoStream['height'])
-            if width and height:
-                props.update({'width' : width})
-                props.update({'height' : height})
-            # Get duration
-            duration = False
-            if 'duration' in format: duration = format['duration']
-            elif 'duration' in videoStream: duration = videoStream['duration']
-            elif 'tags' in videoStream and 'DURATION' in videoStream['tags']: duration = videoStream['tags']['DURATION']
-            if duration and not ':' in duration:
-                try:
-                    float(duration)
-                    duration = '%s.%s' % (time.strftime('%H:%M:%S', time.gmtime(float(duration))), duration[-6:][:3]) # ms to h:m:s.ms
-                except: pass
-            props.update({'durationHMS': duration})
-            if audioStream: props.update({'hasAudio': True})
-            else: props.update({'hasAudio': False})
-        except:
+            with av.open(videoFilePath) as container:
+                video_stream = next((s for s in container.streams if s.type == 'video'), None)
+                audio_stream = next((s for s in container.streams if s.type == 'audio'), None)
+
+                if video_stream and video_stream.codec_context:
+                    props['width'] = video_stream.codec_context.width
+                    props['height'] = video_stream.codec_context.height
+
+                duration = container.duration
+                if duration is not None:
+                    duration_sec = duration / av.time_base
+                    ms = int((duration_sec % 1) * 1000)
+                    time_hms = time.strftime('%H:%M:%S', time.gmtime(duration_sec))
+                    props['durationHMS'] = f"{time_hms}.{ms:03d}"
+
+                props['hasAudio'] = audio_stream is not None
+        except Exception as e:
             props = {}
         return props
 
+
     @staticmethod
     def getVideoCodecInfo(videoFilePath):
-        output = ''
-        output = '{o}Video properties:\n{p}'.format(o=output, p=json.dumps(Functions.getVideoProperties(videoFilePath), indent=2))
-        output = '{o}\n\nffprobe output:\n{a}'.format(o=output, a=json.dumps(ffmpeg.probe(videoFilePath, cmd='ffprobe'), indent=2))
+        output = "Video properties:\n"
+        try:
+            props = Functions.getVideoProperties(videoFilePath)
+            output += str(props) + "\n\nPyAV Stream Info:\n"
+            with av.open(videoFilePath) as container:
+                for i, stream in enumerate(container.streams):
+                    output += f"Stream {i} ({stream.type}):\n"
+                    if stream.codec_context:
+                        output += f"  Codec: {stream.codec_context.name}\n"
+                        if stream.type == 'video':
+                            output += f"  Resolution: {stream.codec_context.width}x{stream.codec_context.height}\n"
+                            output += f"  Framerate: {stream.average_rate}\n"
+                            output += f"  Pixel Format: {stream.codec_context.pix_fmt}\n"
+                        elif stream.type == 'audio':
+                            output += f"  Sample Rate: {stream.codec_context.sample_rate} Hz\n"
+                            output += f"  Channels: {stream.codec_context.channels}\n"
+                    output += f"  Bitrate: {stream.bit_rate}\n\n"
+        except Exception as e:
+            output += "Error probing with PyAV:\n" + str(e)
         return output

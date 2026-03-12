@@ -1,9 +1,9 @@
 # ./classes/CropOverlay.py
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QPainter, QPen, QColor, QBrush, QPolygonF
-from PyQt5.QtCore import Qt, QRect, QPoint, QPointF
+from PyQt6 import QtCore, QtGui
+from PyQt6.QtWidgets import QWidget
+from PyQt6.QtGui import QPainter, QPen, QColor, QBrush, QPolygonF
+from PyQt6.QtCore import Qt, QRect, QPoint, QPointF
 
 class CropOverlay(QWidget):
     def __init__(self, render_frame_widget, main_ui):
@@ -13,15 +13,15 @@ class CropOverlay(QWidget):
         self.main_ui = main_ui
 
         self.setWindowFlags(
-            Qt.FramelessWindowHint |
-            Qt.WindowStaysOnTopHint |
-            Qt.Tool
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.Tool
         )
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setAttribute(Qt.WA_NoSystemBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
 
         self.setMouseTracking(True)
-        self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
 
         self.is_cropping_active = False
         self.is_dragging = False
@@ -62,7 +62,7 @@ class CropOverlay(QWidget):
 
     def keyReleaseEvent(self, event):
         """Handles key release even when the overlay has focus."""
-        if event.key() == Qt.Key_Control and not event.isAutoRepeat():
+        if event.key() == Qt.Key.Key_Control and not event.isAutoRepeat():
             self.stop_interaction()
         super().keyReleaseEvent(event)
 
@@ -185,12 +185,12 @@ class CropOverlay(QWidget):
         self.current_line_pos = pos
 
     def mousePressEvent(self, event):
-        if self.is_cropping_active and self.crop_orientation and event.button() == Qt.LeftButton:
+        if self.is_cropping_active and self.crop_orientation and event.button() == Qt.MouseButton.LeftButton:
             self.is_dragging = True
             self.start_drag_pos = event.pos()
 
     def mouseReleaseEvent(self, event):
-        if self.is_dragging and event.button() == Qt.LeftButton:
+        if self.is_dragging and event.button() == Qt.MouseButton.LeftButton:
             video_rect = self._get_video_geometry()
             if not video_rect.isValid() or video_rect.width() == 0 or video_rect.height() == 0:
                 self.is_dragging = False
@@ -241,10 +241,10 @@ class CropOverlay(QWidget):
             return
 
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         pen_color = QColor(255, 255, 0, 200)
-        pen = QPen(pen_color, 2, Qt.SolidLine)
+        pen = QPen(pen_color, 2, Qt.PenStyle.SolidLine)
         painter.setPen(pen)
 
         video_rect = self._get_video_geometry()
@@ -258,7 +258,7 @@ class CropOverlay(QWidget):
         elif self.crop_orientation in ['left', 'right']:
             painter.drawLine(clamped_pos_x, video_rect.top(), clamped_pos_x, video_rect.bottom())
 
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(pen_color))
 
         arrow = QPolygonF()

@@ -1,6 +1,5 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QDialog
-from .Functions import Functions
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtWidgets import QDialog
 
 class RatingUI(QtWidgets.QDialog):
     def __init__(self, parent):
@@ -26,7 +25,7 @@ class RatingUI(QtWidgets.QDialog):
         self._rating = 0
 
     def customExec(self):
-        self.exec_()
+        self.exec()
         rating = self._rating
         self.reset_ui()
         return rating

@@ -1,6 +1,5 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import *
-from .Functions import Functions
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtWidgets import *
 
 class TagsFilterUI(QtWidgets.QDialog):
     def __init__(self, parent):

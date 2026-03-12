@@ -1,5 +1,5 @@
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QStyleOptionSlider, QStyle
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtWidgets import QStyleOptionSlider, QStyle
 
 class PlayerSlider(QtWidgets.QSlider):
     '''
@@ -9,7 +9,7 @@ class PlayerSlider(QtWidgets.QSlider):
 
     def mousePressEvent(self, event):
         self.pressed = True
-        if event.button() == QtCore.Qt.LeftButton:
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
             val = self.pixelPosToRangeValue(event.pos())
             self.setValue(val)
 
@@ -18,7 +18,7 @@ class PlayerSlider(QtWidgets.QSlider):
 
     def mouseMoveEvent(self, event):
         self.pressed = True
-        if event.buttons() == QtCore.Qt.LeftButton:
+        if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
             val = self.pixelPosToRangeValue(event.pos())
             self.setValue(val)
 
@@ -31,9 +31,9 @@ class PlayerSlider(QtWidgets.QSlider):
     def pixelPosToRangeValue(self, pos):
         opt = QStyleOptionSlider()
         self.initStyleOption(opt)
-        gr = self.style().subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderGroove, self)
-        sr = self.style().subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderHandle, self)
-        if self.orientation() == QtCore.Qt.Horizontal:
+        gr = self.style().subControlRect(QtWidgets.QStyle.ComplexControl.CC_Slider, opt, QtWidgets.QStyle.SubControl.SC_SliderGroove, self)
+        sr = self.style().subControlRect(QtWidgets.QStyle.ComplexControl.CC_Slider, opt, QtWidgets.QStyle.SubControl.SC_SliderHandle, self)
+        if self.orientation() == QtCore.Qt.Orientation.Horizontal:
             sliderLength = sr.width()
             sliderMin = gr.x()
             sliderMax = gr.right() - sliderLength + 1
@@ -42,5 +42,5 @@ class PlayerSlider(QtWidgets.QSlider):
             sliderMin = gr.y()
             sliderMax = gr.bottom() - sliderLength + 1
         pr = pos - sr.center() + sr.topLeft()
-        p = pr.x() if self.orientation() == QtCore.Qt.Horizontal else pr.y()
+        p = pr.x() if self.orientation() == QtCore.Qt.Orientation.Horizontal else pr.y()
         return QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), p - sliderMin, sliderMax - sliderMin, opt.upsideDown)
