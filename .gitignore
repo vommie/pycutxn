@@ -50,13 +50,15 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
-jobs.json
-config.json
 *.bak
+*.json
 
-schema.txt
-scripts.txt
-crawler.py
+*.txt
 schema.py
+mpv.py
+dups.py
+libs/
+*.html
+*.pylintrc
 
 .vscode
