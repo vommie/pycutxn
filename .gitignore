@@ -53,12 +53,12 @@ docs/_build/
 *.bak
 *.json
 
-*.txt
+notes.txt
 schema.py
 mpv.py
 dups.py
 libs/
 *.html
 *.pylintrc
-
+dups_doplhin_contextmenu/
 .vscode
