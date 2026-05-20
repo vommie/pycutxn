@@ -60,5 +60,5 @@ dups.py
 libs/
 *.html
 *.pylintrc
-dups_doplhin_contextmenu/
+dups_doplhin_contextmenu
 .vscode
