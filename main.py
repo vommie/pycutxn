@@ -431,7 +431,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def newFile(self, videoFilePath = False):
         '''
-        Loads a file as new curent job into PyCut. (Re)sets the GUI.
+        Loads a file as new curent job into PyCutXn. (Re)sets the GUI.
 
         :param videoFilePath: The path to the video file to open. If not set, the currently selected job in the queue gets loaded.
         '''
@@ -455,7 +455,7 @@ class MainUi(QtWidgets.QMainWindow):
                 job = self.jobs.get_current_job()
                 self.setCurrTgtDir()
             prevFilters = self.jobs.get_current_job().getFilters()
-            self.setWindowTitle('%s (%s) - pyCut' % (job.getSrcFileNameLong(), job.getSrcDirName()))
+            self.setWindowTitle('%s (%s) - pyCutXn' % (job.getSrcFileNameLong(), job.getSrcDirName()))
             self.log(1, 'Source path: "%s".' % videoFilePath)
             # Get Video Props
             self.videoProps = Functions.getVideoProperties(videoFilePath)
@@ -1623,7 +1623,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     # GUI Control
 
-    def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCut Message', extraBtns=()):
+    def showMsgBox(self, msg, btns="ok", icon="info", infoText='', detailText='', title='PyCutXn Message', extraBtns=()):
         '''
         Shows a QMessageBox dialog.
 
@@ -2796,7 +2796,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def isCurrentFileKnown(self):
         '''
-        Checks if the currently source file was already opened in PyCut in the past
+        Checks if the currently source file was already opened in PyCutXn in the past
 
         :return: HashID and Date if the file is known, else False, False.
         '''
@@ -2814,7 +2814,7 @@ class MainUi(QtWidgets.QMainWindow):
         if hash is False:
             msg = 'Error: The source file cannot be hashed.'
             self.log(1, msg, 1)
-            self.showMsgBox(msg, infoText='It is not known if this file was not edited in the past with PyCut.', icon='warning')
+            self.showMsgBox(msg, infoText='It is not known if this file was not edited in the past with PyCutXn.', icon='warning')
             return False, False
 
         try:
@@ -3294,16 +3294,4 @@ class MainUi(QtWidgets.QMainWindow):
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainUi()
-# Debug Start
-test_input_path = '/home/vommie/videos/pycut/input'
-if os.path.exists(test_input_path) and os.path.isdir(test_input_path):
-    test_file = 'test_color.mp4'
-    test_file = 'test_shake.mp4'
-    test_file = 'decoding_issues.m4v'
-    test_file = 'noaudio.mp4'
-    test_file = 'test_interlace.avi'
-    test_file = 'test_borders2.mp4'
-    test_file = 'test_borders.mp4'
-    window.newFile('%s/%s' % (test_input_path, test_file))
-# Debug End
 app.exec()

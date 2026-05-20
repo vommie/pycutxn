@@ -18,7 +18,7 @@ from .Functions import Functions
 # Color INT DEFAULT 0
 # Meta BLOB
 # UNIQUE (Filename, FolderID))
-# HashID INT (Added by Pycut)
+# HashID INT (Added by PycutXn)
 #
 # Tags:
 # TagID INT PRIMARY KEY
@@ -35,7 +35,7 @@ from .Functions import Functions
 # TagID INT NOT NULL REFERENCES Tags(TagID)
 # UNIQUE(ImageID, TagID)
 #
-# Hashes (Added by PyCut):
+# Hashes (Added by PyCutXn):
 # HashID INT PRIMARY KEY AUTOINCREMENT
 # Hash TEXT NOT NULL UNIQUE
 # DateTime TEXT

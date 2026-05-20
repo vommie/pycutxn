@@ -4,7 +4,7 @@ from PyQt6.QtCore import QSettings
 class Config:
 
     ORGANIZATION_NAME = 'vommie'
-    APP_NAME = 'PyCut'
+    APP_NAME = 'PyCutXn'
 
     def __init__(self):
         self.settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)

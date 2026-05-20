@@ -43,7 +43,7 @@ class FFmpegThread(QThread):
 
     def _log(self, msg):
         timestamp = time.strftime("%H:%M:%S")
-        log_msg = f"[DEBUG PyCut FFmpegThread {timestamp}] {msg}"
+        log_msg = f"[DEBUG PyCutXn FFmpegThread {timestamp}] {msg}"
         print(log_msg)
         sys.stdout.flush()
         self._debug_logs.append(log_msg)
