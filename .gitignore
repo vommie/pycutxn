@@ -62,3 +62,4 @@ libs/
 *.pylintrc
 dups_doplhin_contextmenu
 .vscode
+generate.py
