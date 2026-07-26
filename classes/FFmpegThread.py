@@ -9,44 +9,37 @@ import platform
 import sys
 import logging
 import gc
-import subprocess
+import ctypes
 from fractions import Fraction
 from PyQt6.QtCore import pyqtSignal, QThread
 
-av.logging.set_level(av.logging.TRACE)
-
-class DirectFFmpegHandler(logging.Handler):
-    def emit(self, record):
-        msg = self.format(record)
-        print(f"[FFMPEG] {msg}")
-        sys.stdout.flush()
-
-libav_logger = logging.getLogger('libav')
-libav_logger.setLevel(logging.DEBUG)
-libav_logger.handlers.clear()
-direct_handler = DirectFFmpegHandler()
-direct_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-libav_logger.addHandler(direct_handler)
+os.environ["PYAV_LOGGING"] = "off"
+try:
+    av.logging.set_level(None)
+    av.logging.restore_default_callback()
+except Exception:
+    pass
 
 class FFmpegThread(QThread):
     ffmpegStart = pyqtSignal('PyQt_PyObject')
     ffmpegProcess = pyqtSignal('PyQt_PyObject')
     ffmpegExit = pyqtSignal('PyQt_PyObject')
+    ffmpegLog = pyqtSignal('PyQt_PyObject')
 
     def __init__(self, job, configPath):
+        super().__init__()
         self.job = job
         self.configPath = configPath
         self._is_canceled = False
         self._is_paused = False
-        self._debug_logs =[]
-        QThread.__init__(self)
+        self._debug_logs = []
 
     def _log(self, msg):
         timestamp = time.strftime("%H:%M:%S")
-        log_msg = f"[DEBUG PyCutXn FFmpegThread {timestamp}] {msg}"
-        print(log_msg)
+        log_msg = f"[{timestamp}] {msg}"
         sys.stdout.flush()
         self._debug_logs.append(log_msg)
+        self.ffmpegLog.emit(log_msg)
 
     def cancel(self):
         self._is_canceled = True
@@ -59,50 +52,33 @@ class FFmpegThread(QThread):
     def __del__(self):
         try:
             self.wait()
-        except:
+        except Exception:
             pass
-
-    def get_safe_ffmpeg_path(self, filepath):
-        p = str(filepath)
-        p = p.replace('\\', '/')
-        return p
 
     def _force_c_locale(self):
         try:
             locale.setlocale(locale.LC_NUMERIC, 'C')
             os.environ["LC_NUMERIC"] = "C"
-            self._log("Successfully enforced 'C' locale for safe float parsing.")
+            try:
+                libc = ctypes.CDLL(None)
+                libc.setlocale(1, b"C")
+            except Exception:
+                pass
         except Exception as e:
             self._log(f"Warning: Could not enforce 'C' locale: {e}")
-
-    def _check_vidstab_availability(self):
-        try:
-            result = subprocess.run(["ffmpeg", "-filters"], capture_output=True, text=True)
-            if "vidstab" not in result.stdout:
-                self._log("System FFmpeg is NOT compiled with libvidstab! Check installation.")
-                return False
-
-            g = av.filter.Graph()
-            g.add('vidstabdetect', result='dummy.trf')
-            g.add('vidstabtransform', input='dummy.trf')
-            self._log("vid.stab filters are natively available in PyAV.")
-            return True
-        except Exception as e:
-            self._log(f"vid.stab filter check failed: {e}")
-            return False
 
     def run(self):
         self._force_c_locale()
 
-        self._log("=== SYSTEM INFO DUMP ===")
-        self._log(f"OS: {platform.system()} {platform.release()} {platform.version()} {platform.machine()}")
-        self._log(f"Python: {sys.version.replace(chr(10), ' ')}")
-        self._log(f"PyAV Version: {av.__version__}")
-        try:
-            self._log(f"PyAV Library Versions: {av.library_versions}")
-        except Exception as e:
-            self._log(f"PyAV Library Versions: unavailable ({e})")
-        self._log("========================")
+        # self._log("=== SYSTEM INFO DUMP ===")
+        # self._log(f"OS: {platform.system()} {platform.release()} {platform.version()} {platform.machine()}")
+        # self._log(f"Python: {sys.version.replace(chr(10), ' ')}")
+        # self._log(f"PyAV Version: {av.__version__}")
+        # try:
+        #     self._log(f"PyAV Library Versions: {av.library_versions}")
+        # except Exception as e:
+        #     self._log(f"PyAV Library Versions: unavailable ({e})")
+        # self._log("========================")
 
         job = self.job
         deshakeFile = False
@@ -113,7 +89,8 @@ class FFmpegThread(QThread):
         if not os.path.isfile(srcPath):
             err = f'Input file "{srcPath}" does not exist.'
             self._log(err)
-            self.ffmpegExit.emit([job, 1, b'', err.encode('utf-8'), deshakeFile])
+            full_log = "\n".join(self._debug_logs)
+            self.ffmpegExit.emit([job, 1, b'', err.encode('utf-8'), deshakeFile, full_log])
             return
 
         try:
@@ -123,9 +100,6 @@ class FFmpegThread(QThread):
                 raise Exception("Probing the target file failed. File might be corrupted.")
 
             deshake_state = job.getFilterDeshakeState()
-            if deshake_state and not self._check_vidstab_availability():
-                raise Exception("vidstab filters missing! Please disable Deshake.")
-
             render_passes = 2 if deshake_state else 1
             sections = job.getSections()
             if not sections:
@@ -141,6 +115,8 @@ class FFmpegThread(QThread):
                 deshakeFile = os.path.abspath(os.path.join(self.configPath, f'job_{job.getID()}_transforms.trf'))
                 self._log(f"Deshake TRF file will be saved at: {deshakeFile}")
 
+            start_time_render = time.time()
+
             for render_pass in range(1, render_passes + 1):
                 if self._is_canceled: break
 
@@ -151,19 +127,25 @@ class FFmpegThread(QThread):
                 self.ffmpegProcess.emit([['pass_info', f'Pass {render_pass}/{render_passes}'], self.job, overall_total_seconds])
                 self._run_pass(srcPath, tgtPath, sections, render_pass, render_passes, deshake_state, deshakeFile, videoProps, totalSeconds, overall_total_seconds)
 
+            elapsed = time.time() - start_time_render
+            self._log(f"Render completed in {elapsed:.2f} seconds.")
+
+            full_log = "\n".join(self._debug_logs)
+
             if self._is_canceled:
                 if os.path.exists(tgtPath):
-                    os.remove(tgtPath)
-                self.ffmpegExit.emit([job, 1, b'', b'Render process canceled by user.', deshakeFile])
+                    try: os.remove(tgtPath)
+                    except Exception: pass
+                self.ffmpegExit.emit([job, 1, b'', b'Render process canceled by user.', deshakeFile, full_log])
             else:
-                self.ffmpegExit.emit([job, 0, b'Render complete', b'', deshakeFile])
+                self.ffmpegExit.emit([job, 0, b'Render complete', b'', deshakeFile, full_log])
 
         except Exception as e:
             full_traceback = traceback.format_exc()
             self._log(f"Critical error in FFmpegThread:\n{full_traceback}")
-            debug_info = "\n".join(self._debug_logs)
-            err_msg = f"Error:\n{full_traceback}\n\n--- DEBUG LOGS ---\n{debug_info}".encode('utf-8')
-            self.ffmpegExit.emit([job, 1, b'', err_msg, deshakeFile])
+            full_log = "\n".join(self._debug_logs)
+            err_msg = f"Error:\n{full_traceback}\n\n--- DEBUG LOGS ---\n{full_log}".encode('utf-8')
+            self.ffmpegExit.emit([job, 1, b'', err_msg, deshakeFile, full_log])
 
     def _build_video_graph(self, attempt_config, v_in_stream, is_final_pass, deshake_state, current_pass, deshakeFile):
         self._log(f"Building video filter graph (Pass {current_pass}, Final: {is_final_pass}) with Config: {attempt_config['name']}")
@@ -207,7 +189,10 @@ class FFmpegThread(QThread):
 
             if f_type == 'deshake' and deshake_state:
                 if current_pass == 1:
-                    kwargs = {'result': str(deshakeFile)}
+                    kwargs = {
+                        'result': str(deshakeFile),
+                        'fileformat': 'ascii'
+                    }
                     if attempt_config['vidstab_args_type'] == 'full':
                         kwargs.update({'stepsize': '16', 'shakiness': '7', 'accuracy': '10'})
                     elif attempt_config['vidstab_args_type'] == 'safe':
@@ -219,11 +204,15 @@ class FFmpegThread(QThread):
                     break
 
                 elif current_pass == 2:
+                    fmt_in = v_graph.add('format', pix_fmts='yuv420p')
+                    last_node.link_to(fmt_in)
+                    last_node = fmt_in
+
                     kwargs = {'input': str(deshakeFile)}
                     if attempt_config['vidstab_args_type'] == 'full':
                         kwargs.update({'smoothing': '15', 'optzoom': '1', 'interpol': 'bicubic'})
                     elif attempt_config['vidstab_args_type'] == 'safe':
-                        kwargs.update({'smoothing': '10', 'optzoom': '1', 'interpol': 'bilinear'})
+                        kwargs.update({'smoothing': '10', 'optzoom': '0', 'interpol': 'bilinear'})
                     self._log(f"Adding vidstabtransform with kwargs: {kwargs}")
                     node = v_graph.add('vidstabtransform', **kwargs)
                     last_node.link_to(node)
@@ -286,12 +275,7 @@ class FFmpegThread(QThread):
         v_graph, v_src, v_sink = None, None, None
         a_graph, a_src, a_fmt_node, a_sink = None, None, None, None
 
-        packet_queue =[]
-        frame = None
-        out_frame = None
-        packet = None
-        enc_packet = None
-        out_a_frame = None
+        packet_queue = []
         frames_processed_pass = 0
 
         try:
@@ -320,14 +304,6 @@ class FFmpegThread(QThread):
                 size = os.path.getsize(deshakeFile)
                 self._log(f"TRF file found for Pass 2. Size: {size} bytes")
 
-                try:
-                    with open(deshakeFile, 'rb') as f:
-                        head = f.read(64)
-                        self._log(f"TRF HEX DUMP (first 64 bytes): {head.hex().upper()}")
-                        ascii_text = ''.join(chr(b) if 32 <= b <= 126 else '.' for b in head)
-                        self._log(f"TRF ASCII DUMP: {ascii_text}")
-                except Exception as e:
-                    self._log(f"Failed to read TRF file for debug: {e}")
 
             out_v_stream = None
             out_a_stream = None
@@ -343,7 +319,7 @@ class FFmpegThread(QThread):
                     out_a_stream = out_container.add_stream(self.job.getRenderSettingAudioCodec(), rate=a_rate)
                     out_a_stream.bit_rate = int(self.job.getRenderSettingAudioBitrate()) * 1000
 
-            attempts =[
+            attempts = [
                 {'name': '1. Standard Escaping + Tuning', 'vidstab_args_type': 'full', 'use_unsharp': True},
                 {'name': '2. Safe Fallback', 'vidstab_args_type': 'safe', 'use_unsharp': False},
                 {'name': '3. Minimal Fallback', 'vidstab_args_type': 'minimal', 'use_unsharp': False},
@@ -359,6 +335,11 @@ class FFmpegThread(QThread):
                 except Exception as e:
                     self._log(f"Graph configuration {idx+1}/3 failed: {e}")
                     last_graph_error = e
+
+                    if v_graph and hasattr(v_graph, 'nodes'):
+                        for node in v_graph.nodes:
+                            try: node.graph = None
+                            except Exception: pass
 
                     del v_graph, v_src, v_sink
                     v_graph, v_src, v_sink = None, None, None
@@ -377,11 +358,7 @@ class FFmpegThread(QThread):
                 except AttributeError:
                     a_channels = len(a_ctx.layout.channels) if hasattr(a_ctx, 'layout') and a_ctx.layout else 2
 
-                try:
-                    layout = a_ctx.layout.name if (hasattr(a_ctx, 'layout') and a_ctx.layout and a_ctx.layout.name) else f"{a_channels}c"
-                except AttributeError:
-                    layout = f"{a_channels}c"
-                abuffer_args = f"time_base=1/{a_rate}:sample_rate={a_rate}:sample_fmt={a_fmt}:channel_layout={layout}"
+                abuffer_args = f"time_base=1/{a_rate}:sample_rate={a_rate}:sample_fmt={a_fmt}:channel_layout={a_channels}c"
                 a_src = a_graph.add('abuffer', abuffer_args)
                 a_fmt_node = a_graph.add('aformat', 'sample_fmts=fltp')
                 a_sink = a_graph.add('abuffersink')
@@ -399,28 +376,40 @@ class FFmpegThread(QThread):
             header_written = False
             fps_float = float(fps) if fps else 25.0
 
+            # --- MULTI-SECTION DEMUXING LOOP ---
             for sec_idx, section in enumerate(sections):
                 if self._is_canceled: break
 
                 start_s = Functions.HMSToTimestamp(section[0], True) + stream_start_s
                 end_s = Functions.HMSToTimestamp(section[1], True) + stream_start_s
 
+                if start_s >= end_s:
+                    self._log(f"Warning: Section {sec_idx+1}/{len(sections)} has 0 duration ({start_s}s to {end_s}s). Skipping.")
+                    continue
+
                 self._log(f"Processing section {sec_idx+1}/{len(sections)}: {start_s}s to {end_s}s (Absolute)")
                 target_pts = int(start_s / float(v_in_stream.time_base))
                 container.seek(target_pts, backward=True, any_frame=False, stream=v_in_stream)
+
+                if v_in_stream.codec_context:
+                    v_in_stream.codec_context.flush_buffers()
+                if has_audio and a_in_stream.codec_context:
+                    a_in_stream.codec_context.flush_buffers()
+
                 streams_to_read = [v_in_stream]
                 if has_audio and is_final_pass:
                     streams_to_read.append(a_in_stream)
 
+                section_v_done = False
+                section_a_done = False if (has_audio and is_final_pass) else True
+
                 for packet in container.demux(streams_to_read):
-                    if self._is_canceled: break
+                    if self._is_canceled or (section_v_done and section_a_done): break
                     while self._is_paused: time.sleep(0.1)
 
                     packet_time_s = None
-                    if packet.dts is not None:
+                    if packet.dts is not None and packet.time_base is not None:
                         packet_time_s = float(packet.dts * packet.time_base)
-                        if packet_time_s > end_s + 5.0:
-                            break
 
                     for frame in packet.decode():
                         current_time = frame.time
@@ -433,7 +422,12 @@ class FFmpegThread(QThread):
                                 current_time = start_s
 
                         if current_time < start_s: continue
-                        if current_time > end_s: break
+                        if current_time > end_s:
+                            if isinstance(frame, av.VideoFrame):
+                                section_v_done = True
+                            elif isinstance(frame, av.AudioFrame):
+                                section_a_done = True
+                            continue
 
                         if isinstance(frame, av.VideoFrame):
                             v_graph.push(frame)
@@ -480,17 +474,6 @@ class FFmpegThread(QThread):
                                     out_a_frame = a_graph.pull()
                                     if not out_a_configured:
                                         out_a_stream.format = out_a_frame.format.name
-                                        try:
-                                            out_a_stream.channels = out_a_frame.channels
-                                        except AttributeError:
-                                            if hasattr(out_a_frame, 'layout') and out_a_frame.layout is not None:
-                                                try:
-                                                    out_a_stream.layout = out_a_frame.layout.name
-                                                except Exception:
-                                                    try:
-                                                        out_a_stream.channels = len(out_a_frame.layout.channels)
-                                                    except Exception:
-                                                        pass
                                         a_time_base = Fraction(1, out_a_frame.sample_rate)
                                         out_a_configured = True
                                     out_a_frame.time_base = a_time_base
@@ -516,8 +499,9 @@ class FFmpegThread(QThread):
             self._log(f"Pass {current_pass} normal extraction loop finished. Total frames processed so far: {frames_processed_pass}")
 
             if current_pass == 1 and deshake_state and frames_processed_pass == 0:
-                raise Exception("Pass 1 finished but ZERO frames were pushed to the filter! Check the video timestamps/duration. The TRF file is empty.")
+                raise Exception("Pass 1 finished but ZERO frames were pushed to the filter!")
 
+            # --- FLUSHING ---
             if not self._is_canceled:
                 self._log(f"Sending EOF signal to video filter in Pass {current_pass} for flushing...")
                 v_graph.push(None)
@@ -576,13 +560,6 @@ class FFmpegThread(QThread):
         finally:
             self._log(f"Cleaning up memory references for Pass {current_pass}...")
 
-            frame = None
-            out_frame = None
-            packet = None
-            enc_packet = None
-            out_a_frame = None
-            packet_queue.clear()
-
             if container:
                 container.close()
             if out_container:
@@ -591,15 +568,13 @@ class FFmpegThread(QThread):
                 except Exception as e:
                     self._log(f"Cleanup error on out_container.close(): {e}")
 
-            del v_graph
-            del v_src
-            del v_sink
-            del a_graph
-            del a_src
-            del a_fmt_node
-            del a_sink
+            if v_graph and hasattr(v_graph, 'nodes'):
+                for node in v_graph.nodes:
+                    try: node.graph = None
+                    except Exception: pass
+
+            del v_graph, v_src, v_sink, a_graph, a_src, a_fmt_node, a_sink
             gc.collect()
 
             if current_pass == 1 and deshake_state:
-                self._log("Giving OS 3 seconds to fully close the C-level file handles...")
-                time.sleep(3.0)
+                time.sleep(0.5)

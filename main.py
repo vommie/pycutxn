@@ -685,6 +685,7 @@ class MainUi(QtWidgets.QMainWindow):
                 self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
                 self.FFmpegThread.ffmpegProcess.connect(self.onFFmpegProgress)
                 self.FFmpegThread.ffmpegExit.connect(self.onFFmpegExit)
+                self.FFmpegThread.ffmpegLog.connect(self.onFFmpegLog)
                 self.FFmpegThread.start()
                 self.log(1, 'FFmpeg thread started.')
             else:
@@ -902,6 +903,14 @@ class MainUi(QtWidgets.QMainWindow):
         self.setCurrentSectionEnd()
 
     def onBtnSectionAddClicked(self):
+        if self.sectionTimeStart == self.sectionTimeEnd:
+            self.showMsgBox(
+                'Cannot add a 0-second section.',
+                infoText='Please set a valid section range by seeking forward before setting Section End.',
+                icon='warning'
+            )
+            return
+
         self.sectionAddRow(self.sectionTimeStart, self.sectionTimeEnd)
         self.jobs.get_current_job().addSection(self.sectionTimeStart, self.sectionTimeEnd)
 
@@ -1489,6 +1498,11 @@ class MainUi(QtWidgets.QMainWindow):
 
     # Other Event handlers
 
+    # Event handler for ffmpeg log
+    @pyqtSlot('PyQt_PyObject')
+    def onFFmpegLog(self, msg):
+        self.log(2, msg, timestamp=False)
+
     # Event handler while ffmpeg is rendering
     @pyqtSlot('PyQt_PyObject')
     def onFFmpegProgress(self, atts):
@@ -1557,28 +1571,22 @@ class MainUi(QtWidgets.QMainWindow):
     def onFFmpegExit(self, atts):
         self.log(1, 'FFmpeg exited.')
         self.ffmpegProcess = False
-        job, code, output, error, deshakeFile = atts
+
+        if len(atts) >= 6:
+            job, code, output, error, deshakeFile, full_log = atts
+        else:
+            job, code, output, error, deshakeFile = atts
+            full_log = ""
 
         errorMsg = ''
         if self.ffmpegKilled:
             self.ffmpegKilled = False
             errorMsg = 'ffmpeg killed while rendering by the user.\n\n'
 
-        # Decode and combine stdout and stderr for the log
-        log_content = []
-        if output:
-            try:
-                log_content.append(f"FFmpeg stdout:\n{output.decode('utf-8', errors='ignore')}")
-            except Exception:
-                log_content.append(f"FFmpeg stdout (raw):\n{str(output)}")
-
-        if error:
-            try:
-                log_content.append(f"FFmpeg stderr:\n{error.decode('utf-8', errors='ignore')}")
-            except Exception:
-                log_content.append(f"FFmpeg stderr (raw):\n{str(error)}")
-
-        errorMsg += "\n\n".join(log_content)
+        if full_log:
+            job.setLog(full_log)
+        elif errorMsg:
+            job.setLog(errorMsg)
 
         job.setFilterDeshakeFile(deshakeFile)
         if self.progressBarRender.isEnabled():
@@ -1590,9 +1598,6 @@ class MainUi(QtWidgets.QMainWindow):
         state = 1 if code == 0 else 3
         if self.ffmpegKilled:
             state = 3
-
-        if errorMsg.strip():
-            job.setLog(errorMsg)
 
         job.setState(state)
         if self.btnQueueKill.isEnabled(): self.btnQueueKill.setEnabled(False)
