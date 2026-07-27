@@ -565,7 +565,7 @@ class MainUi(QtWidgets.QMainWindow):
                 'keep_open': 'yes',
                 'input_cursor': True,
                 'input_default_bindings': False,
-                'hwdec': 'auto-safe',
+                'hwdec': 'auto-copy',
             }
 
             if 'xcb' in qpa_platform:
@@ -2835,8 +2835,11 @@ class MainUi(QtWidgets.QMainWindow):
     def loadFilterPositions(self, job):
         items = self.getFilterPositionItems()
         filterPositions = job.getFilterPositions()
-        for position in sorted(filterPositions.keys()):
+        sorted_positions = sorted(filterPositions.keys(), key=lambda x: int(x))
+        for position in sorted_positions:
             filter = filterPositions.get(position)
+            if not filter:
+                filter = filterPositions.get(str(position))
             for item in items:
                 name = item.objectName()
                 atts = self.filterAtts.get(filter)
@@ -3196,8 +3199,11 @@ class MainUi(QtWidgets.QMainWindow):
             filterPositions = self.jobs.get_current_job().getFilterPositions()
             vW = self.videoProps.get('width')
             vH = self.videoProps.get('height')
-            for position in sorted(filterPositions.keys()):
+            sorted_positions = sorted(filterPositions.keys(), key=lambda x: int(x))
+            for position in sorted_positions:
                 filterName = filterPositions.get(position)
+                if not filterName:
+                    filterName = filterPositions.get(str(position))
                 # Crop
                 if filterName == 'crop' and self.btnFilterCrop.isChecked():
                     cropT = self.boxFilterCropT.value()
@@ -3225,7 +3231,7 @@ class MainUi(QtWidgets.QMainWindow):
                     elif self.btnFilterRotateRight.isChecked():
                         filters.append('transpose=1')
                     elif self.btnFilterRotate180.isChecked():
-                        filters.append('rotate=PI:bilinear=0,format=yuv420p')
+                        filters.append('transpose=2,transpose=2')
                 # Deinterlace
                 elif filterName == 'deinterlace' and self.btnFilterDeinterlace.isChecked():
                     filters.append('%s' % self.comboBoxFilterDeinterlaceDeinterlacer.currentText())
@@ -3358,8 +3364,11 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         filterPositions = self.jobs.get_current_job().getFilterPositions()
         isCropBeforeRotate = True
-        for position in sorted(filterPositions.keys()):
+        sorted_positions = sorted(filterPositions.keys(), key=lambda x: int(x))
+        for position in sorted_positions:
             filter = filterPositions.get(position)
+            if not filter:
+                filter = filterPositions.get(str(position))
             if filter == 'crop':
                 break
             elif filter == 'rotate':
