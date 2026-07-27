@@ -27,6 +27,7 @@ class Config:
         path = os.path.normpath(filePath)
         dirName, baseName = os.path.split(path)
         self.configPath = dirName
+        os.makedirs(self.configPath, exist_ok=True)
         return self.configPath
 
     def getConfigDeshakePath(self):

@@ -7,50 +7,83 @@ class PlayerControl():
         self.player = player
 
     def play(self, filepath):
-        self.player.play(filepath)
+        try:
+            self.player.play(filepath)
+        except Exception:
+            pass
 
     def stop(self):
-        self.player.stop()
+        try:
+            self.player.stop()
+        except Exception:
+            pass
 
     def togglePause(self):
-        self.player.pause = not self.player.pause
-        return self.player.pause
+        try:
+            self.player.pause = not self.player.pause
+            return self.player.pause
+        except Exception:
+            return True
 
     def pause(self, state : bool):
-        self.player.pause = state
-        return self.player.pause
+        try:
+            self.player.pause = state
+            return self.player.pause
+        except Exception:
+            return True
 
     def volumeDown(self):
-        if self.player.volume - self.volumeStep >= self.volumeStep:
-            self.player.volume -= self.volumeStep
-        else:
-            self.player.volume = 0.0
-        self.config.setPlayerVolume(self.player.volume)
+        try:
+            if self.player.volume - self.volumeStep >= self.volumeStep:
+                self.player.volume -= self.volumeStep
+            else:
+                self.player.volume = 0.0
+            self.config.setPlayerVolume(self.player.volume)
+        except Exception:
+            pass
 
     def volumeUp(self):
-        if self.player.volume + self.volumeStep <= 100:
-            self.player.volume += self.volumeStep
-        else:
-            self.player.volume = 100.0
-        self.config.setPlayerVolume(self.player.volume)
+        try:
+            if self.player.volume + self.volumeStep <= 100:
+                self.player.volume += self.volumeStep
+            else:
+                self.player.volume = 100.0
+            self.config.setPlayerVolume(self.player.volume)
+        except Exception:
+            pass
 
     def volume(self, volume):
-        if volume > 100:
-            volume = 100
-        if volume < 0:
-            volume = 0
-        self.player.volume = volume
-        self.config.setPlayerVolume(self.player.volume)
+        try:
+            if volume > 100:
+                volume = 100
+            if volume < 0:
+                volume = 0
+            self.player.volume = volume
+            self.config.setPlayerVolume(self.player.volume)
+        except Exception:
+            pass
 
     def mute(self, mute):
-        self.player.mute = mute
-        self.config.setPlayerIsMuted(self.player.mute)
+        try:
+            self.player.mute = mute
+            self.config.setPlayerIsMuted(self.player.mute)
+        except Exception:
+            pass
 
     def frameStep(self):
-        self.player.frame_step()
+        try:
+            self.player.frame_step()
+        except Exception:
+            pass
 
     def frameBackStep(self):
-        self.player.frame_back_step()
+        try:
+            self.player.frame_back_step()
+        except Exception:
+            pass
 
     def seek(self, amount, reference='relative', precision='exact'):
-        self.player.seek(amount, reference, precision)
+        try:
+            self.player.seek(amount, reference, precision)
+        except Exception:
+            pass

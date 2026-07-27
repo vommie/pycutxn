@@ -5,6 +5,8 @@ import sys
 import datetime
 import subprocess
 import os
+if "QT_QPA_PLATFORM" not in os.environ:
+    os.environ["QT_QPA_PLATFORM"] = "xcb;wayland"
 import signal
 import re
 import shutil
@@ -83,6 +85,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.config = Config()
         self.iconFontName = 'DroidSansMono Nerd Font Mono'
         self.jobsFilePath = self.config.getJobsFilePath()
+        self.jobs = None
         try:
             self.jobs = JobsDB(self.jobsFilePath)
             self.jobs.create_empty_current_job()
@@ -240,22 +243,34 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnTaggerActive.setChecked(self.config.getTaggerIsActive())
         self.btnTaggerWarning.setChecked(self.config.getTaggerIsWarningActive())
         self.cropOverlay = CropOverlay(self.renderFrame, self)
+        self.sliderPlayer.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setBtnSectionAddState()
 
     def initShortcuts(self):
-        self.scPause = QShortcut(QKeySequence("Space"), self)
-        self.scFrameStep = QShortcut(QKeySequence("PageDown"), self)
-        self.scFrameStepBack = QShortcut(QKeySequence("PageUp"), self)
-        self.scMute = QShortcut(QKeySequence("M"), self)
-        self.scSeekSmall = QShortcut(QKeySequence("Right"), self)
-        self.scSeekMedium = QShortcut(QKeySequence("Shift+Right"), self)
-        self.scSeekSmallBack = QShortcut(QKeySequence("Left"), self)
-        self.scSeekMediumBack = QShortcut(QKeySequence("Shift+Left"), self)
-        self.scSectionStart = QShortcut(QKeySequence("Home"), self)
-        self.scSectionEnd = QShortcut(QKeySequence("End"), self)
-        self.scSectionAdd1 = QShortcut(QKeySequence("+"), self)
-        self.scSectionAdd2 = QShortcut(QKeySequence("ScrollLock"), self)
+        self.scPause = QShortcut(QKeySequence(Qt.Key.Key_Space), self)
+        self.scFrameStep = QShortcut(QKeySequence(Qt.Key.Key_PageDown), self)
+        self.scFrameStepBack = QShortcut(QKeySequence(Qt.Key.Key_PageUp), self)
+        self.scMute = QShortcut(QKeySequence(Qt.Key.Key_M), self)
+        self.scSeekSmall = QShortcut(QKeySequence(Qt.Key.Key_Right), self)
+        self.scSeekMedium = QShortcut(QKeySequence(Qt.Key.Key_Right | Qt.KeyboardModifier.ShiftModifier), self)
+        self.scSeekSmallBack = QShortcut(QKeySequence(Qt.Key.Key_Left), self)
+        self.scSeekMediumBack = QShortcut(QKeySequence(Qt.Key.Key_Left | Qt.KeyboardModifier.ShiftModifier), self)
+        self.scSectionStart = QShortcut(QKeySequence(Qt.Key.Key_Home), self)
+        self.scSectionEnd = QShortcut(QKeySequence(Qt.Key.Key_End), self)
+        self.scSectionAdd1 = QShortcut(QKeySequence(Qt.Key.Key_Plus), self)
+        self.scSectionAdd2 = QShortcut(QKeySequence(Qt.Key.Key_ScrollLock), self)
         self.scExportSave = QShortcut(QKeySequence("Ctrl+S"), self)
-        self.scExportSave2 = QShortcut(QKeySequence("F9"), self)
+        self.scExportSave2 = QShortcut(QKeySequence(Qt.Key.Key_F9), self)
+
+        all_shortcuts = [
+            self.scPause, self.scFrameStep, self.scFrameStepBack, self.scMute,
+            self.scSeekSmall, self.scSeekMedium, self.scSeekSmallBack, self.scSeekMediumBack,
+            self.scSectionStart, self.scSectionEnd, self.scSectionAdd1, self.scSectionAdd2,
+            self.scExportSave, self.scExportSave2
+        ]
+        for sc in all_shortcuts:
+            sc.setContext(Qt.ShortcutContext.ApplicationShortcut)
+
 
     def initGuiEvents(self):
         try:
@@ -411,23 +426,60 @@ class MainUi(QtWidgets.QMainWindow):
         try:
             self.renderFrame.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors)
             self.renderFrame.setAttribute(Qt.WidgetAttribute.WA_NativeWindow)
+            self.renderFrame.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+
             locale.setlocale(locale.LC_NUMERIC, 'C')
-            player = MPV(wid=str(int(self.renderFrame.winId())), vo='gpu,wayland,xv,x11', loglevel='fatal', keep_open='yes', input_cursor=True, input_default_bindings=False)
+
+            qpa_platform = QtWidgets.QApplication.platformName().lower()
+            self.log(1, f"MPV Init - Aktive Qt QPA Plattform: '{qpa_platform}'")
+
+            win_id = str(int(self.renderFrame.winId()))
+
+            mpv_options = {
+                'wid': win_id,
+                'loglevel': 'fatal',
+                'keep_open': 'yes',
+                'input_cursor': True,
+                'input_default_bindings': False,
+                'hwdec': 'auto-safe',
+            }
+
+            if 'xcb' in qpa_platform:
+                mpv_options.update({
+                    'vo': 'gpu,gpu-next',
+                    'gpu_context': 'x11egl,x11',
+                })
+            elif 'wayland' in qpa_platform:
+                mpv_options.update({
+                    'vo': 'gpu,gpu-next',
+                    'gpu_context': 'waylandegl,waylandvk',
+                })
+            else:
+                mpv_options.update({
+                    'vo': 'gpu,gpu-next,xv,x11',
+                })
+
+            player = MPV(**mpv_options)
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
-            # Register observers
             self.playerControl.player.observe_property('pause', self.onPlayerPause)
             self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
             self.playerControl.player.observe_property('volume', self.onPlayerVolume)
-            self.playerControl.player.background_color = self.config.getPlayerBgColor()
-            try: self.playerControl.player['background'] = self.config.getPlayerBgColor() # Fallback
-            except: pass
+
+            bg_color = self.config.getPlayerBgColor()
+            self.playerControl.player.background_color = bg_color
+            try:
+                self.playerControl.player['background'] = bg_color
+            except Exception:
+                pass
+
         except Exception as e:
             msg = 'Error: Cannot initialize the video player.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
-            exit(1)
+            sys.exit(1)
+
 
     def newFile(self, videoFilePath = False):
         '''
@@ -816,9 +868,16 @@ class MainUi(QtWidgets.QMainWindow):
             self.cropOverlay.update_geometry()
 
     def keyPressEvent(self, event):
-        if self.isActiveWindow() and event.key() == Qt.Key.Key_Control and not event.isAutoRepeat():
-            if self.btnFilterCrop.isChecked() and self.videoProps:
-                self.cropOverlay.start_interaction()
+        if self.isActiveWindow():
+            if event.key() in (Qt.Key.Key_ScrollLock, Qt.Key.Key_Plus):
+                self.onBtnSectionAddClicked()
+                event.accept()
+                return
+
+            if event.key() == Qt.Key.Key_Control and not event.isAutoRepeat():
+                if self.btnFilterCrop.isChecked() and self.videoProps:
+                    self.cropOverlay.start_interaction()
+
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
@@ -867,6 +926,7 @@ class MainUi(QtWidgets.QMainWindow):
             event.ignore()
 
     def onBtnPauseClicked(self):
+        if not self.videoProps: return
         self.playerControl.togglePause()
 
     def onPlayerSeekSmall(self):
@@ -882,11 +942,13 @@ class MainUi(QtWidgets.QMainWindow):
         self.sanitizeSeek(-10.0)
 
     def onBtnFrameStepClicked(self):
+        if not self.videoProps: return
         self.frameStep = True
         self.playerControl.frameStep()
         self.btnPause.setText('契')
 
     def onBtnFrameStepBackClicked(self):
+        if not self.videoProps: return
         self.playerControl.frameBackStep()
         self.btnPause.setText('契')
 
@@ -2101,7 +2163,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.queueRemoveRowByJob(job)
 
     def setBtnSectionAddState(self):
-        if self.sectionTimeStart and self.sectionTimeEnd:
+        if self.sectionTimeStart and self.sectionTimeEnd and (self.sectionTimeStart != self.sectionTimeEnd):
             self.btnSectionAdd2.setEnabled(True)
         else:
             self.btnSectionAdd2.setEnabled(False)
@@ -2902,6 +2964,7 @@ class MainUi(QtWidgets.QMainWindow):
 
         :param value: Time value like seconds (+2 jumps 2 seconds forward, -2 jumps 2 seconds backwards)
         '''
+        if not self.videoProps: return
         try:
             if value < 0 and self.playerTimeCurrentMs == 0:
                 self.setLabelPlayerTimeCurr('0:00:00.000')
@@ -3115,6 +3178,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.sectionTimeStart = value
         self.btnCurrentSectionStart.setText(value)
         self.setCurrentSectionInSlider()
+        self.setBtnSectionAddState()
 
     def setSectionTimeEnd(self, value):
         '''
@@ -3125,6 +3189,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.sectionTimeEnd = value
         self.btnCurrentSectionEnd.setText(value)
         self.setCurrentSectionInSlider()
+        self.setBtnSectionAddState()
 
     def togglePowerMode(self, mode, state):
         '''

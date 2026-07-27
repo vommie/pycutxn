@@ -17,6 +17,7 @@ class JobsDB:
 
     def _connect(self):
         try:
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
             conn = sqlite3.connect(self.db_path, check_same_thread=False)
             conn.row_factory = sqlite3.Row
             return conn

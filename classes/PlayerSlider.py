@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QStyleOptionSlider, QStyle
 
 class PlayerSlider(QtWidgets.QSlider):
     '''
-    Slider which jumps to position if the it gets clicked somewhere else than the handle
+    Slider which jumps to position if it gets clicked somewhere else than the handle
     See: https://stackoverflow.com/questions/52689047/moving-qslider-to-mouse-click-position
     '''
 
@@ -27,6 +27,12 @@ class PlayerSlider(QtWidgets.QSlider):
 
     def dragMoveEvent(self, event):
         return
+
+    def keyPressEvent(self, event):
+        if event.key() in (QtCore.Qt.Key.Key_Home, QtCore.Qt.Key.Key_End, QtCore.Qt.Key.Key_PageUp, QtCore.Qt.Key.Key_PageDown):
+            event.ignore()
+            return
+        super().keyPressEvent(event)
 
     def pixelPosToRangeValue(self, pos):
         opt = QStyleOptionSlider()
