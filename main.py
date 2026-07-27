@@ -7,7 +7,6 @@ import subprocess
 import os
 if "QT_QPA_PLATFORM" not in os.environ:
     os.environ["QT_QPA_PLATFORM"] = "xcb;wayland"
-import signal
 import re
 import shutil
 import hashlib
@@ -41,6 +40,66 @@ from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer
 from PyQt6.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor, QAction, QShortcut
 
 import res  # pyrcc5 -o res.py res/res.qrc (Unter Qt6: rcc -g python res/res.qrc > res.py)
+
+CODEC_SPECS = {
+    'libsvtav1': {
+        'name': 'AV1 (SVT-AV1)',
+        'min_crf': 0,
+        'max_crf': 63,
+        'default_crf': 26,
+        'presets': [
+            ('0', '0 - Slowest (Archival)'),
+            ('2', '2 - Very Slow'),
+            ('4', '4 - High Quality'),
+            ('5', '5 - Slow Quality'),
+            ('6', '6 - Recommended Balance'),
+            ('7', '7 - Fast'),
+            ('8', '8 - Faster'),
+            ('10', '10 - Very Fast'),
+            ('12', '12 - Fastest')
+        ],
+        'default_preset': '6',
+        'recommended_audio': 'libopus'
+    },
+    'libx265': {
+        'name': 'H.265 (HEVC)',
+        'min_crf': 0,
+        'max_crf': 51,
+        'default_crf': 22,
+        'presets': [
+            ('ultrafast', 'ultrafast'),
+            ('superfast', 'superfast'),
+            ('veryfast', 'veryfast'),
+            ('faster', 'faster'),
+            ('fast', 'fast'),
+            ('medium', 'medium'),
+            ('slow', 'slow'),
+            ('slower', 'slower'),
+            ('veryslow', 'veryslow')
+        ],
+        'default_preset': 'medium',
+        'recommended_audio': 'aac'
+    },
+    'libx264': {
+        'name': 'H.264 (AVC)',
+        'min_crf': 0,
+        'max_crf': 51,
+        'default_crf': 20,
+        'presets': [
+            ('ultrafast', 'ultrafast'),
+            ('superfast', 'superfast'),
+            ('veryfast', 'veryfast'),
+            ('faster', 'faster'),
+            ('fast', 'fast'),
+            ('medium', 'medium'),
+            ('slow', 'slow'),
+            ('slower', 'slower'),
+            ('veryslow', 'veryslow')
+        ],
+        'default_preset': 'medium',
+        'recommended_audio': 'aac'
+    }
+}
 
 class MainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -179,13 +238,19 @@ class MainUi(QtWidgets.QMainWindow):
         self.btnSectionAutoRemove.setChecked(self.config.getSectionsAutoRemove())
         self.btnFiltersPreview.setChecked(self.config.getFiltersPreview())
         self.setBtnFiltersPreviewIcon()
-        # Render Settings
-        self.comboBoxVideoCodec.setCurrentText(self.config.getRenderVideoCodec())
+
+        current_v_codec = self.config.getRenderVideoCodec()
+        if current_v_codec not in CODEC_SPECS:
+            current_v_codec = 'libsvtav1'
+
+        self.comboBoxVideoCodec.setCurrentText(current_v_codec)
+        self.onVideoCodecChanged(current_v_codec)
+
         self.spinBoxCRF.setValue(self.config.getRenderCRF())
         self.comboBoxContainer.setCurrentText(self.config.getRenderContainer())
-        self.comboBoxPreset.setCurrentText(self.config.getRenderPreset())
         self.comboBoxAudioCodec.setCurrentText(self.config.getRenderAudioCodec())
         self.spinBoxAudioBitrate.setValue(self.config.getRenderAudioBitrate())
+
         # Tagger
         waitingJobs = False
         # Queue Jobs
@@ -270,7 +335,6 @@ class MainUi(QtWidgets.QMainWindow):
         ]
         for sc in all_shortcuts:
             sc.setContext(Qt.ShortcutContext.ApplicationShortcut)
-
 
     def initGuiEvents(self):
         try:
@@ -382,7 +446,6 @@ class MainUi(QtWidgets.QMainWindow):
             self.actionStateReset.triggered.connect(self.onQueueCtxActioStateReset)
             self.actionStateCancel.triggered.connect(self.onQueueCtxActionCancelJob)
             self.actionShowLog.triggered.connect(self.onQueueCtxActionShowLog)
-            self.actionKillFfmpeg.triggered.connect(self.onActionKillFfmpeg)
             # Tagger
             self.btnTagRateHistorySave.clicked.connect(self.onBtnTagRateHistorySaveClicked)
             self.listWidgetLastTags.itemClicked.connect(self.onListWidgetLastTagsItemClicked)
@@ -392,11 +455,11 @@ class MainUi(QtWidgets.QMainWindow):
             self.btnTaggerWarning.clicked.connect(self.onBtnTaggerWarningClicked)
             self.btnTaggerFilter.clicked.connect(self.onBtnTaggerFilterClicked)
             self.btnLastRating.clicked.connect(self.onBtnLastRatingClicked)
-            # Render
-            self.comboBoxVideoCodec.currentTextChanged.connect(lambda text: self.config.setRenderVideoCodec(text))
+            # Render Controls Events
+            self.comboBoxVideoCodec.currentTextChanged.connect(self.onVideoCodecChanged)
             self.spinBoxCRF.valueChanged.connect(lambda val: self.config.setRenderCRF(val))
             self.comboBoxContainer.currentTextChanged.connect(lambda text: self.config.setRenderContainer(text))
-            self.comboBoxPreset.currentTextChanged.connect(lambda text: self.config.setRenderPreset(text))
+            self.comboBoxPreset.currentIndexChanged.connect(self.onPresetChanged)
             self.comboBoxAudioCodec.currentTextChanged.connect(lambda text: self.config.setRenderAudioCodec(text))
             self.spinBoxAudioBitrate.valueChanged.connect(lambda val: self.config.setRenderAudioBitrate(val))
         except Exception as e:
@@ -404,6 +467,67 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, infoText='Exit application', detailText=traceback.format_exc(), icon='critical')
             exit(1)
+
+    def onVideoCodecChanged(self, codec_name: str):
+        """
+        Handles dynamic UI adjustments when the video codec is changed.
+        Updates CRF range, preset list, and default values based on CODEC_SPECS.
+        """
+        spec = CODEC_SPECS.get(codec_name)
+        if not spec:
+            return
+
+        self.comboBoxVideoCodec.blockSignals(True)
+        self.spinBoxCRF.blockSignals(True)
+        self.comboBoxPreset.blockSignals(True)
+
+        # Update CRF bounds and set sensible default if current value is out of bounds
+        self.spinBoxCRF.setRange(spec['min_crf'], spec['max_crf'])
+        current_crf = self.spinBoxCRF.value()
+        if current_crf < spec['min_crf'] or current_crf > spec['max_crf']:
+            self.spinBoxCRF.setValue(spec['default_crf'])
+
+        # Populate preset drop-down list
+        self.comboBoxPreset.clear()
+        for val, label in spec['presets']:
+            self.comboBoxPreset.addItem(label, userData=val)
+
+        # Restore configured preset or select default preset
+        saved_preset = str(self.config.getRenderPreset())
+        preset_idx = self.comboBoxPreset.findData(saved_preset)
+        if preset_idx != -1:
+            self.comboBoxPreset.setCurrentIndex(preset_idx)
+        else:
+            default_idx = self.comboBoxPreset.findData(spec['default_preset'])
+            if default_idx != -1:
+                self.comboBoxPreset.setCurrentIndex(default_idx)
+
+        # Persist updated codec choices to QSettings
+        self.config.setRenderVideoCodec(codec_name)
+        self.config.setRenderCRF(self.spinBoxCRF.value())
+        selected_preset = self.comboBoxPreset.currentData()
+        if selected_preset:
+            self.config.setRenderPreset(selected_preset)
+
+        self.comboBoxVideoCodec.blockSignals(False)
+        self.spinBoxCRF.blockSignals(False)
+        self.comboBoxPreset.blockSignals(False)
+
+    def onPresetChanged(self, index: int):
+        """
+        Saves the selected preset userData (e.g. '6' or 'medium') to config.
+        """
+        preset_data = self.comboBoxPreset.currentData()
+        if preset_data:
+            self.config.setRenderPreset(str(preset_data))
+
+    def cancelCurrentJob(self):
+        if hasattr(self, 'FFmpegThread') and self.FFmpegThread and self.FFmpegThread.isRunning():
+            self.ffmpegKilled = True
+            self.FFmpegThread.cancel()
+            self.log(1, "Signaled active PyAV render thread to cancel.")
+        else:
+            self.log(1, "No active render thread to cancel.")
 
     def showEvent(self, event):
         super(MainUi, self).showEvent(event)
@@ -893,6 +1017,10 @@ class MainUi(QtWidgets.QMainWindow):
                 event.ignore()
                 return
 
+        if hasattr(self, 'FFmpegThread') and self.FFmpegThread and self.FFmpegThread.isRunning():
+            self.cancelCurrentJob()
+            self.FFmpegThread.wait(2000)
+
         if hasattr(self, 'playerControl') and self.playerControl.player:
             try:
                 self.log(1, "Terminating MPV player instance...")
@@ -949,6 +1077,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onBtnFrameStepBackClicked(self):
         if not self.videoProps: return
+        self.frameStep = True
         self.playerControl.frameBackStep()
         self.btnPause.setText('契')
 
@@ -1221,7 +1350,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.toggleQueuePause()
 
     def onBtnQueueKillClicked(self):
-        self.killFFmpegProcess()
+        self.cancelCurrentJob()
 
     def onBtnQueueLoadClicked(self):
         self.newFile(False)
@@ -1350,7 +1479,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onQueueCtxActionCancelJobs(self, jobs_to_cancel):
         if any(job.getState() == 4 for job in jobs_to_cancel):
-            self.onBtnQueueKillClicked()
+            self.cancelCurrentJob()
 
     def onQueueCtxActionResumeJobs(self, jobs_to_resume):
         for job in jobs_to_resume:
@@ -1416,9 +1545,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.queueSetStateByJob(job, 0)
 
     def onQueueCtxActionCancelJob(self):
-        # Robust check to ensure the job is still rendering when the action is triggered
         if self.queueGetCurrentState() == 4:
-            self.onBtnQueueKillClicked()
+            self.cancelCurrentJob()
         else:
             self.log(1, "Cancel Job action triggered, but job is no longer rendering.")
 
@@ -1540,9 +1668,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.dockQueue.show()
         self.dockLogs.show()
         self.dockCodecs.show()
-
-    def onActionKillFfmpeg(self):
-        self.killAllFFmpegProcesses()
 
     def onMsgBoxExtraBtnOverwriteFile(self):
         '''Opens a file saved in variable self.overwriteFile'''
@@ -2568,7 +2693,6 @@ class MainUi(QtWidgets.QMainWindow):
 
         self.jobs.swap_jobs(job1, job2)
 
-        # GUI aktualisieren
         Functions.moveTableRow(self.tableQueue, direction)
 
         self.jobsSwapping = False
@@ -2804,7 +2928,7 @@ class MainUi(QtWidgets.QMainWindow):
 
     def showWarningForExistingTargetFile(self, matches) -> bool:
         '''
-        Shows
+        Shows warning dialog if target file exists.
 
         :param matches: Array of file paths to show in list
         '''
@@ -2859,7 +2983,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def videoPathToHashPath(self,filePath):
         return f"{os.path.dirname(filePath)}/.{os.path.basename(filePath)}.{self.hashFileExt}"
-
 
     def isCurrentFileKnown(self):
         '''
@@ -3068,7 +3191,6 @@ class MainUi(QtWidgets.QMainWindow):
 
     def setVideoFilter(self):
         '''Set video filters on MPV'''
-        # TODO: When rotate, change video X, Y, width and height accordingly, so very filter applies correctly if reordered (also on export!)
         filters = []
         if self.btnFiltersPreview.isChecked():
             filterPositions = self.jobs.get_current_job().getFilterPositions()
@@ -3234,7 +3356,6 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         Change the icon and tooltip of all crop fields based on the rotation
         '''
-        # Check if crop filter is before rotate filter
         filterPositions = self.jobs.get_current_job().getFilterPositions()
         isCropBeforeRotate = True
         for position in sorted(filterPositions.keys()):
@@ -3244,7 +3365,6 @@ class MainUi(QtWidgets.QMainWindow):
             elif filter == 'rotate':
                 isCropBeforeRotate = False
                 break
-        # Change labels and tooltips based on rotation
         chars = {
             't': [ 'Top', ''],
             'r': [ 'Right', ''],
@@ -3293,7 +3413,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.log(1, 'Get autocrop values ...')
         job = self.jobs.get_current_job()
         file = job.getSrcFilePathLong()
-        # Prevent current timestamp from being same or bigger than video duration
         time_format = '%H:%M:%S.%f'
         time = self.playerTimeCurrent if datetime.datetime.strptime(self.playerTimeCurrent, time_format) <= datetime.datetime.strptime(self.videoProps['durationHMS'], time_format) else (datetime.datetime.strptime(self.videoProps['durationHMS'], time_format) - datetime.timedelta(milliseconds=100)).strftime(time_format)
         cmd = 'ffmpeg -ss %s -i "%s" -t 00:00:00.1 -vf cropdetect=%d:%d:%d:%d -f null - 2>&1 | awk \'/crop/ { print $NF }\' | tail -1' % (time, file, limit, round, skip, reset)
@@ -3341,25 +3460,6 @@ class MainUi(QtWidgets.QMainWindow):
                 background-color: #bbbbbb;
             }
         """)
-
-    def killAllFFmpegProcesses(self):
-        self.killFFmpegProcess()
-        self.log(1, "All PyAV rendering threads canceled.")
-
-    def killAllFFmpegProcesses(self):
-        p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        killed = []
-        for line in out.splitlines():
-            if b'ffmpeg' in line:
-                pid = int(line.split(None, 1)[0])
-                os.kill(pid, signal.SIGKILL)
-                killed.append(str(pid))
-        msg = '{} ffmpeg process killed'.format(len(killed))
-        if len(killed) > 0:
-            msg = '{m}: {i}'.format(m=msg if len(killed) < 2 else msg.replace('process', 'processes'), i=','.join(killed))
-        self.log(1, msg)
-
 
 
 app = QtWidgets.QApplication(sys.argv)

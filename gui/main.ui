@@ -385,7 +385,6 @@
     <addaction name="actionEditJobsFile"/>
     <addaction name="actionOpenAppDir"/>
     <addaction name="actionOpenAppData"/>
-    <addaction name="actionKillFfmpeg"/>
    </widget>
    <widget class="QMenu" name="menuModes">
     <property name="title">
@@ -2120,7 +2119,7 @@
   </widget>
   <widget class="QDockWidget" name="dockRender">
    <property name="windowTitle">
-    <string>Render</string>
+    <string>Render Settings</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -2146,6 +2145,11 @@
            <widget class="QComboBox" name="comboBoxVideoCodec">
             <item>
              <property name="text">
+              <string>libsvtav1</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>libx265</string>
              </property>
             </item>
@@ -2169,8 +2173,14 @@
           </item>
           <item>
            <widget class="QSpinBox" name="spinBoxCRF">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>63</number>
+            </property>
             <property name="value">
-             <number>21</number>
+             <number>26</number>
             </property>
            </widget>
           </item>
@@ -2211,58 +2221,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBoxPreset">
-            <item>
-             <property name="text">
-              <string>ultrafast</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>superfast</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>veryfast</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>faster</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>fast</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>medium</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>slow</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>slower</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>veryslow</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>placebo</string>
-             </property>
-            </item>
-           </widget>
+           <widget class="QComboBox" name="comboBoxPreset"/>
           </item>
          </layout>
         </item>
@@ -2288,6 +2247,11 @@
            <widget class="QComboBox" name="comboBoxAudioCodec">
             <item>
              <property name="text">
+              <string>libopus</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>aac</string>
              </property>
             </item>
@@ -2310,17 +2274,20 @@
           <item>
            <widget class="QLabel" name="label_ABitrate">
             <property name="text">
-             <string>Audio Bitrate</string>
+             <string>Audio Bitrate (kbps)</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QSpinBox" name="spinBoxAudioBitrate">
+            <property name="minimum">
+             <number>32</number>
+            </property>
             <property name="maximum">
-             <number>99999</number>
+             <number>512</number>
             </property>
             <property name="singleStep">
-             <number>2</number>
+             <number>16</number>
             </property>
             <property name="value">
              <number>128</number>
@@ -2348,6 +2315,7 @@
     </layout>
    </widget>
   </widget>
+
   <widget class="QDockWidget" name="dockTagger">
    <property name="enabled">
     <bool>false</bool>
@@ -3931,11 +3899,6 @@ QRadioButton::unchecked:hover {
   <action name="actionModeTag">
    <property name="text">
     <string>Tag &amp;&amp; Rate</string>
-   </property>
-  </action>
-  <action name="actionKillFfmpeg">
-   <property name="text">
-    <string>Kill all ffmpeg processes</string>
    </property>
   </action>
   <action name="actionMoveTop">
