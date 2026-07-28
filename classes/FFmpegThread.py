@@ -49,6 +49,7 @@ class PacketMuxer:
         self.has_audio = has_audio
         self.packet_queue = []
         self.header_written = False
+        self.total_bytes = 0
 
     def mux_video_packet(self, packet, is_audio_configured: bool):
         is_ready = not self.has_audio or is_audio_configured
@@ -58,6 +59,9 @@ class PacketMuxer:
         self._write_packet(packet, is_ready=is_video_configured)
 
     def _write_packet(self, packet, is_ready: bool):
+        if hasattr(packet, 'size') and packet.size:
+            self.total_bytes += packet.size
+
         if not self.header_written:
             if not is_ready:
                 self.packet_queue.append(packet)
@@ -85,6 +89,7 @@ class PassState:
         self.rendered_seconds = 0.0
         self.fps_float = float(fps) if fps and fps.numerator else 25.0
         self.frames_processed_pass = 0
+        self.start_time = time.time()
 
 
 class VideoFilterRegistry:
@@ -311,6 +316,44 @@ class FFmpegThread(QThread):
             return default_str
         return f"{frac.numerator}/{frac.denominator}"
 
+    @staticmethod
+    def _format_out_time(seconds: float) -> str:
+        if seconds < 0:
+            seconds = 0.0
+        s = int(seconds)
+        ms = int(round((seconds - s) * 1000000))
+        if ms >= 1000000:
+            s += 1
+            ms = 0
+        m, s = divmod(s, 60)
+        h, m = divmod(m, 60)
+        return f"{h:02d}:{m:02d}:{s:02d}.{ms:06d}"
+
+    def _emit_render_progress(self, pass_state: PassState, current_pass: int, totalSeconds: float,
+                              overall_total_seconds: float, is_final_pass: bool, muxer: PacketMuxer = None):
+        pass_offset = totalSeconds if current_pass == 2 else 0
+        current_progress = pass_offset + pass_state.rendered_seconds
+
+        elapsed = time.time() - pass_state.start_time
+        if elapsed > 0:
+            calc_fps = pass_state.frames_processed_pass / elapsed
+            calc_speed = pass_state.rendered_seconds / elapsed
+
+            self.ffmpegProcess.emit([['fps', f"{calc_fps:.2f}"], self.job, overall_total_seconds])
+            self.ffmpegProcess.emit([['speed', f"{calc_speed:.2f}x"], self.job, overall_total_seconds])
+
+        if is_final_pass and muxer:
+            self.ffmpegProcess.emit([['total_size', str(muxer.total_bytes)], self.job, overall_total_seconds])
+
+        out_time_str = self._format_out_time(current_progress)
+        self.ffmpegProcess.emit([['out_time', out_time_str], self.job, overall_total_seconds])
+
+        self.ffmpegProcess.emit([
+            ['out_time_ms', str(int(current_progress * 1000000))],
+            self.job,
+            overall_total_seconds
+        ])
+
     def _build_video_graph(self, v_in_stream, is_final_pass, deshake_state, current_pass, deshakeFile):
         v_codec = self.job.getRenderSettingVideoCodec()
         self._log(f"Building video filter graph (Pass {current_pass}, Final: {is_final_pass})")
@@ -451,13 +494,7 @@ class FFmpegThread(QThread):
                 pass_state.rendered_seconds += (1.0 / pass_state.fps_float)
 
                 if pass_state.frames_processed_pass % 10 == 0:
-                    pass_offset = totalSeconds if current_pass == 2 else 0
-                    current_progress = pass_offset + pass_state.rendered_seconds
-                    self.ffmpegProcess.emit([
-                        ['out_time_ms', str(int(current_progress * 1000000))],
-                        self.job,
-                        overall_total_seconds
-                    ])
+                    self._emit_render_progress(pass_state, current_pass, totalSeconds, overall_total_seconds, is_final_pass, muxer)
 
                 if is_final_pass:
                     self._encode_and_mux_video_frame(out_frame, out_v_stream, muxer, pass_state)
@@ -512,6 +549,8 @@ class FFmpegThread(QThread):
                 self._log("Flushing audio encoder...")
                 for enc_packet in out_a_stream.encode(None):
                     muxer.mux_audio_packet(enc_packet, is_video_configured=pass_state.v_configured)
+
+        self._emit_render_progress(pass_state, current_pass, totalSeconds, overall_total_seconds, is_final_pass, muxer)
 
     def _run_pass(self, srcPath, tgtPath, sections, current_pass, total_passes,
                   deshake_state, deshakeFile, videoProps, totalSeconds, overall_total_seconds):
