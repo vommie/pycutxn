@@ -345,7 +345,7 @@ class FFmpegThread(QThread):
         if is_final_pass and muxer:
             self.ffmpegProcess.emit([['total_size', str(muxer.total_bytes)], self.job, overall_total_seconds])
 
-        out_time_str = self._format_out_time(current_progress)
+        out_time_str = self._format_out_time(pass_state.rendered_seconds)
         self.ffmpegProcess.emit([['out_time', out_time_str], self.job, overall_total_seconds])
 
         self.ffmpegProcess.emit([
@@ -491,7 +491,7 @@ class FFmpegThread(QThread):
             while True:
                 out_frame = v_graph.pull()
                 pass_state.frames_processed_pass += 1
-                pass_state.rendered_seconds += (1.0 / pass_state.fps_float)
+                pass_state.rendered_seconds = pass_state.frames_processed_pass / pass_state.fps_float
 
                 if pass_state.frames_processed_pass % 10 == 0:
                     self._emit_render_progress(pass_state, current_pass, totalSeconds, overall_total_seconds, is_final_pass, muxer)

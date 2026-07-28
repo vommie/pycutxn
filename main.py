@@ -856,6 +856,11 @@ class MainUi(QtWidgets.QMainWindow):
             job = self.getNextWaitingJob()
             if job:
                 if self.isSameRenderSrcTgt(job, True) or self.isSectionsMissing(job, True): return False
+
+                self.ffmpegProcess = True
+                job.setState(4)
+                self.updateQueueJobState(job.getID(), 4)
+
                 self.FFmpegThread = FFmpegThread(job, self.config.getConfigDeshakePath())
                 self.FFmpegThread.finished.connect(self.onFFmpegThreadFinished)
                 self.FFmpegThread.ffmpegStart.connect(self.onFFmpegStart)
@@ -868,6 +873,7 @@ class MainUi(QtWidgets.QMainWindow):
                 if self.powerMode: self.runPowerMode(self.powerMode)
             return True
         except Exception as e:
+            self.ffmpegProcess = False
             msg = 'Error: Cannot run next waiting job in queue.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
@@ -1799,9 +1805,7 @@ class MainUi(QtWidgets.QMainWindow):
     def onFFmpegStart(self, atts):
         job = atts[0]
         totalSeconds = atts[1]
-        job.setState(4)
         self.ffmpegProcess = atts[2]
-        self.updateQueueJobState(job.getID(), 4)
         if not self.progressBarRender.isEnabled(): self.progressBarRender.setEnabled(True)
         self.progressBarRender.setMinimum(0) # When min and max are same value, progress bar gets an "idle" animation in some system themes
         self.progressBarRender.setMaximum(0)
@@ -1857,7 +1861,6 @@ class MainUi(QtWidgets.QMainWindow):
         elif(result == QMessageBox.StandardButton.No): return False
         elif(result == QMessageBox.StandardButton.Save): return True
         elif(result == QMessageBox.StandardButton.Retry): return True
-        elif(result == QMessageBox.StandardButton.Abort): return False
         elif(result == QMessageBox.StandardButton.Close): return False
         return False
 
