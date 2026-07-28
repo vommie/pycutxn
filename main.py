@@ -36,10 +36,15 @@ from classes.CropOverlay import CropOverlay
 
 from PyQt6 import uic, QtGui, QtWidgets, QtCore
 from PyQt6.QtWidgets import QListWidgetItem, QLayout, QMessageBox, QTableWidgetItem, QMainWindow, QDialog
-from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer
+from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer, QObject, pyqtSignal
 from PyQt6.QtGui import QFont, QFontDatabase, QKeySequence, QPalette, QColor, QAction, QShortcut
 
 import res  # pyrcc5 -o res.py res/res.qrc (Unter Qt6: rcc -g python res/res.qrc > res.py)
+
+class MPVSignalBridge(QObject):
+    time_pos_changed = pyqtSignal(float)
+    pause_changed = pyqtSignal(bool)
+    volume_changed = pyqtSignal(float)
 
 CODEC_SPECS = {
     'libsvtav1': {
@@ -163,6 +168,10 @@ class MainUi(QtWidgets.QMainWindow):
         self.ffmpegProcess = False
         self.ffmpegKilled = False
         # Init member variables
+        self.mpv_bridge = MPVSignalBridge()
+        self.mpv_bridge.time_pos_changed.connect(self.onPlayerTimePosOnMainThread)
+        self.mpv_bridge.pause_changed.connect(self.onPlayerPauseOnMainThread)
+        self.mpv_bridge.volume_changed.connect(self.onPlayerVolumeOnMainThread)
         self.dirsUI = DirsUI(self)
         self.knownUI = KnownUI(self)
         self.hashUI = HashUI(self)
@@ -587,9 +596,9 @@ class MainUi(QtWidgets.QMainWindow):
             self.playerControl = PlayerControl(player, self.config)
             self.playerControl.volume(self.config.getPlayerVolume())
             self.setMuteState(self.config.getPlayerIsMuted())
-            self.playerControl.player.observe_property('pause', self.onPlayerPause)
-            self.playerControl.player.observe_property('time-pos', self.onPlayerTimePos)
-            self.playerControl.player.observe_property('volume', self.onPlayerVolume)
+            self.playerControl.player.observe_property('pause', lambda name, val: self.mpv_bridge.pause_changed.emit(val) if val is not None else None)
+            self.playerControl.player.observe_property('time-pos', lambda name, val: self.mpv_bridge.time_pos_changed.emit(val) if val is not None else None)
+            self.playerControl.player.observe_property('volume', lambda name, val: self.mpv_bridge.volume_changed.emit(val) if val is not None else None)
 
             bg_color = self.config.getPlayerBgColor()
             self.playerControl.player.background_color = bg_color
@@ -604,6 +613,17 @@ class MainUi(QtWidgets.QMainWindow):
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
             sys.exit(1)
 
+    @pyqtSlot(bool)
+    def onPlayerPauseOnMainThread(self, state):
+        self.onPlayerPause('pause', state)
+
+    @pyqtSlot(float)
+    def onPlayerTimePosOnMainThread(self, timestamp):
+        self.onPlayerTimePos('time-pos', timestamp)
+
+    @pyqtSlot(float)
+    def onPlayerVolumeOnMainThread(self, volume):
+        self.onPlayerVolume('volume', volume)
 
     def newFile(self, videoFilePath = False):
         '''
@@ -3139,12 +3159,17 @@ class MainUi(QtWidgets.QMainWindow):
         '''
         Sets the player slider to a position calculated based on a timestamp
 
-        :param timestamp: Timestimp in ms like 123122.304
+        :param timestamp: Timestamp in seconds
         '''
-        if timestamp >= self.sliderPlayer.maximum():
+        duration = self.videoProps.get('durationMs') if self.videoProps else 0
+        if not duration or duration <= 0:
+            self.sliderPlayer.setValue(0)
+            return
+
+        if timestamp >= duration:
             self.sliderPlayer.setValue(self.sliderPlayer.maximum())
         elif timestamp > 0:
-            percentage = timestamp / self.videoProps.get('durationMs')
+            percentage = timestamp / duration
             self.sliderPlayer.setValue(int(percentage * self.sliderPlayer.maximum()))
         elif timestamp <= 0:
             self.sliderPlayer.setValue(0)
