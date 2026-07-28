@@ -50,19 +50,20 @@ class Functions:
     @staticmethod
     def HMSToTimestamp(timeStr, asFloat=False):
         '''Converts a timestamp like 0:00:12.323 to a timestamp like 12.3234'''
-        h, m, s = timeStr.split(':')
-        s, ms = s.split('.')
-        if asFloat: return float(h) * 3600 + float(m) * 60 + float(s) + (float(ms) / 1000)
-        else: return float(h) * 3600 + float(m) * 60 + float(s)
+        try:
+            val = Functions._parse_time_to_seconds(timeStr)
+            return val if asFloat else int(round(val))
+        except Exception:
+            return 0.0 if asFloat else 0
 
     @staticmethod
     def timestampToHMS(timestamp):
         '''Converts a timestamp like 12.3234 to HMLS like 0:00:12.323'''
         timeSplit = str(timestamp).split('.', 1)
-        timeMs = timeSplit[1]
-        if len(timeMs) == 1: timeMs = '%s00' % timeSplit[1]
-        elif len(timeMs) == 2: timeMs = '%s0' % timeSplit[1]
-        else: timeMs = '{:03d}'.format(int(timeSplit[1][:3]))
+        timeMs = timeSplit[1] if len(timeSplit) > 1 else '0'
+        if len(timeMs) == 1: timeMs = '%s00' % timeMs
+        elif len(timeMs) == 2: timeMs = '%s0' % timeMs
+        else: timeMs = '{:03d}'.format(int(timeMs[:3]))
         time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
         return time
 
@@ -125,3 +126,106 @@ class Functions:
         except Exception as e:
             output += "Error probing with PyAV:\n" + str(e)
         return output
+
+    @staticmethod
+    def calculateJobImagesInfo(job, videoProps=None):
+        if not videoProps:
+            videoProps = {}
+
+        w, h = Functions._calculate_target_dimensions(job, videoProps)
+        fmt = Functions._extract_target_format(job)
+        duration = Functions._calculate_target_duration(job, videoProps)
+
+        return {
+            'width': w,
+            'height': h,
+            'orient': 1,
+            'format': '',
+            'depth': 0,
+            'duration': duration,
+            'bits': 0,
+            'ratio': 0,
+            'colorProfile': ''
+        }
+
+    @staticmethod
+    def _calculate_target_dimensions(job, videoProps):
+        w = videoProps.get('width', 0) or 0
+        h = videoProps.get('height', 0) or 0
+
+        if job.getFilterCropState():
+            crop_t = job.getFilterCropT() or 0
+            crop_r = job.getFilterCropR() or 0
+            crop_b = job.getFilterCropB() or 0
+            crop_l = job.getFilterCropL() or 0
+            w = max(0, w - crop_l - crop_r)
+            h = max(0, h - crop_t - crop_b)
+
+        if job.getFilterResizeState():
+            res_w = job.getFilterResizeWidth() or 0
+            res_h = job.getFilterResizeHeight() or 0
+            if res_w > 0:
+                w = res_w
+            if res_h > 0:
+                h = res_h
+
+        rotate = job.getFilterRotate()
+        if rotate in (90, -90):
+            w, h = h, w
+
+        return int(w), int(h)
+
+    @staticmethod
+    def _extract_target_format(job):
+        container = job.getRenderSettingContainer() or job.getTgtFileExt().lstrip('.')
+        if container:
+            return str(container).lower()
+        return ''
+
+    @staticmethod
+    def _calculate_target_duration(job, videoProps):
+        sections = job.getSections()
+        total_duration = 0.0
+
+        if sections:
+            for sec in sections:
+                try:
+                    start_s = Functions._parse_time_to_seconds(sec[0])
+                    end_s = Functions._parse_time_to_seconds(sec[1])
+                    if end_s > start_s:
+                        total_duration += (end_s - start_s)
+                except Exception:
+                    pass
+
+        if total_duration == 0.0 and videoProps:
+            dur = videoProps.get('durationHMS') or videoProps.get('durationMs')
+            if dur:
+                total_duration = Functions._parse_time_to_seconds(dur)
+
+        return int(round(total_duration * 1000))
+
+    @staticmethod
+    def _parse_time_to_seconds(time_val):
+        if time_val is None:
+            return 0.0
+        if isinstance(time_val, (int, float)):
+            return float(time_val)
+        time_str = str(time_val).strip()
+        if not time_str:
+            return 0.0
+        try:
+            parts = time_str.split(':')
+            if len(parts) == 3:
+                h = float(parts[0])
+                m = float(parts[1])
+                s = float(parts[2])
+                return h * 3600 + m * 60 + s
+            elif len(parts) == 2:
+                m = float(parts[0])
+                s = float(parts[1])
+                return m * 60 + s
+            elif len(parts) == 1:
+                return float(parts[0])
+        except Exception:
+            pass
+        return 0.0

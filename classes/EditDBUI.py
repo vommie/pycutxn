@@ -1,9 +1,9 @@
-from PyQt6 import QtWidgets, uic
+from PyQt6 import uic
 from PyQt6.QtWidgets import QDialog, QListWidgetItem
 from PyQt6.QtGui import QFont, QPalette
-import copy
 import traceback
 from collections import defaultdict
+from .Functions import Functions
 
 class EditDBUI(QDialog):
     def __init__(self, parent, job):
@@ -83,6 +83,10 @@ class EditDBUI(QDialog):
             if hashID: db.setHashID(imageID, folderID, hashID)
             db.setRating(imageID, folderID, rating)
             db.setTags(imageID, tagIDs)
+
+            video_props = getattr(self.parent, 'videoProps', None) if self.parent.jobs.get_current_job() and self.parent.jobs.get_current_job().getID() == job.getID() else None
+            images_info = Functions.calculateJobImagesInfo(job, video_props)
+            db.setImagesInfo(imageID, images_info)
 
             self.parent.log(1, f"DB entry for Job {job.getID()} ({job.getTgtFileNameLong()}) updated successfully.")
 

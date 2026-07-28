@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import traceback
 from .Functions import Functions
 
 # XnView Database Schema:
@@ -205,6 +206,36 @@ class DB:
             self.disconnect(conn)
         except AttributeError:
             raise Exception('NoConnection\n' + traceback.format_exc())
+        return True
+
+    def setImagesInfo(self, imageID, info: dict):
+        self.log(3, 'Set ImagesInfo for imageID "%s" ...' % imageID)
+        try:
+            conn = self.connect()
+            c = conn.cursor()
+            sql = """
+                INSERT OR REPLACE INTO ImagesInfo (
+                    ImageID, Width, Height, Orient, Format, Depth, Duration, Bits, Ratio, ColorProfile
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """
+            c.execute(sql, (
+                imageID,
+                info.get('width', 0),
+                info.get('height', 0),
+                info.get('orient', 0),
+                info.get('format', ''),
+                info.get('depth', 0),
+                info.get('duration', 0),
+                info.get('bits', 0),
+                info.get('ratio', 0),
+                info.get('colorProfile', None)
+            ))
+            conn.commit()
+            self.disconnect(conn)
+        except AttributeError:
+            raise Exception('NoConnection\n' + traceback.format_exc())
+        except Exception as e:
+            raise Exception('Error inserting/updating ImagesInfo\n' + traceback.format_exc())
         return True
 
     def getTagsTree(self):

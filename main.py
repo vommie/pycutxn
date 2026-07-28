@@ -2003,6 +2003,10 @@ class MainUi(QtWidgets.QMainWindow):
             self.log(1, 'Save tags to database ...')
             self.db.setTags(imageID, tagIDs)
             self.log(1, 'Tags saved: %s' % tagIDs)
+            self.log(1, 'Save ImagesInfo to database ...')
+            images_info = Functions.calculateJobImagesInfo(job, getattr(self, 'videoProps', None))
+            self.db.setImagesInfo(imageID, images_info)
+            self.log(1, 'ImagesInfo saved: %s' % images_info)
         except:
             msg = 'Error: No database connection possible'
             self.log(1, msg, 1)
