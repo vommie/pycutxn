@@ -252,13 +252,12 @@ class MainUi(QtWidgets.QMainWindow):
         if current_v_codec not in CODEC_SPECS:
             current_v_codec = 'libsvtav1'
 
-        self.comboBoxVideoCodec.setCurrentText(current_v_codec)
-        self.onVideoCodecChanged(current_v_codec)
-
         self.spinBoxCRF.setValue(self.config.getRenderCRF())
         self.comboBoxContainer.setCurrentText(self.config.getRenderContainer())
         self.comboBoxAudioCodec.setCurrentText(self.config.getRenderAudioCodec())
         self.spinBoxAudioBitrate.setValue(self.config.getRenderAudioBitrate())
+        self.comboBoxVideoCodec.setCurrentText(current_v_codec)
+        self.onVideoCodecChanged(current_v_codec)
 
         # Tagger
         waitingJobs = False
