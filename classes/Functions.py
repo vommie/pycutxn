@@ -103,14 +103,29 @@ class Functions:
             props = {}
         return props
 
-
     @staticmethod
-    def getVideoCodecInfo(videoFilePath):
+    def getVideoPropertiesAndCodecInfo(videoFilePath):
+        props = {}
         output = "Video properties:\n"
         try:
-            props = Functions.getVideoProperties(videoFilePath)
-            output += str(props) + "\n\nPyAV Stream Info:\n"
             with av.open(videoFilePath) as container:
+                video_stream = next((s for s in container.streams if s.type == 'video'), None)
+                audio_stream = next((s for s in container.streams if s.type == 'audio'), None)
+
+                if video_stream and video_stream.codec_context:
+                    props['width'] = video_stream.codec_context.width
+                    props['height'] = video_stream.codec_context.height
+
+                duration = container.duration
+                if duration is not None:
+                    duration_sec = duration / av.time_base
+                    ms = int((duration_sec % 1) * 1000)
+                    time_hms = time.strftime('%H:%M:%S', time.gmtime(duration_sec))
+                    props['durationHMS'] = f"{time_hms}.{ms:03d}"
+
+                props['hasAudio'] = audio_stream is not None
+
+                output += str(props) + "\n\nPyAV Stream Info:\n"
                 for i, stream in enumerate(container.streams):
                     output += f"Stream {i} ({stream.type}):\n"
                     if stream.codec_context:
@@ -125,7 +140,32 @@ class Functions:
                     output += f"  Bitrate: {stream.bit_rate}\n\n"
         except Exception as e:
             output += "Error probing with PyAV:\n" + str(e)
-        return output
+        return props, output
+
+    @staticmethod
+    def getVideoCodecInfo(videoFilePath, props=None):
+        if props is not None:
+            output = "Video properties:\n" + str(props) + "\n\nPyAV Stream Info:\n"
+            try:
+                with av.open(videoFilePath) as container:
+                    for i, stream in enumerate(container.streams):
+                        output += f"Stream {i} ({stream.type}):\n"
+                        if stream.codec_context:
+                            output += f"  Codec: {stream.codec_context.name}\n"
+                            if stream.type == 'video':
+                                output += f"  Resolution: {stream.codec_context.width}x{stream.codec_context.height}\n"
+                                output += f"  Framerate: {stream.average_rate}\n"
+                                output += f"  Pixel Format: {stream.codec_context.pix_fmt}\n"
+                            elif stream.type == 'audio':
+                                output += f"  Sample Rate: {stream.codec_context.sample_rate} Hz\n"
+                                output += f"  Channels: {stream.codec_context.channels}\n"
+                        output += f"  Bitrate: {stream.bit_rate}\n\n"
+            except Exception as e:
+                output += "Error probing with PyAV:\n" + str(e)
+            return output
+        else:
+            _, codec_info = Functions.getVideoPropertiesAndCodecInfo(videoFilePath)
+            return codec_info
 
     @staticmethod
     def calculateJobImagesInfo(job, videoProps=None):

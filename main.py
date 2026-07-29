@@ -46,6 +46,35 @@ class MPVSignalBridge(QObject):
     pause_changed = pyqtSignal(bool)
     volume_changed = pyqtSignal(float)
 
+class TargetDirScannerThread(QtCore.QThread):
+    scanFinished = pyqtSignal(str, list, object, object, str) # (job_id, matches, hashID, dateTime, detailText)
+
+    def __init__(self, job, hashID=False, dateTime=None, detailText=''):
+        super().__init__()
+        self.job_id = job.getID()
+        self.path = job.getTgtDirName()
+        self.fileName = job.getTgtFileName()
+        self.sep = job.getTgtFileSep()
+        self.count = job.getTgtFileCount()
+        self.hashID = hashID
+        self.dateTime = dateTime
+        self.detailText = detailText
+
+    def run(self):
+        matches = []
+        if self.path and os.path.isdir(self.path):
+            searchName = '{f}{s}01'.format(f=self.fileName, s=self.sep) if int(self.count) > 0 else '{f}'.format(f=self.fileName)
+            searchNameLower = searchName.lower()
+            try:
+                with os.scandir(self.path) as entries:
+                    for entry in entries:
+                        if entry.name.lower().startswith(searchNameLower):
+                            matches.append(os.path.join(self.path, entry.name))
+            except Exception:
+                pass
+
+        self.scanFinished.emit(self.job_id, matches, self.hashID, self.dateTime, self.detailText)
+
 CODEC_SPECS = {
     'libsvtav1': {
         'name': 'AV1 (SVT-AV1)',
@@ -167,6 +196,7 @@ class MainUi(QtWidgets.QMainWindow):
         }
         self.ffmpegProcess = False
         self.ffmpegKilled = False
+        self.dirScannerThread = None
         # Init member variables
         self.mpv_bridge = MPVSignalBridge()
         self.mpv_bridge.time_pos_changed.connect(self.onPlayerTimePosOnMainThread)
@@ -653,9 +683,9 @@ class MainUi(QtWidgets.QMainWindow):
             self.setWindowTitle('%s (%s) - pyCutXn' % (job.getSrcFileNameLong(), job.getSrcDirName()))
             self.log(1, 'Source path: "%s".' % videoFilePath)
             # Get Video Props
-            self.videoProps = Functions.getVideoProperties(videoFilePath)
+            self.videoProps, codecInfo = Functions.getVideoPropertiesAndCodecInfo(videoFilePath)
             self.videoProps['durationMs'] = Functions.HMSToTimestamp(self.videoProps.get('durationHMS'), True)
-            self.plainTextEditCodecInfo.setPlainText(str(Functions.getVideoCodecInfo(videoFilePath)))
+            self.plainTextEditCodecInfo.setPlainText(codecInfo)
             self.showWarningForOddVideoSourceSize(self.videoProps)
             self.log(1, 'Video properties: %s' % self.videoProps)
             # Set properties
@@ -700,7 +730,28 @@ class MainUi(QtWidgets.QMainWindow):
             detailText=f'Hash ID: {hashID}, Date: {dateTime}'
         if hashID:
             self.log(1, 'Current source file was already opened in the past. (HashID: "%s", Date: %s)' % (hashID, dateTime))
-        targetMatches = self.isCurrentFileNameInTargetDir(job)
+
+        if self.isBaseFileExistsInTgtDirWarningActive():
+            self.startAsyncTargetDirScan(job, hashID, dateTime, detailText)
+        elif hashID:
+            self.showWarningForKnownFile(detailText=detailText)
+
+    def startAsyncTargetDirScan(self, job, hashID=False, dateTime=None, detailText=''):
+        if self.dirScannerThread and self.dirScannerThread.isRunning():
+            self.dirScannerThread.wait(100)
+
+        self.dirScannerThread = TargetDirScannerThread(job, hashID, dateTime, detailText)
+        self.dirScannerThread.scanFinished.connect(self.onTargetDirScanFinished)
+        self.dirScannerThread.start()
+
+    @pyqtSlot(str, list, object, object, str)
+    def onTargetDirScanFinished(self, job_id, matches, hashID, dateTime, detailText):
+        current_job = self.jobs.get_current_job()
+        if not current_job or current_job.getID() != job_id:
+            return
+
+        targetMatches = matches if matches else False
+
         if hashID and targetMatches:
             self.showWarningForExistingTargetAndKnownFile(detailText=detailText, matches=targetMatches)
         elif hashID:
@@ -1187,9 +1238,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.config.setAppTgtDirName(text)
         self.setBtnExportSaveState()
         if self.isBaseFileExistsInTgtDirWarningActive():
-            targetMatches = self.isCurrentFileNameInTargetDir(self.jobs.get_current_job())
-            if targetMatches:
-                self.showWarningForExistingTargetFile(targetMatches)
+            job = self.jobs.get_current_job()
+            if job and job.getTgtDirName():
+                self.startAsyncTargetDirScan(job)
 
     def onBtnFilterCropClicked(self):
         job = self.jobs.get_current_job()
@@ -2258,15 +2309,21 @@ class MainUi(QtWidgets.QMainWindow):
         if not path: return False
         if not os.path.isdir(path):
             self.log(1, f'Path does not exist: "{path}"')
-            return
+            return False
         fileName = currentJob.getTgtFileName()
         sep = currentJob.getTgtFileSep()
         count = currentJob.getTgtFileCount()
         searchName = '{f}{s}01'.format(f=fileName, s=sep) if int(count) > 0 else '{f}'.format(f=fileName)
+        searchNameLower = searchName.lower()
         matches = []
-        for file in os.listdir(path):
-            if file.lower().startswith(searchName.lower()):
-                matches.append('{p}/{f}'.format(p=path, f=file))
+        try:
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    if entry.name.lower().startswith(searchNameLower):
+                        matches.append(os.path.join(path, entry.name))
+        except Exception as e:
+            self.log(1, f'Error scanning directory: {e}')
+            return False
         if not matches:
             return False
         return matches

@@ -46,21 +46,49 @@ class DB:
     def __init__(self, dbPath, log):
         self.log = log
         self.dbPath = dbPath
+        self._conn = None
+
+    def setDBPath(self, newPath):
+        if self.dbPath != newPath:
+            self.disconnect(force=True)
+            self.dbPath = newPath
+
+    def _get_conn(self):
+        if not self.dbPath or not os.path.isfile(self.dbPath):
+            self.disconnect(force=True)
+            return None
+
+        if self._conn is not None:
+            try:
+                self._conn.execute("SELECT 1;")
+                return self._conn
+            except (sqlite3.Error, AttributeError):
+                self.disconnect(force=True)
+
+        try:
+            self._conn = sqlite3.connect(self.dbPath)
+            return self._conn
+        except sqlite3.Error:
+            self._conn = None
+            return None
 
     def connect(self):
-        if os.path.isfile(self.dbPath):
-            conn = sqlite3.connect(self.dbPath)
+        conn = self._get_conn()
+        if conn:
             return conn
-        else:
-            return False
+        return False
 
-    def disconnect(self, conn):
-        if conn: conn.close()
+    def disconnect(self, conn=None, force=False):
+        if force and self._conn:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
 
     def testConnection(self):
         conn = self.connect()
         if conn:
-            self.disconnect(conn)
             return True
         return False
 
@@ -70,6 +98,8 @@ class DB:
         folderID = False
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("select FolderID from Folders where Pathname = ? collate nocase;", (path,))
             conn.commit()
@@ -92,20 +122,21 @@ class DB:
         maxFolderID = False
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("select max(FolderID) from Folders;")
             conn.commit()
             maxFolderID = c.fetchone()
         except AttributeError:
             raise Exception('Cannot connect to Database\n' + traceback.format_exc())
-        if maxFolderID: maxFolderID = int(maxFolderID[0])
+        if maxFolderID and maxFolderID[0] is not None: maxFolderID = int(maxFolderID[0])
         else: self.log(3, 'No max folderID found. Cannot create new folderID.')
         if not maxFolderID: return False
         folderID = maxFolderID + 1
         try:
             c.execute("insert into Folders(FolderID,Pathname) values(?,?);", (folderID, path))
             conn.commit()
-            maxFolderID = c.fetchone()
             self.disconnect(conn)
         except AttributeError:
             raise Exception('Cannot connect to Database\n' + traceback.format_exc())
@@ -117,6 +148,8 @@ class DB:
         imageID = False
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("select ImageID from Images where FolderID = ? and Filename = ? collate nocase;", (folderID, fileName))
             conn.commit()
@@ -139,20 +172,21 @@ class DB:
         maxImageID = False
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("select max(ImageID) from Images")
             conn.commit()
             maxImageID = c.fetchone()
         except AttributeError:
             raise Exception('Cannot connect to Database\n' + traceback.format_exc())
-        if maxImageID: maxImageID = int(maxImageID[0])
+        if maxImageID and maxImageID[0] is not None: maxImageID = int(maxImageID[0])
         else: self.log(3, 'No max folderID found. Cannot create new folderID.')
         if not maxImageID: return False
         imageID = maxImageID + 1
         try:
             c.execute("insert into Images(ImageID,FolderID,Filename,Size,ModifiedDate) values(?,?,?,0,0);", (imageID, folderID, fileName))
             conn.commit()
-            maxImageID = c.fetchone()
             self.disconnect(conn)
         except AttributeError:
             raise Exception('Cannot connect to Database\n' + traceback.format_exc())
@@ -164,6 +198,8 @@ class DB:
         tags = []
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             for row in c.execute("select TagID from TagsTree where ImageID = ?;", (imageID,)):
                 tags.append(row[0])
@@ -180,6 +216,8 @@ class DB:
         rating = False
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("select Rating from Images where ImageID = ? collate nocase;", (imageID,))
             conn.commit()
@@ -200,6 +238,8 @@ class DB:
         self.log(3, 'Set rating "%s" for folderID "%s" / imageID: "%s" ...' % (rating, folderID, imageID))
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("update Images set Rating=? where ImageID=? and FolderID=?;", (rating, imageID, folderID))
             conn.commit()
@@ -212,6 +252,8 @@ class DB:
         self.log(3, 'Set ImagesInfo for imageID "%s" ...' % imageID)
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             sql = """
                 INSERT OR REPLACE INTO ImagesInfo (
@@ -243,6 +285,8 @@ class DB:
         tagsTree = []
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             for row in c.execute("select TagID, Label, ParentID, ID from Tags order by ParentID, Label;"):
                 tagsTree.append({'tagID': row[0], 'parentID': row[2], 'label': row[1]})
@@ -257,6 +301,8 @@ class DB:
         self.log(3, 'Set tagID "%s" for imageID "%s" ...' % (tagIDs, imageID))
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("delete from TagsTree where ImageID = ?", (imageID,))
             conn.commit()
@@ -274,6 +320,8 @@ class DB:
     def createHashTable(self):
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("create table if not exists Hashes(HashID integer primary key autoincrement, Hash text, DateTime text not null);")
             conn.commit()
@@ -289,6 +337,8 @@ class DB:
     def addHashIDColumnToImages(self):
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("alter table Images add column HashID integer;")
             conn.commit()
@@ -304,6 +354,8 @@ class DB:
         self.log(3, 'Set hash "%s" ...' % hash)
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("insert into Hashes(Hash,DateTime) values (?, CURRENT_TIMESTAMP);", (hash,))
             conn.commit()
@@ -316,6 +368,8 @@ class DB:
         data = [False, False]
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('Cannot connect to Database')
             c = conn.cursor()
             c.execute("select HashID, DateTime from Hashes where hash = ?;", (hash,))
             conn.commit()
@@ -336,34 +390,33 @@ class DB:
         filePaths = []
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
-            c.execute("select Filename, FolderID from Images where HashID = ? collate nocase;", (hashID,))
+            sql = """
+                SELECT Folders.Pathname, Images.Filename
+                FROM Images
+                JOIN Folders ON Images.FolderID = Folders.FolderID
+                WHERE Images.HashID = ? COLLATE NOCASE;
+            """
+            c.execute(sql, (hashID,))
             conn.commit()
             results = c.fetchall()
             self.disconnect(conn)
         except AttributeError:
             raise Exception('NoConnection\n' + traceback.format_exc())
         if not results: return filePaths
-        for fileName, folderID in results:
-            if not fileName or not folderID: raise Exception('Filename or FolderID missing in query results.\n' + traceback.format_exc())
-            try:
-                conn = self.connect()
-                c = conn.cursor()
-                c.execute("select Pathname from Folders where FolderID = ? collate nocase;", (folderID,))
-                conn.commit()
-                results = c.fetchone()
-                self.disconnect(conn)
-            except AttributeError:
-                raise Exception('NoConnection\n' + traceback.format_exc())
-            if results:
-                pathName = results[0]
-                filePaths.append(Functions.removeTrailingSlash('%s%s' % (pathName, fileName)))
+        for pathName, fileName in results:
+            if not fileName or not pathName: raise Exception('Filename or FolderID missing in query results.\n' + traceback.format_exc())
+            filePaths.append(Functions.removeTrailingSlash('%s%s' % (pathName, fileName)))
         return filePaths
 
     def setHashID(self, imageID, folderID, hashID):
         self.log(3, 'Set hashID "%s" for folderID "%s" / imageID: "%s" ...' % (hashID, folderID, imageID))
         try:
             conn = self.connect()
+            if not conn:
+                raise AttributeError('NoConnection')
             c = conn.cursor()
             c.execute("update Images set HashID=? where ImageID=? and FolderID=?;", (hashID, imageID, folderID))
             conn.commit()

@@ -39,7 +39,10 @@ class SettingsUI(QtWidgets.QDialog):
         self.parent.config.setPlayerAutoPlay(self.checkBoxPlayerAutoPlay.isChecked())
         self.parent.config.setPlayerMuteVideoEnd(self.checkBoxMuteVideoEnd.isChecked())
         # Database
-        self.parent.config.setTaggerDBPath(self.lineEditDBPath.text()) # TODO: Reload Tagger when path changes
+        new_db_path = self.lineEditDBPath.text()
+        self.parent.config.setTaggerDBPath(new_db_path)
+        if hasattr(self.parent, 'db') and self.parent.db:
+            self.parent.db.setDBPath(new_db_path)
         # Warnings
         self.parent.config.setAppWarnTgtFileExistsInTgtDir(self.checkBoxWarnTgtTgt.isChecked())
         self.parent.config.setAppWarnBaseFileExistsInTgtDir(self.checkBoxWarnBaseFileExists.isChecked())
