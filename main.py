@@ -13,6 +13,20 @@ import hashlib
 import locale
 import math
 import traceback
+import gc
+import ctypes
+
+def _trim_memory():
+    try:
+        gc.collect()
+        try:
+            libc = ctypes.CDLL("libc.so.6")
+            libc.malloc_trim(0)
+        except Exception:
+            libc = ctypes.CDLL(None)
+            libc.malloc_trim(0)
+    except Exception:
+        pass
 
 from libs.mpv import *
 
@@ -1886,6 +1900,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def onFFmpegThreadFinished(self):
         self.ffmpegProcess = False
+        self.FFmpegThread = None
+        _trim_memory()
 
     # GUI Control
 

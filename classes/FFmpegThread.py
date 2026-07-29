@@ -20,6 +20,19 @@ except Exception:
     pass
 
 
+def _trim_memory():
+    try:
+        gc.collect()
+        try:
+            libc = ctypes.CDLL("libc.so.6")
+            libc.malloc_trim(0)
+        except Exception:
+            libc = ctypes.CDLL(None)
+            libc.malloc_trim(0)
+    except Exception:
+        pass
+
+
 class AudioCodecHelper:
     """
     Helper utility for resolving audio codec sample rates and sample formats.
@@ -237,78 +250,81 @@ class FFmpegThread(QThread):
         self._log("========================")
 
     def run(self):
-        self._force_c_locale()
-        self._log_system_info()
-
-        job = self.job
-        deshakeFile = False
-        srcPath = job.getSrcFilePathLong()
-        tgtPath = job.getTgtFilePathLong()
-        self._log(f"Starting Job ID {job.getID()} | Source: {srcPath} | Target: {tgtPath}")
-
-        if not os.path.isfile(srcPath):
-            err = f'Input file "{srcPath}" does not exist.'
-            self._log(err)
-            full_log = "\n".join(self._debug_logs)
-            self.ffmpegExit.emit([job, 1, b'', err.encode('utf-8'), deshakeFile, full_log])
-            return
-
         try:
-            from classes.Functions import Functions
-            videoProps = Functions.getVideoProperties(srcPath)
-            if not videoProps:
-                raise Exception("Probing the target file failed. File might be corrupted.")
+            self._force_c_locale()
+            self._log_system_info()
 
-            deshake_state = job.getFilterDeshakeState()
-            render_passes = 2 if deshake_state else 1
-            sections = job.getSections()
-            if not sections:
-                raise Exception("No sections to render.")
+            job = self.job
+            deshakeFile = False
+            srcPath = job.getSrcFilePathLong()
+            tgtPath = job.getTgtFilePathLong()
+            self._log(f"Starting Job ID {job.getID()} | Source: {srcPath} | Target: {tgtPath}")
 
-            totalSeconds = sum([Functions.HMSToTimestamp(s[1], True) - Functions.HMSToTimestamp(s[0], True) for s in sections])
-            overall_total_seconds = totalSeconds * render_passes
-            self.ffmpegStart.emit([job, overall_total_seconds, self])
+            if not os.path.isfile(srcPath):
+                err = f'Input file "{srcPath}" does not exist.'
+                self._log(err)
+                full_log = "\n".join(self._debug_logs)
+                self.ffmpegExit.emit([job, 1, b'', err.encode('utf-8'), deshakeFile, full_log])
+                return
 
-            if deshake_state:
-                if not os.path.isdir(self.configPath):
-                    os.makedirs(self.configPath, exist_ok=True)
-                deshakeFile = os.path.abspath(os.path.join(self.configPath, f'job_{job.getID()}_transforms.trf'))
-                self._log(f"Deshake TRF file will be saved at: {deshakeFile}")
+            try:
+                from classes.Functions import Functions
+                videoProps = Functions.getVideoProperties(srcPath)
+                if not videoProps:
+                    raise Exception("Probing the target file failed. File might be corrupted.")
 
-            start_time_render = time.time()
+                deshake_state = job.getFilterDeshakeState()
+                render_passes = 2 if deshake_state else 1
+                sections = job.getSections()
+                if not sections:
+                    raise Exception("No sections to render.")
 
-            for render_pass in range(1, render_passes + 1):
+                totalSeconds = sum([Functions.HMSToTimestamp(s[1], True) - Functions.HMSToTimestamp(s[0], True) for s in sections])
+                overall_total_seconds = totalSeconds * render_passes
+                self.ffmpegStart.emit([job, overall_total_seconds, self])
+
+                if deshake_state:
+                    if not os.path.isdir(self.configPath):
+                        os.makedirs(self.configPath, exist_ok=True)
+                    deshakeFile = os.path.abspath(os.path.join(self.configPath, f'job_{job.getID()}_transforms.trf'))
+                    self._log(f"Deshake TRF file will be saved at: {deshakeFile}")
+
+                start_time_render = time.time()
+
+                for render_pass in range(1, render_passes + 1):
+                    if self._is_canceled:
+                        break
+
+                    if render_pass == 1 and deshake_state and os.path.exists(deshakeFile):
+                        self._log("Removing old TRF file before Pass 1.")
+                        os.remove(deshakeFile)
+
+                    self.ffmpegProcess.emit([['pass_info', f'Pass {render_pass}/{render_passes}'], self.job, overall_total_seconds])
+                    self._run_pass(srcPath, tgtPath, sections, render_pass, render_passes, deshake_state, deshakeFile, videoProps, totalSeconds, overall_total_seconds)
+
+                elapsed = time.time() - start_time_render
+                self._log(f"Render completed in {elapsed:.2f} seconds.")
+
+                full_log = "\n".join(self._debug_logs)
+
                 if self._is_canceled:
-                    break
+                    if os.path.exists(tgtPath):
+                        try:
+                            os.remove(tgtPath)
+                        except Exception:
+                            pass
+                    self.ffmpegExit.emit([job, 1, b'', b'Render process canceled by user.', deshakeFile, full_log])
+                else:
+                    self.ffmpegExit.emit([job, 0, b'Render complete', b'', deshakeFile, full_log])
 
-                if render_pass == 1 and deshake_state and os.path.exists(deshakeFile):
-                    self._log("Removing old TRF file before Pass 1.")
-                    os.remove(deshakeFile)
-
-                self.ffmpegProcess.emit([['pass_info', f'Pass {render_pass}/{render_passes}'], self.job, overall_total_seconds])
-                self._run_pass(srcPath, tgtPath, sections, render_pass, render_passes, deshake_state, deshakeFile, videoProps, totalSeconds, overall_total_seconds)
-
-            elapsed = time.time() - start_time_render
-            self._log(f"Render completed in {elapsed:.2f} seconds.")
-
-            full_log = "\n".join(self._debug_logs)
-
-            if self._is_canceled:
-                if os.path.exists(tgtPath):
-                    try:
-                        os.remove(tgtPath)
-                    except Exception:
-                        pass
-                self.ffmpegExit.emit([job, 1, b'', b'Render process canceled by user.', deshakeFile, full_log])
-            else:
-                self.ffmpegExit.emit([job, 0, b'Render complete', b'', deshakeFile, full_log])
-
-        except Exception as e:
-            full_traceback = traceback.format_exc()
-            self._log(f"Critical error in FFmpegThread:\n{full_traceback}")
-            full_log = "\n".join(self._debug_logs)
-            err_msg = f"Error:\n{full_traceback}\n\n--- DEBUG LOGS ---\n{full_log}".encode('utf-8')
-            self.ffmpegExit.emit([job, 1, b'', err_msg, deshakeFile, full_log])
+            except Exception as e:
+                full_traceback = traceback.format_exc()
+                self._log(f"Critical error in FFmpegThread:\n{full_traceback}")
+                full_log = "\n".join(self._debug_logs)
+                err_msg = f"Error:\n{full_traceback}\n\n--- DEBUG LOGS ---\n{full_log}".encode('utf-8')
+                self.ffmpegExit.emit([job, 1, b'', err_msg, deshakeFile, full_log])
+        finally:
+            _trim_memory()
 
     @staticmethod
     def _format_fraction(frac, default_str: str) -> str:
@@ -737,7 +753,12 @@ class FFmpegThread(QThread):
                         pass
 
             del v_graph, a_graph
-            gc.collect()
+            v_graph = None
+            a_graph = None
+            container = None
+            out_container = None
+            muxer = None
+            _trim_memory()
 
             if current_pass == 1 and deshake_state:
                 time.sleep(0.5)
