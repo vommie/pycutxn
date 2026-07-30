@@ -188,6 +188,7 @@ class MainUi(QtWidgets.QMainWindow):
         return super(MainUi, self).eventFilter(source, event)
 
     def initMembers(self):
+        self._loadingJob = False
         self.is_first_show = True
         self.config = Config()
         self.iconFontName = 'DroidSansMono Nerd Font Mono'
@@ -675,10 +676,11 @@ class MainUi(QtWidgets.QMainWindow):
         :param videoFilePath: The path to the video file to open. If not set, the currently selected job in the queue gets loaded.
         '''
         try:
+            self._loadingJob = True
             self.log(1, '---New File-----------------------------------')
             self.log(3, '---New File -----------------------------------')
             self.cropOverlay.stop_interaction()
-            self.playerControl.pause(True)
+            self.playerControl.stop()
             self.checkDBConnectivity()
             if not videoFilePath:
                 self.log(1, 'Loading job from queue ...')
@@ -719,6 +721,9 @@ class MainUi(QtWidgets.QMainWindow):
             self.playerTimeTotalS = Functions.HMSToTimestamp(self.videoProps.get('durationHMS'))
             self.setFilterBtnStates()
             self.loadSections(job)
+            self._loadingJob = False
+            self.setVideoFilter()
+
             # Load video file
             if self.videoProps:
                 audioFilter='lavfi=[loudnorm=I=-22:TP=-1.5:LRA=2]' # Audio Normalization
@@ -732,6 +737,7 @@ class MainUi(QtWidgets.QMainWindow):
 
             self.handleKnownWarnings(job)
         except Exception as e:
+            self._loadingJob = False
             msg = 'Error: Cannot load new file.'
             self.log(1, msg, 1, traceback=traceback.format_exc())
             self.showMsgBox(msg, detailText=traceback.format_exc(), icon='critical')
@@ -3298,6 +3304,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     def setVideoFilter(self):
         '''Set video filters on MPV'''
+        if getattr(self, '_loadingJob', False):
+            return
         filters = []
         if self.btnFiltersPreview.isChecked():
             filterPositions = self.jobs.get_current_job().getFilterPositions()
