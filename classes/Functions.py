@@ -1,9 +1,69 @@
 import sys
+import os
 import av
 import time
 import json
+import gc
+import ctypes
 
 class Functions:
+
+    @staticmethod
+    def safeDeleteTargetFile(tgtPath, jobs_db, currentJobId=None, logger=None):
+        if not tgtPath or not os.path.exists(tgtPath):
+            return False
+
+        try:
+            norm_target = os.path.normpath(os.path.abspath(tgtPath))
+        except Exception:
+            norm_target = tgtPath
+
+        if jobs_db:
+            try:
+                for job in jobs_db.get_sorted_jobs():
+                    if currentJobId is not None and str(job.getID()) == str(currentJobId):
+                        continue
+
+                    if job.getState() == 4:
+                        try:
+                            other_target = os.path.normpath(os.path.abspath(job.getTgtFilePathLong()))
+                        except Exception:
+                            other_target = job.getTgtFilePathLong()
+
+                        if norm_target == other_target:
+                            msg = f"Safety check: Prevented deletion of '{tgtPath}' because rendering Job ID {job.getID()} is currently writing to this file."
+                            if logger:
+                                logger(msg)
+                            return False
+            except Exception as e:
+                msg = f"Warning during safe delete job check: {e}"
+                if logger:
+                    logger(msg)
+
+        try:
+            os.remove(tgtPath)
+        except Exception as rem_err:
+            msg = f"Warning: Could not remove incomplete target file '{tgtPath}': {rem_err}"
+            if logger:
+                logger(msg)
+            return False
+
+    @staticmethod
+    def trimMemory():
+        """Forces garbage collection and releases unmapped C heap memory via glibc malloc_trim."""
+        try:
+            gc.collect()
+            try:
+                libc = ctypes.CDLL("libc.so.6")
+                libc.malloc_trim(0)
+            except Exception:
+                try:
+                    libc = ctypes.CDLL(None)
+                    libc.malloc_trim(0)
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     @staticmethod
     def convertSecondsToHMFS(seconds):
@@ -15,12 +75,12 @@ class Functions:
 
         return "%d:%02d:%02d" % (hour, minutes, seconds)
 
-    # Move an table item up (+1) or down (-1)
+    # Move a table item up (+1) or down (-1)
     @staticmethod
-    def moveTableRow(control, directionValue):
+    def moveTableRow(control, directionValue, start_row=None):
         rowCount = control.rowCount()
         colCount = control.columnCount()
-        rowIndex = control.currentRow()
+        rowIndex = control.currentRow() if start_row is None else start_row
         to = rowIndex
         if rowIndex + directionValue >= 0 and rowIndex + directionValue <= rowCount - 1:
             to = rowIndex + directionValue
@@ -43,10 +103,11 @@ class Functions:
 
     @staticmethod
     def appendTrailingSlash(text):
-        if not text[:-1] == '/': text = '%s/' % text
+        if not text[:-1] == '/':
+            text = '%s/' % text
         return text
 
-    # H:M:S.f to seconds (int)
+    # H:M:S.f to seconds (int or float)
     @staticmethod
     def HMSToTimestamp(timeStr, asFloat=False):
         '''Converts a timestamp like 0:00:12.323 to a timestamp like 12.3234'''
@@ -58,19 +119,21 @@ class Functions:
 
     @staticmethod
     def timestampToHMS(timestamp):
-        '''Converts a timestamp like 12.3234 to HMLS like 0:00:12.323'''
+        '''Converts a timestamp like 12.3234 to HMS like 0:00:12.323'''
         timeSplit = str(timestamp).split('.', 1)
         timeMs = timeSplit[1] if len(timeSplit) > 1 else '0'
-        if len(timeMs) == 1: timeMs = '%s00' % timeMs
-        elif len(timeMs) == 2: timeMs = '%s0' % timeMs
-        else: timeMs = '{:03d}'.format(int(timeMs[:3]))
-        time = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
-        return time
+        if len(timeMs) == 1:
+            timeMs = '%s00' % timeMs
+        elif len(timeMs) == 2:
+            timeMs = '%s0' % timeMs
+        else:
+            timeMs = '{:03d}'.format(int(timeMs[:3]))
+        time_str = "%s.%s" % (Functions.convertSecondsToHMFS(int(timeSplit[0])), timeMs)
+        return time_str
 
     # Get the system opener name for the current OS / system
     @staticmethod
     def getCurrentSysOpener():
-        # Todo: use os.startfile() on windows
         return "open" if sys.platform == "darwin" else "xdg-open"
 
     # Check if two strings are the same
@@ -78,7 +141,7 @@ class Functions:
     def isSameString(string1, string2):
         return string1 == string2
 
-    # Get video properties from ffprobe
+    # Get video properties from PyAV / ffprobe
     @staticmethod
     def getVideoProperties(videoFilePath):
         props = {}
@@ -99,7 +162,7 @@ class Functions:
                     props['durationHMS'] = f"{time_hms}.{ms:03d}"
 
                 props['hasAudio'] = audio_stream is not None
-        except Exception as e:
+        except Exception:
             props = {}
         return props
 

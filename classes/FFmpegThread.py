@@ -12,25 +12,14 @@ import ctypes
 from fractions import Fraction
 from PyQt6.QtCore import pyqtSignal, QThread
 
+from classes.Functions import Functions
+
 os.environ["PYAV_LOGGING"] = "off"
 try:
     av.logging.set_level(None)
     av.logging.restore_default_callback()
 except Exception:
     pass
-
-
-def _trim_memory():
-    try:
-        gc.collect()
-        try:
-            libc = ctypes.CDLL("libc.so.6")
-            libc.malloc_trim(0)
-        except Exception:
-            libc = ctypes.CDLL(None)
-            libc.malloc_trim(0)
-    except Exception:
-        pass
 
 
 class AudioCodecHelper:
@@ -103,6 +92,7 @@ class PassState:
         self.fps_float = float(fps) if fps and fps.numerator else 25.0
         self.frames_processed_pass = 0
         self.start_time = time.time()
+        self.last_progress_time = 0.0
 
 
 class VideoFilterRegistry:
@@ -197,10 +187,11 @@ class FFmpegThread(QThread):
     ffmpegExit = pyqtSignal('PyQt_PyObject')
     ffmpegLog = pyqtSignal('PyQt_PyObject')
 
-    def __init__(self, job, configPath):
+    def __init__(self, job, configPath, jobs_db=None):
         super().__init__()
         self.job = job
         self.configPath = configPath
+        self.jobs_db = jobs_db
         self._is_canceled = False
         self._is_paused = False
         self._debug_logs = []
@@ -268,7 +259,6 @@ class FFmpegThread(QThread):
                 return
 
             try:
-                from classes.Functions import Functions
                 videoProps = Functions.getVideoProperties(srcPath)
                 if not videoProps:
                     raise Exception("Probing the target file failed. File might be corrupted.")
@@ -308,11 +298,7 @@ class FFmpegThread(QThread):
                 full_log = "\n".join(self._debug_logs)
 
                 if self._is_canceled:
-                    if os.path.exists(tgtPath):
-                        try:
-                            os.remove(tgtPath)
-                        except Exception:
-                            pass
+                    Functions.safeDeleteTargetFile(tgtPath, self.jobs_db, currentJobId=job.getID(), logger=self._log)
                     self.ffmpegExit.emit([job, 1, b'', b'Render process canceled by user.', deshakeFile, full_log])
                 else:
                     self.ffmpegExit.emit([job, 0, b'Render complete', b'', deshakeFile, full_log])
@@ -320,11 +306,14 @@ class FFmpegThread(QThread):
             except Exception as e:
                 full_traceback = traceback.format_exc()
                 self._log(f"Critical error in FFmpegThread:\n{full_traceback}")
+                Functions.safeDeleteTargetFile(tgtPath, self.jobs_db, currentJobId=job.getID(), logger=self._log)
+
                 full_log = "\n".join(self._debug_logs)
                 err_msg = f"Error:\n{full_traceback}\n\n--- DEBUG LOGS ---\n{full_log}".encode('utf-8')
                 self.ffmpegExit.emit([job, 1, b'', err_msg, deshakeFile, full_log])
         finally:
-            _trim_memory()
+            self._debug_logs.clear()
+            Functions.trimMemory()
 
     @staticmethod
     def _format_fraction(frac, default_str: str) -> str:
@@ -485,8 +474,11 @@ class FFmpegThread(QThread):
         out_frame.pts = pass_state.v_pts_offset
         pass_state.v_pts_offset += 1
 
-        for enc_packet in out_v_stream.encode(out_frame):
+        packets = out_v_stream.encode(out_frame)
+        for enc_packet in packets:
             muxer.mux_video_packet(enc_packet, is_audio_configured=pass_state.a_configured)
+            del enc_packet
+        del packets
 
     def _encode_and_mux_audio_frame(self, out_a_frame, out_a_stream, muxer, pass_state: PassState):
         if not pass_state.a_configured:
@@ -498,8 +490,11 @@ class FFmpegThread(QThread):
         out_a_frame.pts = pass_state.a_pts_offset
         pass_state.a_pts_offset += out_a_frame.samples
 
-        for enc_packet in out_a_stream.encode(out_a_frame):
+        packets = out_a_stream.encode(out_a_frame)
+        for enc_packet in packets:
             muxer.mux_audio_packet(enc_packet, is_video_configured=pass_state.v_configured)
+            del enc_packet
+        del packets
 
     def _pull_and_process_video_graph(self, v_graph, out_v_stream, muxer, pass_state: PassState,
                                       is_final_pass, overall_total_seconds, totalSeconds, current_pass):
@@ -509,11 +504,18 @@ class FFmpegThread(QThread):
                 pass_state.frames_processed_pass += 1
                 pass_state.rendered_seconds = pass_state.frames_processed_pass / pass_state.fps_float
 
-                if pass_state.frames_processed_pass % 10 == 0:
+                now = time.time()
+                if now - pass_state.last_progress_time >= 0.2:
+                    pass_state.last_progress_time = now
                     self._emit_render_progress(pass_state, current_pass, totalSeconds, overall_total_seconds, is_final_pass, muxer)
 
                 if is_final_pass:
                     self._encode_and_mux_video_frame(out_frame, out_v_stream, muxer, pass_state)
+                del out_frame
+
+                if pass_state.frames_processed_pass % 300 == 0:
+                    Functions.trimMemory()
+
         except (av.error.BlockingIOError, av.error.EOFError):
             pass
 
@@ -522,6 +524,7 @@ class FFmpegThread(QThread):
             while True:
                 out_a_frame = a_graph.pull()
                 self._encode_and_mux_audio_frame(out_a_frame, out_a_stream, muxer, pass_state)
+                del out_a_frame
         except (av.error.BlockingIOError, av.error.EOFError):
             pass
 
@@ -553,8 +556,11 @@ class FFmpegThread(QThread):
 
         if is_final_pass and out_v_stream:
             self._log("Flushing video encoder...")
-            for enc_packet in out_v_stream.encode(None):
+            packets = out_v_stream.encode(None)
+            for enc_packet in packets:
                 muxer.mux_video_packet(enc_packet, is_audio_configured=pass_state.a_configured)
+                del enc_packet
+            del packets
 
         if is_final_pass and has_audio:
             self._log("Flushing audio filter...")
@@ -563,14 +569,16 @@ class FFmpegThread(QThread):
 
             if out_a_stream:
                 self._log("Flushing audio encoder...")
-                for enc_packet in out_a_stream.encode(None):
+                packets = out_a_stream.encode(None)
+                for enc_packet in packets:
                     muxer.mux_audio_packet(enc_packet, is_video_configured=pass_state.v_configured)
+                    del enc_packet
+                del packets
 
         self._emit_render_progress(pass_state, current_pass, totalSeconds, overall_total_seconds, is_final_pass, muxer)
 
     def _run_pass(self, srcPath, tgtPath, sections, current_pass, total_passes,
                   deshake_state, deshakeFile, videoProps, totalSeconds, overall_total_seconds):
-        from classes.Functions import Functions
         container = None
         out_container = None
         v_graph, a_graph = None, None
@@ -690,18 +698,21 @@ class FFmpegThread(QThread):
                         frames = packet.decode()
                     except (av.FFmpegError, Exception) as decode_err:
                         self._log(f"Warning: Skipping corrupted packet near timestamp {packet_time_s or 'unknown'}s: {decode_err}")
+                        del packet
                         continue
 
                     for frame in frames:
                         current_time = self._resolve_frame_time(frame, v_in_stream, packet_time_s, start_s)
 
                         if current_time < start_s:
+                            del frame
                             continue
                         if current_time > end_s:
                             if isinstance(frame, av.VideoFrame):
                                 section_v_done = True
                             elif isinstance(frame, av.AudioFrame):
                                 section_a_done = True
+                            del frame
                             continue
 
                         if isinstance(frame, av.VideoFrame):
@@ -721,6 +732,11 @@ class FFmpegThread(QThread):
                             except (av.FFmpegError, Exception) as filter_err:
                                 self._log(f"Warning: Audio filter graph error at {current_time}s: {filter_err}")
 
+                        del frame
+
+                    del frames
+                    del packet
+
             self._log(f"Pass {current_pass} normal extraction loop finished. Total frames processed so far: {pass_state.frames_processed_pass}")
 
             if current_pass == 1 and deshake_state and pass_state.frames_processed_pass == 0:
@@ -733,12 +749,28 @@ class FFmpegThread(QThread):
                     pass_state, is_final_pass, has_audio,
                     overall_total_seconds, totalSeconds, current_pass
                 )
+            else:
+                if is_final_pass and out_v_stream:
+                    try:
+                        pkts = out_v_stream.encode(None)
+                        del pkts
+                    except Exception:
+                        pass
+                if is_final_pass and out_a_stream:
+                    try:
+                        pkts = out_a_stream.encode(None)
+                        del pkts
+                    except Exception:
+                        pass
 
         finally:
             self._log(f"Cleaning up memory references for Pass {current_pass}...")
 
             if container:
-                container.close()
+                try:
+                    container.close()
+                except Exception:
+                    pass
             if out_container:
                 try:
                     out_container.close()
@@ -746,19 +778,19 @@ class FFmpegThread(QThread):
                     self._log(f"Cleanup error on out_container.close(): {e}")
 
             if v_graph and hasattr(v_graph, 'nodes'):
-                for node in v_graph.nodes:
+                for node in list(v_graph.nodes):
                     try:
                         node.graph = None
                     except Exception:
                         pass
 
-            del v_graph, a_graph
+            del v_graph, a_graph, container, out_container, muxer
             v_graph = None
             a_graph = None
             container = None
             out_container = None
             muxer = None
-            _trim_memory()
+            Functions.trimMemory()
 
             if current_pass == 1 and deshake_state:
                 time.sleep(0.5)
